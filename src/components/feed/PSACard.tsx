@@ -23,11 +23,17 @@ export default function PSACard({ feedItem, isActive = true }: PSACardProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [isEndorsing, setIsEndorsing] = useState(false);
+  const [displayedEndorsementCount, setDisplayedEndorsementCount] = useState(0);
 
   const { psa, candidate, alignmentScore, matchedIssues, hasDealbreaker } = feedItem;
 
   // Check endorsement status from global store
   const hasEndorsed = hasEndorsedCandidate(candidate.id);
+
+  // Initialize and sync endorsement count
+  useEffect(() => {
+    setDisplayedEndorsementCount(candidate.endorsementCount);
+  }, [candidate.endorsementCount]);
 
   // Control video playback based on active state
   useEffect(() => {
@@ -62,7 +68,11 @@ export default function PSACard({ feedItem, isActive = true }: PSACardProps) {
 
     setIsEndorsing(true);
     try {
-      await endorseCandidate(user.id, candidate.id);
+      const success = await endorseCandidate(user.id, candidate.id);
+      if (success) {
+        // Increment the displayed count immediately for visual feedback
+        setDisplayedEndorsementCount((prev) => prev + 1);
+      }
     } catch (error) {
       console.error('Error endorsing candidate:', error);
     } finally {
@@ -78,6 +88,11 @@ export default function PSACard({ feedItem, isActive = true }: PSACardProps) {
     if (views >= 1000000) return `${(views / 1000000).toFixed(1)}M`;
     if (views >= 1000) return `${(views / 1000).toFixed(1)}K`;
     return views.toString();
+  };
+
+  // Format number with commas for full display
+  const formatWithCommas = (num: number) => {
+    return num.toLocaleString();
   };
 
   return (
@@ -150,7 +165,7 @@ export default function PSACard({ feedItem, isActive = true }: PSACardProps) {
                 color={theme.colors.outline}
               />
               <Text variant="bodySmall" style={{ color: theme.colors.outline, marginLeft: 4 }}>
-                {formatViews(candidate.endorsementCount)} endorsements
+                {formatWithCommas(displayedEndorsementCount)} endorsements
               </Text>
               <Text variant="bodySmall" style={{ color: theme.colors.outline, marginLeft: 12 }}>
                 •

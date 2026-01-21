@@ -40,9 +40,17 @@ export default function CandidateProfileScreen() {
   const [activeTab, setActiveTab] = useState<ProfileTab>('issues');
   const [isLoading, setIsLoading] = useState(true);
   const [isEndorsing, setIsEndorsing] = useState(false);
+  const [displayedEndorsementCount, setDisplayedEndorsementCount] = useState(0);
 
   // Check endorsement status from global store
   const hasEndorsed = id ? hasEndorsedCandidate(id) : false;
+
+  // Sync endorsement count when candidate loads
+  useEffect(() => {
+    if (candidate?.endorsementCount !== undefined) {
+      setDisplayedEndorsementCount(candidate.endorsementCount);
+    }
+  }, [candidate?.endorsementCount]);
 
   useEffect(() => {
     const fetchCandidateData = async () => {
@@ -79,7 +87,11 @@ export default function CandidateProfileScreen() {
 
     setIsEndorsing(true);
     try {
-      await endorseCandidate(currentUser.id, id);
+      const success = await endorseCandidate(currentUser.id, id);
+      if (success) {
+        // Increment the displayed count immediately for visual feedback
+        setDisplayedEndorsementCount((prev) => prev + 1);
+      }
     } catch (error) {
       console.error('Error endorsing:', error);
     } finally {
@@ -91,6 +103,11 @@ export default function CandidateProfileScreen() {
     if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
     if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
     return num.toString();
+  };
+
+  // Format number with commas for full display
+  const formatWithCommas = (num: number) => {
+    return num.toLocaleString();
   };
 
   const getIssueName = (issueId: string) => {
@@ -311,7 +328,7 @@ export default function CandidateProfileScreen() {
           <View style={styles.statsRow}>
             <View style={styles.stat}>
               <Text variant="titleLarge" style={{ fontWeight: 'bold' }}>
-                {formatNumber(candidate.endorsementCount)}
+                {formatWithCommas(displayedEndorsementCount)}
               </Text>
               <Text variant="bodySmall" style={{ color: theme.colors.outline }}>
                 Endorsements
