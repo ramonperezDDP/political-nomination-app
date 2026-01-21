@@ -1,0 +1,143 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function getUserRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && getUserRole() == 'admin';
+    }
+
+    function isVerified() {
+      return isAuthenticated() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.verificationStatus == 'verified';
+    }
+
+    function isCandidate() {
+      return isAuthenticated() && getUserRole() == 'candidate';
+    }
+
+    // Users collection
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Candidates collection
+    match /candidates/{candidateId} {
+      allow read: if isAuthenticated();
+      allow create: if isAdmin();
+      allow update: if isAdmin() ||
+        (isCandidate() && resource.data.odid == request.auth.uid);
+      allow delete: if isAdmin();
+    }
+
+    // Candidate Applications collection
+    match /candidateApplications/{applicationId} {
+      allow read: if isAdmin() ||
+        (isAuthenticated() && resource.data.userId == request.auth.uid);
+      allow create: if isVerified();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // PSAs collection
+    match /psas/{psaId} {
+      allow read: if isAuthenticated();
+      allow create: if isCandidate();
+      allow update: if isAdmin() ||
+        (isCandidate() && resource.data.candidateId ==
+          get(/databases/$(database)/documents/candidates/$(resource.data.candidateId)).data.odid);
+      allow delete: if isAdmin();
+    }
+
+    // Issues collection
+    match /issues/{issueId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Issue Categories collection
+    match /issueCategories/{categoryId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Endorsements collection
+    match /endorsements/{endorsementId} {
+      allow read: if isAuthenticated();
+      allow create: if isVerified() &&
+        request.resource.data.odid == request.auth.uid;
+      allow update: if isOwner(resource.data.odid);
+      allow delete: if isOwner(resource.data.odid) || isAdmin();
+    }
+
+    // Conversations collection
+    match /conversations/{conversationId} {
+      allow read: if isAuthenticated() &&
+        request.auth.uid in resource.data.participantIds;
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() &&
+        request.auth.uid in resource.data.participantIds;
+      allow delete: if isAdmin();
+
+      // Messages subcollection
+      match /messages/{messageId} {
+        allow read: if isAuthenticated() &&
+          request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participantIds;
+        allow create: if isAuthenticated() &&
+          request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participantIds &&
+          request.resource.data.senderId == request.auth.uid;
+        allow update: if isAuthenticated() &&
+          request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participantIds;
+        allow delete: if isAdmin();
+      }
+    }
+
+    // Notifications collection
+    match /notifications/{notificationId} {
+      allow read: if isOwner(resource.data.userId);
+      allow create: if isAdmin() || isAuthenticated();
+      allow update: if isOwner(resource.data.userId);
+      allow delete: if isOwner(resource.data.userId) || isAdmin();
+    }
+
+    // Questions collection
+    match /questions/{questionId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // Party Config collection
+    match /partyConfig/{configId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Profile Metrics collection
+    match /profileMetrics/{metricId} {
+      allow read: if isAdmin() ||
+        (isCandidate() && resource.data.candidateId ==
+          get(/databases/$(database)/documents/candidates/$(resource.data.candidateId)).data.odid);
+      allow write: if isAdmin();
+    }
+
+    // Audit Log collection
+    match /auditLog/{logId} {
+      allow read: if isAdmin();
+      allow write: if isAdmin();
+    }
+  }
+}

@@ -1,0 +1,106 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isValidImageType() {
+      return request.resource.contentType.matches('image/.*');
+    }
+
+    function isValidVideoType() {
+      return request.resource.contentType.matches('video/.*');
+    }
+
+    function isValidDocumentType() {
+      return request.resource.contentType.matches('application/pdf') ||
+             request.resource.contentType.matches('image/.*');
+    }
+
+    function isUnderSizeLimit(maxSizeMB) {
+      return request.resource.size < maxSizeMB * 1024 * 1024;
+    }
+
+    // Profile photos
+    match /profilePhotos/{userId}/{filename} {
+      allow read: if isAuthenticated();
+      allow write: if isOwner(userId) &&
+        isValidImageType() &&
+        isUnderSizeLimit(5);
+      allow delete: if isOwner(userId);
+    }
+
+    // PSA videos
+    match /psaVideos/{candidateId}/{filename} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() &&
+        isValidVideoType() &&
+        isUnderSizeLimit(500);
+      allow delete: if isAuthenticated();
+    }
+
+    // PSA thumbnails
+    match /psaThumbnails/{candidateId}/{filename} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() &&
+        isValidImageType() &&
+        isUnderSizeLimit(2);
+      allow delete: if isAuthenticated();
+    }
+
+    // Signature documents (sensitive)
+    match /signatureDocs/{userId}/{filename} {
+      allow read: if isOwner(userId) ||
+        request.auth.token.admin == true;
+      allow write: if isOwner(userId) &&
+        isValidDocumentType() &&
+        isUnderSizeLimit(50);
+      allow delete: if request.auth.token.admin == true;
+    }
+
+    // ID documents (sensitive)
+    match /idDocs/{userId}/{filename} {
+      allow read: if isOwner(userId) ||
+        request.auth.token.admin == true;
+      allow write: if isOwner(userId) &&
+        isValidDocumentType() &&
+        isUnderSizeLimit(10);
+      allow delete: if request.auth.token.admin == true;
+    }
+
+    // Resumes
+    match /resumes/{userId}/{filename} {
+      allow read: if isOwner(userId) ||
+        request.auth.token.admin == true;
+      allow write: if isOwner(userId) &&
+        isValidDocumentType() &&
+        isUnderSizeLimit(10);
+      allow delete: if isOwner(userId) ||
+        request.auth.token.admin == true;
+    }
+
+    // Tax returns (highly sensitive)
+    match /taxReturns/{userId}/{filename} {
+      allow read: if request.auth.token.admin == true;
+      allow write: if isOwner(userId) &&
+        isValidDocumentType() &&
+        isUnderSizeLimit(50);
+      allow delete: if request.auth.token.admin == true;
+    }
+
+    // Message attachments
+    match /messageAttachments/{conversationId}/{filename} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() &&
+        (isValidImageType() || isValidDocumentType()) &&
+        isUnderSizeLimit(10);
+      allow delete: if isAuthenticated();
+    }
+  }
+}
