@@ -6,8 +6,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Video, ResizeMode, AVPlaybackStatus } from 'expo-av';
 
 import { Card, UserAvatar, AlignmentBadge, Chip, PrimaryButton } from '@/components/ui';
-import { useAuthStore } from '@/stores';
-import { createEndorsement, hasUserEndorsedCandidate } from '@/services/firebase/firestore';
+import { useAuthStore, useUserStore } from '@/stores';
 import type { FeedItem } from '@/types';
 
 interface PSACardProps {
@@ -18,25 +17,17 @@ interface PSACardProps {
 export default function PSACard({ feedItem, isActive = true }: PSACardProps) {
   const theme = useTheme();
   const { user } = useAuthStore();
+  const { hasEndorsedCandidate, endorseCandidate } = useUserStore();
   const videoRef = useRef<Video>(null);
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
-  const [hasEndorsed, setHasEndorsed] = useState(false);
   const [isEndorsing, setIsEndorsing] = useState(false);
 
   const { psa, candidate, alignmentScore, matchedIssues, hasDealbreaker } = feedItem;
 
-  // Check endorsement status
-  useEffect(() => {
-    const checkEndorsement = async () => {
-      if (user?.id) {
-        const endorsed = await hasUserEndorsedCandidate(user.id, candidate.id);
-        setHasEndorsed(endorsed);
-      }
-    };
-    checkEndorsement();
-  }, [user?.id, candidate.id]);
+  // Check endorsement status from global store
+  const hasEndorsed = hasEndorsedCandidate(candidate.id);
 
   // Control video playback based on active state
   useEffect(() => {
@@ -71,8 +62,7 @@ export default function PSACard({ feedItem, isActive = true }: PSACardProps) {
 
     setIsEndorsing(true);
     try {
-      await createEndorsement(user.id, candidate.id);
-      setHasEndorsed(true);
+      await endorseCandidate(user.id, candidate.id);
     } catch (error) {
       console.error('Error endorsing candidate:', error);
     } finally {

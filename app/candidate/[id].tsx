@@ -10,10 +10,8 @@ import {
   getCandidatePSAs,
   incrementCandidateViews,
   getUser,
-  createEndorsement,
-  hasUserEndorsedCandidate,
 } from '@/services/firebase/firestore';
-import { useAuthStore, useConfigStore } from '@/stores';
+import { useAuthStore, useConfigStore, useUserStore } from '@/stores';
 import {
   Card,
   UserAvatar,
@@ -34,14 +32,17 @@ export default function CandidateProfileScreen() {
   const theme = useTheme();
   const { user: currentUser } = useAuthStore();
   const { issues } = useConfigStore();
+  const { hasEndorsedCandidate, endorseCandidate } = useUserStore();
 
   const [candidate, setCandidate] = useState<Candidate | null>(null);
   const [candidateUser, setCandidateUser] = useState<User | null>(null);
   const [psas, setPSAs] = useState<PSA[]>([]);
   const [activeTab, setActiveTab] = useState<ProfileTab>('issues');
   const [isLoading, setIsLoading] = useState(true);
-  const [hasEndorsed, setHasEndorsed] = useState(false);
   const [isEndorsing, setIsEndorsing] = useState(false);
+
+  // Check endorsement status from global store
+  const hasEndorsed = id ? hasEndorsedCandidate(id) : false;
 
   useEffect(() => {
     const fetchCandidateData = async () => {
@@ -62,12 +63,6 @@ export default function CandidateProfileScreen() {
           // Fetch PSAs
           const candidatePSAs = await getCandidatePSAs(id, 'published');
           setPSAs(candidatePSAs);
-
-          // Check endorsement status
-          if (currentUser?.id) {
-            const endorsed = await hasUserEndorsedCandidate(currentUser.id, id);
-            setHasEndorsed(endorsed);
-          }
         }
       } catch (error) {
         console.error('Error fetching candidate:', error);
@@ -77,15 +72,14 @@ export default function CandidateProfileScreen() {
     };
 
     fetchCandidateData();
-  }, [id, currentUser?.id]);
+  }, [id]);
 
   const handleEndorse = async () => {
     if (!currentUser?.id || !id || hasEndorsed) return;
 
     setIsEndorsing(true);
     try {
-      await createEndorsement(currentUser.id, id);
-      setHasEndorsed(true);
+      await endorseCandidate(currentUser.id, id);
     } catch (error) {
       console.error('Error endorsing:', error);
     } finally {

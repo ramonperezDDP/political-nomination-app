@@ -8,7 +8,7 @@ import { useColorScheme, StyleSheet } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
 
-import { useAuthStore, useConfigStore } from '@/stores';
+import { useAuthStore, useConfigStore, useUserStore } from '@/stores';
 
 // Prevent splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
@@ -59,7 +59,9 @@ export default function RootLayout() {
   const colorScheme = useColorScheme();
   const initializeAuth = useAuthStore((state) => state.initialize);
   const isAuthInitialized = useAuthStore((state) => state.isInitialized);
+  const user = useAuthStore((state) => state.user);
   const initializeConfig = useConfigStore((state) => state.initialize);
+  const fetchEndorsements = useUserStore((state) => state.fetchEndorsements);
 
   useEffect(() => {
     // Initialize auth listener
@@ -73,6 +75,13 @@ export default function RootLayout() {
       unsubscribeConfig();
     };
   }, [initializeAuth, initializeConfig]);
+
+  // Fetch endorsements when user is authenticated
+  useEffect(() => {
+    if (user?.id) {
+      fetchEndorsements(user.id);
+    }
+  }, [user?.id, fetchEndorsements]);
 
   useEffect(() => {
     if (isAuthInitialized) {

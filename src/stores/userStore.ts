@@ -4,6 +4,7 @@ import {
   subscribeToUser,
   getUser,
   getUserEndorsements,
+  createEndorsement as createEndorsementInFirestore,
 } from '@/services/firebase/firestore';
 import type { User, Endorsement, QuestionnaireResponse } from '@/types';
 
@@ -31,6 +32,8 @@ interface UserState {
     dealbreakers: string[]
   ) => Promise<boolean>;
   fetchEndorsements: (odid: string) => Promise<void>;
+  endorseCandidate: (odid: string, candidateId: string) => Promise<boolean>;
+  hasEndorsedCandidate: (candidateId: string) => boolean;
   setError: (error: string | null) => void;
   reset: () => void;
 }
@@ -119,6 +122,44 @@ export const useUserStore = create<UserState>((set, get) => ({
     }
   },
 
+  // Endorse a candidate and update local state
+  endorseCandidate: async (odid: string, candidateId: string) => {
+    // Check if already endorsed locally
+    if (get().hasEndorsedCandidate(candidateId)) {
+      return true; // Already endorsed
+    }
+
+    try {
+      const endorsementId = await createEndorsementInFirestore(odid, candidateId);
+
+      // Add to local endorsements list
+      const newEndorsement: Endorsement = {
+        id: endorsementId,
+        odid,
+        candidateId,
+        isActive: true,
+        createdAt: new Date() as any,
+      };
+
+      set((state) => ({
+        endorsements: [...state.endorsements, newEndorsement],
+      }));
+
+      return true;
+    } catch (error: any) {
+      console.error('Error endorsing candidate:', error);
+      set({ error: error.message });
+      return false;
+    }
+  },
+
+  // Check if user has endorsed a specific candidate
+  hasEndorsedCandidate: (candidateId: string) => {
+    return get().endorsements.some(
+      (e) => e.candidateId === candidateId && e.isActive
+    );
+  },
+
   // Set error
   setError: (error: string | null) => {
     set({ error });
@@ -143,3 +184,5 @@ export const selectUserDealbreakers = (state: UserState) =>
 export const selectHasCompletedOnboarding = (state: UserState) =>
   (state.userProfile?.selectedIssues?.length || 0) >= 4 &&
   (state.userProfile?.questionnaireResponses?.length || 0) > 0;
+export const selectEndorsedCandidateIds = (state: UserState) =>
+  state.endorsements.filter((e) => e.isActive).map((e) => e.candidateId);
