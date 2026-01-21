@@ -61,9 +61,15 @@ export const subscribeToUser = (
 ): (() => void) => {
   return getCollection<User>(Collections.USERS)
     .doc(userId)
-    .onSnapshot((doc) => {
-      callback(doc.exists ? (doc.data() as User) : null);
-    });
+    .onSnapshot(
+      (doc) => {
+        callback(doc && doc.exists ? (doc.data() as User) : null);
+      },
+      (error) => {
+        console.warn('Error subscribing to user:', error);
+        callback(null);
+      }
+    );
 };
 
 // ==================== CANDIDATE OPERATIONS ====================
@@ -227,11 +233,16 @@ export const incrementPSAViews = async (psaId: string): Promise<void> => {
 // ==================== ISSUE OPERATIONS ====================
 
 export const getIssues = async (): Promise<Issue[]> => {
-  const snapshot = await getCollection<Issue>(Collections.ISSUES)
-    .where('isActive', '==', true)
-    .orderBy('order')
-    .get();
-  return snapshot.docs.map((doc) => doc.data() as Issue);
+  try {
+    const snapshot = await getCollection<Issue>(Collections.ISSUES)
+      .where('isActive', '==', true)
+      .orderBy('order')
+      .get();
+    return snapshot?.docs?.map((doc) => doc.data() as Issue) || [];
+  } catch (error) {
+    console.warn('Error fetching issues:', error);
+    return [];
+  }
 };
 
 export const getIssuesByCategory = async (category: string): Promise<Issue[]> => {
@@ -451,10 +462,15 @@ export const getQuestions = async (issueIds: string[]): Promise<Question[]> => {
 // ==================== PARTY CONFIG OPERATIONS ====================
 
 export const getPartyConfig = async (): Promise<PartyConfig | null> => {
-  const snapshot = await getCollection<PartyConfig>(Collections.PARTY_CONFIG)
-    .limit(1)
-    .get();
-  return snapshot.empty ? null : (snapshot.docs[0].data() as PartyConfig);
+  try {
+    const snapshot = await getCollection<PartyConfig>(Collections.PARTY_CONFIG)
+      .limit(1)
+      .get();
+    return !snapshot || snapshot.empty ? null : (snapshot.docs[0].data() as PartyConfig);
+  } catch (error) {
+    console.warn('Error fetching party config:', error);
+    return null;
+  }
 };
 
 export const subscribeToPartyConfig = (
@@ -462,9 +478,19 @@ export const subscribeToPartyConfig = (
 ): (() => void) => {
   return getCollection<PartyConfig>(Collections.PARTY_CONFIG)
     .limit(1)
-    .onSnapshot((snapshot) => {
-      callback(snapshot.empty ? null : (snapshot.docs[0].data() as PartyConfig));
-    });
+    .onSnapshot(
+      (snapshot) => {
+        if (!snapshot || snapshot.empty) {
+          callback(null);
+        } else {
+          callback(snapshot.docs[0].data() as PartyConfig);
+        }
+      },
+      (error) => {
+        console.warn('Error subscribing to party config:', error);
+        callback(null);
+      }
+    );
 };
 
 // ==================== LEADERBOARD OPERATIONS ====================

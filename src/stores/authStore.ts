@@ -78,13 +78,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   signUp: async (email: string, password: string, displayName: string) => {
     set({ isLoading: true, error: null });
 
+    console.log('Starting signup for:', email);
     const result = await createAccount(email, password, displayName);
 
     if (!result.success || !result.user) {
+      console.log('Auth creation failed:', result.error);
       set({ isLoading: false, error: result.error });
       return false;
     }
 
+    console.log('Auth user created, creating Firestore document...');
     // Create user document in Firestore
     try {
       await createUser(result.user.uid, {
@@ -98,11 +101,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         dealbreakers: [],
       });
 
+      console.log('Firestore document created, sending verification email...');
       // Send email verification
       await sendEmailVerification();
 
+      console.log('Signup complete!');
       return true;
     } catch (error: any) {
+      console.log('Firestore error:', error.message);
       set({ isLoading: false, error: error.message });
       return false;
     }

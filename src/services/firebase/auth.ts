@@ -142,6 +142,7 @@ export const reauthenticate = async (
 
 // Helper function to get human-readable error messages
 const getAuthErrorMessage = (errorCode: string): string => {
+  console.log('Firebase Auth Error Code:', errorCode);
   switch (errorCode) {
     case FirebaseErrorCodes.AUTH.USER_NOT_FOUND:
       return 'No account found with this email address.';
@@ -159,7 +160,10 @@ const getAuthErrorMessage = (errorCode: string): string => {
       return 'Too many attempts. Please try again later.';
     case FirebaseErrorCodes.AUTH.NETWORK_REQUEST_FAILED:
       return 'Network error. Please check your connection.';
+    case 'auth/invalid-credential':
+      return 'Invalid credentials. Please check your email and password.';
     default:
-      return 'An error occurred. Please try again.';
+      console.warn('Unknown auth error code:', errorCode);
+      return `An error occurred (${errorCode}). Please try again.`;
   }
 };
