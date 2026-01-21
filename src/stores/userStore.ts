@@ -5,6 +5,7 @@ import {
   getUser,
   getUserEndorsements,
   createEndorsement as createEndorsementInFirestore,
+  revokeEndorsement as revokeEndorsementInFirestore,
 } from '@/services/firebase/firestore';
 import type { User, Endorsement, QuestionnaireResponse } from '@/types';
 
@@ -33,6 +34,7 @@ interface UserState {
   ) => Promise<boolean>;
   fetchEndorsements: (odid: string) => Promise<void>;
   endorseCandidate: (odid: string, candidateId: string) => Promise<boolean>;
+  revokeEndorsement: (odid: string, candidateId: string) => Promise<boolean>;
   hasEndorsedCandidate: (candidateId: string) => boolean;
   setError: (error: string | null) => void;
   reset: () => void;
@@ -148,6 +150,31 @@ export const useUserStore = create<UserState>((set, get) => ({
       return true;
     } catch (error: any) {
       console.error('Error endorsing candidate:', error);
+      set({ error: error.message });
+      return false;
+    }
+  },
+
+  // Revoke an endorsement and update local state
+  revokeEndorsement: async (odid: string, candidateId: string) => {
+    // Check if endorsed locally
+    if (!get().hasEndorsedCandidate(candidateId)) {
+      return true; // Already not endorsed
+    }
+
+    try {
+      await revokeEndorsementInFirestore(odid, candidateId);
+
+      // Remove from local endorsements list (mark as inactive)
+      set((state) => ({
+        endorsements: state.endorsements.map((e) =>
+          e.candidateId === candidateId ? { ...e, isActive: false } : e
+        ),
+      }));
+
+      return true;
+    } catch (error: any) {
+      console.error('Error revoking endorsement:', error);
       set({ error: error.message });
       return false;
     }

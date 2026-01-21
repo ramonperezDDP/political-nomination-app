@@ -17,7 +17,7 @@ interface PSACardProps {
 export default function PSACard({ feedItem, isActive = true }: PSACardProps) {
   const theme = useTheme();
   const { user } = useAuthStore();
-  const { hasEndorsedCandidate, endorseCandidate } = useUserStore();
+  const { hasEndorsedCandidate, endorseCandidate, revokeEndorsement } = useUserStore();
   const videoRef = useRef<Video>(null);
 
   const [isPlaying, setIsPlaying] = useState(false);
@@ -63,18 +63,28 @@ export default function PSACard({ feedItem, isActive = true }: PSACardProps) {
     setIsMuted(!isMuted);
   };
 
-  const handleEndorse = async () => {
-    if (!user?.id || hasEndorsed || isEndorsing) return;
+  const handleEndorseToggle = async () => {
+    if (!user?.id || isEndorsing) return;
 
     setIsEndorsing(true);
     try {
-      const success = await endorseCandidate(user.id, candidate.id);
-      if (success) {
-        // Increment the displayed count immediately for visual feedback
-        setDisplayedEndorsementCount((prev) => prev + 1);
+      if (hasEndorsed) {
+        // Remove endorsement
+        const success = await revokeEndorsement(user.id, candidate.id);
+        if (success) {
+          // Decrement the displayed count immediately for visual feedback
+          setDisplayedEndorsementCount((prev) => Math.max(0, prev - 1));
+        }
+      } else {
+        // Add endorsement
+        const success = await endorseCandidate(user.id, candidate.id);
+        if (success) {
+          // Increment the displayed count immediately for visual feedback
+          setDisplayedEndorsementCount((prev) => prev + 1);
+        }
       }
     } catch (error) {
-      console.error('Error endorsing candidate:', error);
+      console.error('Error toggling endorsement:', error);
     } finally {
       setIsEndorsing(false);
     }
@@ -204,8 +214,7 @@ export default function PSACard({ feedItem, isActive = true }: PSACardProps) {
         {/* Action Buttons */}
         <View style={styles.actionRow}>
           <PrimaryButton
-            onPress={handleEndorse}
-            disabled={hasEndorsed}
+            onPress={handleEndorseToggle}
             loading={isEndorsing}
             icon={hasEndorsed ? 'check' : 'thumb-up'}
             style={styles.endorseButton}
