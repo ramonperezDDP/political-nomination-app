@@ -23,6 +23,7 @@ interface InputProps {
     | 'numeric'
     | 'phone-pad'
     | 'decimal-pad';
+  returnKeyType?: 'done' | 'go' | 'next' | 'search' | 'send';
   multiline?: boolean;
   numberOfLines?: number;
   maxLength?: number;
@@ -33,6 +34,7 @@ interface InputProps {
   testID?: string;
   onBlur?: () => void;
   onFocus?: () => void;
+  onSubmitEditing?: () => void;
 }
 
 export function Input({
@@ -45,6 +47,7 @@ export function Input({
   autoCapitalize = 'none',
   autoComplete = 'off',
   keyboardType = 'default',
+  returnKeyType,
   multiline = false,
   numberOfLines = 1,
   maxLength,
@@ -55,6 +58,7 @@ export function Input({
   testID,
   onBlur,
   onFocus,
+  onSubmitEditing,
 }: InputProps) {
   const theme = useTheme();
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
@@ -78,6 +82,7 @@ export function Input({
         autoCapitalize={autoCapitalize}
         autoComplete={autoComplete}
         keyboardType={keyboardType}
+        returnKeyType={returnKeyType}
         multiline={multiline}
         numberOfLines={numberOfLines}
         maxLength={maxLength}
@@ -89,6 +94,7 @@ export function Input({
         testID={testID}
         onBlur={onBlur}
         onFocus={onFocus}
+        onSubmitEditing={onSubmitEditing}
       />
       {error && (
         <HelperText type="error" visible={!!error}>
@@ -125,6 +131,7 @@ export function SearchInput(props: InputProps) {
   return (
     <Input
       {...props}
+      returnKeyType={props.returnKeyType || 'search'}
       left={<TextInput.Icon icon="magnify" />}
     />
   );

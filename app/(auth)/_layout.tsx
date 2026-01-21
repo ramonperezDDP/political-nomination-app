@@ -1,13 +1,18 @@
 import { Stack, Redirect } from 'expo-router';
 import { useTheme } from 'react-native-paper';
 
-import { useAuthStore, selectIsAuthenticated, selectHasCompletedOnboarding, useUserStore } from '@/stores';
+import { useAuthStore, selectIsAuthenticated } from '@/stores';
 
 export default function AuthLayout() {
   const theme = useTheme();
   const isAuthenticated = useAuthStore(selectIsAuthenticated);
   const isInitialized = useAuthStore((state) => state.isInitialized);
-  const hasCompletedOnboarding = useUserStore(selectHasCompletedOnboarding);
+  const user = useAuthStore((state) => state.user);
+
+  // Check if user has completed onboarding (has selected issues and questionnaire responses)
+  const hasCompletedOnboarding =
+    (user?.selectedIssues?.length || 0) >= 4 &&
+    (user?.questionnaireResponses?.length || 0) > 0;
 
   // Wait for auth to initialize
   if (!isInitialized) {

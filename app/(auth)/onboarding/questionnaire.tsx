@@ -5,8 +5,8 @@ import Slider from '@react-native-community/slider';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { useAuthStore, useUserStore, useConfigStore } from '@/stores';
-import { getQuestions } from '@/services/firebase/firestore';
+import { useAuthStore, useUserStore } from '@/stores';
+import { getQuestions, ensureQuestionsExist } from '@/services/firebase/firestore';
 import {
   PrimaryButton,
   SecondaryButton,
@@ -18,23 +18,37 @@ import type { Question, QuestionnaireResponse } from '@/types';
 export default function QuestionnaireScreen() {
   const theme = useTheme();
   const { user } = useAuthStore();
-  const { userProfile, updateQuestionnaireResponses, isLoading } = useUserStore();
+  const { updateQuestionnaireResponses, isLoading } = useUserStore();
 
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [responses, setResponses] = useState<Map<string, QuestionnaireResponse>>(new Map());
   const [loadingQuestions, setLoadingQuestions] = useState(true);
 
-  // Fetch questions based on selected issues
+  // Fetch questions based on selected issues (auto-seed if needed)
   useEffect(() => {
     const fetchQuestions = async () => {
-      if (!userProfile?.selectedIssues?.length) {
-        router.replace('/(auth)/onboarding/issues');
+      // Wait for user to load
+      if (!user) {
         return;
       }
 
+      if (!user.selectedIssues?.length) {
+        // Only redirect if we're sure the user is loaded but has no issues
+        const timeoutId = setTimeout(() => {
+          if (!user.selectedIssues?.length) {
+            router.replace('/(auth)/onboarding/issues');
+          }
+        }, 1500);
+        return () => clearTimeout(timeoutId);
+      }
+
       try {
-        const fetchedQuestions = await getQuestions(userProfile.selectedIssues);
+        // Ensure questions are seeded first
+        await ensureQuestionsExist();
+
+        // Then fetch questions for user's selected issues
+        const fetchedQuestions = await getQuestions(user.selectedIssues);
         setQuestions(fetchedQuestions);
       } catch (error) {
         console.error('Error fetching questions:', error);
@@ -44,7 +58,7 @@ export default function QuestionnaireScreen() {
     };
 
     fetchQuestions();
-  }, [userProfile?.selectedIssues]);
+  }, [user]);
 
   const currentQuestion = questions[currentIndex];
   const progress = questions.length > 0 ? (currentIndex + 1) / questions.length : 0;
@@ -114,7 +128,7 @@ export default function QuestionnaireScreen() {
             variant="bodyLarge"
             style={[styles.emptyText, { color: theme.colors.outline }]}
           >
-            There are no questionnaire questions for your selected issues yet.
+            There are no questionnaire questions for your selected issues yet. You can continue to the next step.
           </Text>
           <PrimaryButton
             onPress={() => router.push('/(auth)/onboarding/dealbreakers')}

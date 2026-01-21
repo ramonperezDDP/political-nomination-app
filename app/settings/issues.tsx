@@ -1,36 +1,30 @@
-import React, { useState, useMemo } from 'react';
-import { StyleSheet, View, ScrollView, Pressable, Alert } from 'react-native';
-import { Text, useTheme, Chip, Searchbar, Button } from 'react-native-paper';
+import React, { useState, useMemo, useEffect } from 'react';
+import { StyleSheet, View, ScrollView, Pressable } from 'react-native';
+import { Text, useTheme, Chip, Searchbar } from 'react-native-paper';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { useAuthStore, useUserStore, useConfigStore } from '@/stores';
 import { PrimaryButton, Card, LoadingOverlay } from '@/components/ui';
-import { seedIssues, reseedAllData } from '@/services/firebase/firestore';
 
-export default function IssuesScreen() {
+export default function ManageIssuesScreen() {
   const theme = useTheme();
   const { user } = useAuthStore();
   const { updateSelectedIssues, isLoading } = useUserStore();
-  const { issues, fetchIssues } = useConfigStore();
+  const { issues } = useConfigStore();
 
   const [selectedIssues, setSelectedIssues] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
-  const [isSeeding, setIsSeeding] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
 
-  const handleSeedIssues = async () => {
-    setIsSeeding(true);
-    try {
-      await reseedAllData();
-      await fetchIssues();
-      Alert.alert('Success', 'All data has been populated (issues, questions, and candidates)!');
-    } catch (error: any) {
-      Alert.alert('Error', error.message);
+  // Load existing selected issues when screen mounts
+  useEffect(() => {
+    if (user?.selectedIssues) {
+      setSelectedIssues(user.selectedIssues);
     }
-    setIsSeeding(false);
-  };
+  }, [user?.selectedIssues]);
 
   // Group issues by category
   const issuesByCategory = useMemo(() => {
@@ -67,13 +61,16 @@ export default function IssuesScreen() {
 
   const toggleIssue = (issueId: string) => {
     setSelectedIssues((prev) => {
+      let newSelection;
       if (prev.includes(issueId)) {
-        return prev.filter((id) => id !== issueId);
-      }
-      if (prev.length >= 7) {
+        newSelection = prev.filter((id) => id !== issueId);
+      } else if (prev.length >= 7) {
         return prev;
+      } else {
+        newSelection = [...prev, issueId];
       }
-      return [...prev, issueId];
+      setHasChanges(true);
+      return newSelection;
     });
   };
 
@@ -85,12 +82,12 @@ export default function IssuesScreen() {
     );
   };
 
-  const handleContinue = async () => {
+  const handleSave = async () => {
     if (!user?.id) return;
 
     const success = await updateSelectedIssues(user.id, selectedIssues);
     if (success) {
-      router.push('/(auth)/onboarding/questionnaire');
+      router.back();
     }
   };
 
@@ -104,9 +101,6 @@ export default function IssuesScreen() {
       <LoadingOverlay visible={isLoading} message="Saving..." />
 
       <View style={styles.header}>
-        <Text variant="headlineSmall" style={styles.title}>
-          Select Your Top Issues
-        </Text>
         <Text
           variant="bodyMedium"
           style={[styles.subtitle, { color: theme.colors.outline }]}
@@ -126,7 +120,7 @@ export default function IssuesScreen() {
           {selectedIssues.length < 4 && (
             <Text
               variant="bodySmall"
-              style={{ color: theme.colors.outline }}
+              style={{ color: theme.colors.outline, marginLeft: 8 }}
             >
               (minimum 4)
             </Text>
@@ -146,21 +140,6 @@ export default function IssuesScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {issues.length === 0 && (
-          <View style={styles.emptyState}>
-            <Text variant="bodyLarge" style={{ textAlign: 'center', marginBottom: 16 }}>
-              No issues found. Tap below to populate all sample data (issues, questions, and candidates).
-            </Text>
-            <Button
-              mode="contained"
-              onPress={handleSeedIssues}
-              loading={isSeeding}
-              disabled={isSeeding}
-            >
-              Load Sample Data
-            </Button>
-          </View>
-        )}
         {Array.from(filteredCategories.entries()).map(([category, categoryIssues]) => (
           <View key={category} style={styles.categorySection}>
             <Pressable
@@ -248,21 +227,6 @@ export default function IssuesScreen() {
             )}
           </View>
         ))}
-
-        {/* Dev tool to reset data if needed */}
-        {issues.length > 0 && (
-          <View style={styles.resetContainer}>
-            <Button
-              mode="text"
-              onPress={handleSeedIssues}
-              loading={isSeeding}
-              disabled={isSeeding}
-              compact
-            >
-              Reset Sample Data
-            </Button>
-          </View>
-        )}
       </ScrollView>
 
       <View style={styles.footer}>
@@ -288,11 +252,11 @@ export default function IssuesScreen() {
         )}
 
         <PrimaryButton
-          onPress={handleContinue}
-          disabled={!isValid}
-          style={styles.continueButton}
+          onPress={handleSave}
+          disabled={!isValid || !hasChanges}
+          style={styles.saveButton}
         >
-          Continue
+          Save Changes
         </PrimaryButton>
       </View>
     </SafeAreaView>
@@ -307,17 +271,12 @@ const styles = StyleSheet.create({
     padding: 24,
     paddingBottom: 16,
   },
-  title: {
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
   subtitle: {
     marginBottom: 16,
   },
   counter: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
     marginBottom: 16,
   },
   searchbar: {
@@ -368,15 +327,7 @@ const styles = StyleSheet.create({
   chip: {
     marginRight: 8,
   },
-  continueButton: {},
-  emptyState: {
-    padding: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  resetContainer: {
-    alignItems: 'center',
-    paddingVertical: 24,
-    marginTop: 16,
+  saveButton: {
+    width: '100%',
   },
 });

@@ -12,11 +12,10 @@ import type { FeedItem } from '@/types';
 
 interface PSACardProps {
   feedItem: FeedItem;
-  isActive: boolean;
-  cardHeight: number;
+  isActive?: boolean;
 }
 
-export default function PSACard({ feedItem, isActive, cardHeight }: PSACardProps) {
+export default function PSACard({ feedItem, isActive = true }: PSACardProps) {
   const theme = useTheme();
   const { user } = useAuthStore();
   const videoRef = useRef<Video>(null);
@@ -92,8 +91,8 @@ export default function PSACard({ feedItem, isActive, cardHeight }: PSACardProps
   };
 
   return (
-    <Card style={[styles.card, { height: cardHeight }]}>
-      {/* Video Player Area */}
+    <Card style={styles.card}>
+      {/* Video/Media Area */}
       <Pressable onPress={handlePlayPause} style={styles.videoContainer}>
         {psa.videoUrl ? (
           <Video
@@ -230,15 +229,15 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   videoContainer: {
-    flex: 1,
+    height: 180,
     position: 'relative',
   },
   video: {
-    flex: 1,
+    height: 180,
     width: '100%',
   },
   videoPlaceholder: {
-    flex: 1,
+    height: 180,
     justifyContent: 'center',
     alignItems: 'center',
   },

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { getPartyConfig, subscribeToPartyConfig, getIssues } from '@/services/firebase/firestore';
+import { getPartyConfig, subscribeToPartyConfig, getIssues, ensureQuestionsExist, seedIssues } from '@/services/firebase/firestore';
 import type { PartyConfig, Issue, ContestStage } from '@/types';
 
 interface ConfigState {
@@ -30,6 +30,9 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
     // Fetch issues once
     get().fetchIssues();
 
+    // Ensure questions are seeded (runs in background)
+    ensureQuestionsExist().catch((err) => console.warn('Error ensuring questions:', err));
+
     // Subscribe to party config changes
     const unsubscribe = subscribeToPartyConfig((config) => {
       set({ partyConfig: config, isLoading: false });
@@ -50,10 +53,23 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
     }
   },
 
-  // Fetch all issues
+  // Fetch all issues - auto-seeds if none exist
   fetchIssues: async () => {
     try {
-      const issues = await getIssues();
+      let issues = await getIssues();
+
+      // Auto-seed issues if none exist
+      if (issues.length === 0) {
+        console.log('No issues found - auto-seeding issues...');
+        try {
+          await seedIssues();
+          issues = await getIssues();
+          console.log('After seeding, fetched issues:', issues.length);
+        } catch (seedError) {
+          console.warn('Error auto-seeding issues:', seedError);
+        }
+      }
+
       set({ issues });
     } catch (error: any) {
       set({ error: error.message });

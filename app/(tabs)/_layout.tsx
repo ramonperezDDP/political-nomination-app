@@ -54,6 +54,7 @@ export default function TabLayout() {
         name="for-you"
         options={{
           title: 'For You',
+          headerShown: false,
           tabBarIcon: ({ color, focused }) => (
             <MaterialCommunityIcons
               name={focused ? 'cards' : 'cards-outline'}

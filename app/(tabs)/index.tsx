@@ -6,13 +6,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthStore, selectIsCandidate, useConfigStore } from '@/stores';
 import VoterHome from '@/components/home/VoterHome';
 import CandidateHome from '@/components/home/CandidateHome';
-import { SearchInput } from '@/components/ui';
 
 export default function HomeScreen() {
   const theme = useTheme();
   const isCandidate = useAuthStore(selectIsCandidate);
   const partyConfig = useConfigStore((state) => state.partyConfig);
-  const [searchQuery, setSearchQuery] = React.useState('');
 
   return (
     <SafeAreaView
@@ -35,14 +33,6 @@ export default function HomeScreen() {
             </Text>
           </View>
         </View>
-
-        <SearchInput
-          label=""
-          placeholder="Search candidates, issues..."
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          style={styles.searchBar}
-        />
       </View>
 
       <ScrollView
@@ -51,9 +41,9 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
       >
         {isCandidate ? (
-          <CandidateHome searchQuery={searchQuery} />
+          <CandidateHome />
         ) : (
-          <VoterHome searchQuery={searchQuery} />
+          <VoterHome />
         )}
       </ScrollView>
     </SafeAreaView>
@@ -71,7 +61,6 @@ const styles = StyleSheet.create({
   logoContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
   },
   logo: {
     width: 48,
@@ -89,9 +78,6 @@ const styles = StyleSheet.create({
   },
   appTitle: {
     fontWeight: 'bold',
-  },
-  searchBar: {
-    marginBottom: 0,
   },
   content: {
     flex: 1,

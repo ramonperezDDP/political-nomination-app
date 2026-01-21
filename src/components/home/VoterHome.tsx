@@ -8,11 +8,7 @@ import { Video, ResizeMode } from 'expo-av';
 import { Card, PrimaryButton, SecondaryButton } from '@/components/ui';
 import { useConfigStore } from '@/stores';
 
-interface VoterHomeProps {
-  searchQuery: string;
-}
-
-export default function VoterHome({ searchQuery }: VoterHomeProps) {
+export default function VoterHome() {
   const theme = useTheme();
   const partyConfig = useConfigStore((state) => state.partyConfig);
   const [expandedFaq, setExpandedFaq] = useState<string | null>(null);
@@ -24,20 +20,23 @@ export default function VoterHome({ searchQuery }: VoterHomeProps) {
       description: 'Check your registration status',
       icon: 'vote',
       url: 'https://vote.gov',
+      isExternal: true,
     },
     {
       id: 'issues',
-      title: 'Learn About Issues',
-      description: 'Understand the key topics',
-      icon: 'book-open-variant',
-      url: '#',
+      title: 'Policy Preferences',
+      description: 'Set your policy priorities',
+      icon: 'tune',
+      route: '/settings/issues',
+      isExternal: false,
     },
     {
       id: 'calendar',
       title: 'Election Calendar',
       description: 'Important dates and deadlines',
       icon: 'calendar',
-      url: '#',
+      url: 'https://www.usa.gov/election-day',
+      isExternal: true,
     },
   ];
 
@@ -120,7 +119,13 @@ export default function VoterHome({ searchQuery }: VoterHomeProps) {
         {externalLinks.map((link) => (
           <Pressable
             key={link.id}
-            onPress={() => link.url !== '#' && Linking.openURL(link.url)}
+            onPress={() => {
+              if (link.isExternal && link.url) {
+                Linking.openURL(link.url);
+              } else if (link.route) {
+                router.push(link.route as any);
+              }
+            }}
             style={({ pressed }) => [
               styles.linkCard,
               { backgroundColor: theme.colors.surface, opacity: pressed ? 0.8 : 1 },

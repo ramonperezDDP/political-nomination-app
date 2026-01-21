@@ -8,7 +8,7 @@ import {
   sendPasswordResetEmail,
   sendEmailVerification,
 } from '@/services/firebase/auth';
-import { createUser, getUser } from '@/services/firebase/firestore';
+import { createUser, getUser, subscribeToUser } from '@/services/firebase/firestore';
 import type { User, UserRole, UserState } from '@/types';
 
 interface AuthState {
@@ -44,19 +44,33 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   // Initialize auth state listener
   initialize: () => {
+    let userUnsubscribe: (() => void) | null = null;
+
     const unsubscribe = onAuthStateChanged(async (firebaseUser) => {
       set({ firebaseUser, isLoading: true });
 
+      // Clean up previous user subscription
+      if (userUnsubscribe) {
+        userUnsubscribe();
+        userUnsubscribe = null;
+      }
+
       if (firebaseUser) {
-        // Fetch user data from Firestore
-        const userData = await getUser(firebaseUser.uid);
-        set({ user: userData, isLoading: false, isInitialized: true });
+        // Subscribe to user data changes for real-time updates
+        userUnsubscribe = subscribeToUser(firebaseUser.uid, (userData) => {
+          set({ user: userData, isLoading: false, isInitialized: true });
+        });
       } else {
         set({ user: null, isLoading: false, isInitialized: true });
       }
     });
 
-    return unsubscribe;
+    return () => {
+      unsubscribe();
+      if (userUnsubscribe) {
+        userUnsubscribe();
+      }
+    };
   },
 
   // Sign in with email/password

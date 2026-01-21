@@ -9,11 +9,7 @@ import { useAuthStore, useCandidateStore } from '@/stores';
 import { subscribeToNotifications } from '@/services/firebase/firestore';
 import type { Notification } from '@/types';
 
-interface CandidateHomeProps {
-  searchQuery: string;
-}
-
-export default function CandidateHome({ searchQuery }: CandidateHomeProps) {
+export default function CandidateHome() {
   const theme = useTheme();
   const { user } = useAuthStore();
   const { candidate, fetchCandidateByUser, metrics, fetchMetrics } = useCandidateStore();

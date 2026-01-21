@@ -117,12 +117,49 @@ export const updateCandidate = async (
 export const getApprovedCandidates = async (
   limit = 50
 ): Promise<Candidate[]> => {
-  const snapshot = await getCollection<Candidate>(Collections.CANDIDATES)
-    .where('status', '==', 'approved')
-    .orderBy('endorsementCount', 'desc')
-    .limit(limit)
-    .get();
-  return snapshot.docs.map((doc) => doc.data() as Candidate);
+  try {
+    // Fetch all and filter in memory to avoid composite index
+    const snapshot = await getCollection<Candidate>(Collections.CANDIDATES).get();
+    const allCandidates = snapshot?.docs?.map((doc) => doc.data() as Candidate) || [];
+    console.log('Total candidates in Firestore:', allCandidates.length);
+
+    const approved = allCandidates
+      .filter((c) => c.status === 'approved')
+      .sort((a, b) => (b.endorsementCount || 0) - (a.endorsementCount || 0))
+      .slice(0, limit);
+
+    console.log('Approved candidates:', approved.length);
+    return approved;
+  } catch (error) {
+    console.warn('Error fetching approved candidates:', error);
+    return [];
+  }
+};
+
+// Get candidates with full data for feed generation
+export const getCandidatesForFeed = async (): Promise<Array<{ candidate: Candidate; user: User | null }>> => {
+  try {
+    const candidates = await getApprovedCandidates(50);
+    console.log('getApprovedCandidates returned:', candidates.length, 'candidates');
+
+    // Fetch all users in parallel, handling errors individually
+    const results = await Promise.all(
+      candidates.map(async (candidate) => {
+        try {
+          const user = await getUser(candidate.userId);
+          return { candidate, user };
+        } catch (error) {
+          console.warn(`Error fetching user for candidate ${candidate.id}:`, error);
+          return { candidate, user: null };
+        }
+      })
+    );
+
+    return results;
+  } catch (error) {
+    console.warn('Error fetching candidates for feed:', error);
+    return [];
+  }
 };
 
 export const incrementCandidateViews = async (
@@ -133,6 +170,51 @@ export const incrementCandidateViews = async (
     .update({
       profileViews: firestore.FieldValue.increment(1),
     });
+};
+
+// Get candidates with user display names for leaderboard
+export const getCandidatesWithUsers = async (
+  sortBy: 'endorsements' | 'trending' = 'endorsements',
+  limit = 50
+): Promise<LeaderboardEntry[]> => {
+  try {
+    // Fetch all candidates to avoid composite index requirement
+    const snapshot = await getCollection<Candidate>(Collections.CANDIDATES).get();
+
+    // Filter and sort in memory
+    const candidates = (snapshot?.docs?.map((doc) => doc.data() as Candidate) || [])
+      .filter((c) => c.status === 'approved')
+      .sort((a, b) => {
+        if (sortBy === 'endorsements') {
+          return (b.endorsementCount || 0) - (a.endorsementCount || 0);
+        }
+        return (b.trendingScore || 0) - (a.trendingScore || 0);
+      })
+      .slice(0, limit);
+
+    const entries: LeaderboardEntry[] = [];
+
+    for (let i = 0; i < candidates.length; i++) {
+      const candidate = candidates[i];
+      // Fetch user data for display name
+      const user = await getUser(candidate.userId);
+
+      entries.push({
+        candidateId: candidate.id,
+        candidateName: user?.displayName || 'Unknown Candidate',
+        photoUrl: user?.photoUrl,
+        endorsementCount: candidate.endorsementCount || 0,
+        profileViews: candidate.profileViews || 0,
+        trendingScore: candidate.trendingScore || 0,
+        rank: i + 1,
+      });
+    }
+
+    return entries;
+  } catch (error) {
+    console.warn('Error fetching candidates with users:', error);
+    return [];
+  }
 };
 
 // ==================== CANDIDATE APPLICATION OPERATIONS ====================
@@ -200,16 +282,22 @@ export const getCandidatePSAs = async (
   candidateId: string,
   status?: 'draft' | 'published'
 ): Promise<PSA[]> => {
-  let query = getCollection<PSA>(Collections.PSAS).where(
-    'candidateId',
-    '==',
-    candidateId
-  );
-  if (status) {
-    query = query.where('status', '==', status);
+  try {
+    // Fetch all PSAs and filter in memory to avoid composite index requirement
+    const snapshot = await getCollection<PSA>(Collections.PSAS).get();
+    const psas = (snapshot?.docs?.map((doc) => doc.data() as PSA) || [])
+      .filter((psa) => psa.candidateId === candidateId)
+      .filter((psa) => !status || psa.status === status)
+      .sort((a, b) => {
+        const aTime = a.createdAt?.toMillis?.() || 0;
+        const bTime = b.createdAt?.toMillis?.() || 0;
+        return bTime - aTime;
+      });
+    return psas;
+  } catch (error) {
+    console.warn('Error fetching candidate PSAs:', error);
+    return [];
   }
-  const snapshot = await query.orderBy('createdAt', 'desc').get();
-  return snapshot.docs.map((doc) => doc.data() as PSA);
 };
 
 export const updatePSA = async (
@@ -234,11 +322,13 @@ export const incrementPSAViews = async (psaId: string): Promise<void> => {
 
 export const getIssues = async (): Promise<Issue[]> => {
   try {
-    const snapshot = await getCollection<Issue>(Collections.ISSUES)
-      .where('isActive', '==', true)
-      .orderBy('order')
-      .get();
-    return snapshot?.docs?.map((doc) => doc.data() as Issue) || [];
+    // Simple query without composite index requirement
+    const snapshot = await getCollection<Issue>(Collections.ISSUES).get();
+    const issues = snapshot?.docs?.map((doc) => doc.data() as Issue) || [];
+    // Filter and sort in memory
+    return issues
+      .filter((issue) => issue.isActive)
+      .sort((a, b) => a.order - b.order);
   } catch (error) {
     console.warn('Error fetching issues:', error);
     return [];
@@ -254,21 +344,895 @@ export const getIssuesByCategory = async (category: string): Promise<Issue[]> =>
   return snapshot.docs.map((doc) => doc.data() as Issue);
 };
 
+// Seed issues with sample political topics (for development)
+export const seedIssues = async (): Promise<void> => {
+  // Use explicit IDs that match what candidates expect
+  const issues: Issue[] = [
+    { id: 'economy', name: 'Economy & Jobs', description: 'Economic policy, job creation, and workforce development', category: 'Economy', icon: 'currency-usd', order: 1, isActive: true },
+    { id: 'taxes', name: 'Tax Policy', description: 'Federal tax rates, tax reform, and fiscal policy', category: 'Economy', icon: 'file-document', order: 2, isActive: true },
+    { id: 'minimum-wage', name: 'Minimum Wage', description: 'Federal and state minimum wage policies', category: 'Economy', icon: 'cash', order: 3, isActive: true },
+    { id: 'healthcare', name: 'Healthcare', description: 'Healthcare access, affordability, and reform', category: 'Healthcare', icon: 'hospital', order: 4, isActive: true },
+    { id: 'medicare', name: 'Medicare & Medicaid', description: 'Government healthcare programs', category: 'Healthcare', icon: 'medical-bag', order: 5, isActive: true },
+    { id: 'prescription-drugs', name: 'Prescription Drug Prices', description: 'Regulation and pricing of pharmaceutical drugs', category: 'Healthcare', icon: 'pill', order: 6, isActive: true },
+    { id: 'education', name: 'Education', description: 'K-12 education policy and school funding', category: 'Education', icon: 'school', order: 7, isActive: true },
+    { id: 'higher-education', name: 'Higher Education', description: 'College affordability and student loan policy', category: 'Education', icon: 'account-school', order: 8, isActive: true },
+    { id: 'climate-change', name: 'Climate Change', description: 'Climate policy and environmental protection', category: 'Environment', icon: 'earth', order: 9, isActive: true },
+    { id: 'clean-energy', name: 'Clean Energy', description: 'Renewable energy and reducing fossil fuel dependence', category: 'Environment', icon: 'solar-power', order: 10, isActive: true },
+    { id: 'immigration', name: 'Immigration', description: 'Immigration policy and border security', category: 'Immigration', icon: 'passport', order: 11, isActive: true },
+    { id: 'path-to-citizenship', name: 'Path to Citizenship', description: 'Policies for undocumented immigrants', category: 'Immigration', icon: 'card-account-details', order: 12, isActive: true },
+    { id: 'civil-rights', name: 'Civil Rights', description: 'Equal rights and anti-discrimination policies', category: 'Civil Rights', icon: 'scale-balance', order: 13, isActive: true },
+    { id: 'voting-rights', name: 'Voting Rights', description: 'Election access and voting protections', category: 'Civil Rights', icon: 'vote', order: 14, isActive: true },
+    { id: 'criminal-justice', name: 'Criminal Justice Reform', description: 'Police reform, sentencing, and prison policy', category: 'Civil Rights', icon: 'gavel', order: 15, isActive: true },
+    { id: 'foreign-policy', name: 'Foreign Policy', description: 'International relations and diplomacy', category: 'Foreign Policy', icon: 'earth', order: 16, isActive: true },
+    { id: 'defense', name: 'National Defense', description: 'Military spending and national security', category: 'Foreign Policy', icon: 'shield', order: 17, isActive: true },
+    { id: 'gun-policy', name: 'Gun Policy', description: 'Second Amendment rights and gun safety regulations', category: 'Social Issues', icon: 'pistol', order: 18, isActive: true },
+    { id: 'abortion', name: 'Reproductive Rights', description: 'Abortion access and reproductive healthcare', category: 'Social Issues', icon: 'human-pregnant', order: 19, isActive: true },
+    { id: 'lgbtq-rights', name: 'LGBTQ+ Rights', description: 'Equal rights and protections for LGBTQ+ individuals', category: 'Social Issues', icon: 'rainbow', order: 20, isActive: true },
+    { id: 'infrastructure', name: 'Infrastructure', description: 'Roads, bridges, and public works investment', category: 'Infrastructure', icon: 'bridge', order: 21, isActive: true },
+    { id: 'housing', name: 'Housing', description: 'Affordable housing and homelessness', category: 'Infrastructure', icon: 'home', order: 22, isActive: true },
+  ];
+
+  const batch = firestore().batch();
+
+  for (const issue of issues) {
+    const docRef = getCollection<Issue>(Collections.ISSUES).doc(issue.id);
+    batch.set(docRef, issue);
+  }
+
+  await batch.commit();
+  console.log('Issues seeded successfully!');
+};
+
+// Seed questionnaire questions for each issue
+export const seedQuestions = async (): Promise<void> => {
+  const questions: Question[] = [
+    // Economy & Jobs
+    {
+      id: 'economy-1',
+      issueId: 'economy',
+      text: 'What role should the government play in the economy?',
+      type: 'single_choice',
+      options: [
+        { id: 'e1-a', text: 'Significant intervention to ensure fair wages, worker protections, and reduce inequality', value: -80 },
+        { id: 'e1-b', text: 'Moderate regulation to protect consumers and workers while allowing business growth', value: -30 },
+        { id: 'e1-c', text: 'Limited regulation focused on preventing monopolies and fraud', value: 30 },
+        { id: 'e1-d', text: 'Minimal government involvement - free markets work best with little interference', value: 80 },
+      ],
+      order: 1,
+      isRequired: true,
+    },
+
+    // Tax Policy
+    {
+      id: 'taxes-1',
+      issueId: 'taxes',
+      text: 'How should the tax system be structured?',
+      type: 'single_choice',
+      options: [
+        { id: 't1-a', text: 'Significantly higher taxes on wealthy individuals and corporations to fund social programs', value: -85 },
+        { id: 't1-b', text: 'Moderately progressive taxes with higher rates for top earners', value: -40 },
+        { id: 't1-c', text: 'Flatter tax rates with fewer deductions and loopholes', value: 40 },
+        { id: 't1-d', text: 'Lower taxes across the board to stimulate economic growth', value: 85 },
+      ],
+      order: 1,
+      isRequired: true,
+    },
+
+    // Minimum Wage
+    {
+      id: 'minimum-wage-1',
+      issueId: 'minimum-wage',
+      text: 'What should happen with the federal minimum wage?',
+      type: 'single_choice',
+      options: [
+        { id: 'mw1-a', text: 'Raise to $20-25/hour and index to inflation', value: -90 },
+        { id: 'mw1-b', text: 'Raise to $15-17/hour gradually over several years', value: -50 },
+        { id: 'mw1-c', text: 'Keep current levels and let states decide their own minimums', value: 40 },
+        { id: 'mw1-d', text: 'Eliminate the federal minimum wage - let the market determine wages', value: 90 },
+      ],
+      order: 1,
+      isRequired: true,
+    },
+
+    // Healthcare
+    {
+      id: 'healthcare-1',
+      issueId: 'healthcare',
+      text: 'What healthcare system do you prefer?',
+      type: 'single_choice',
+      options: [
+        { id: 'h1-a', text: 'Single-payer Medicare for All - government-funded universal healthcare', value: -90 },
+        { id: 'h1-b', text: 'Public option alongside private insurance - expand ACA', value: -45 },
+        { id: 'h1-c', text: 'Market-based with subsidies for those who need help', value: 45 },
+        { id: 'h1-d', text: 'Fully private system with minimal government involvement', value: 90 },
+      ],
+      order: 1,
+      isRequired: true,
+    },
+
+    // Medicare & Medicaid
+    {
+      id: 'medicare-1',
+      issueId: 'medicare',
+      text: 'What changes should be made to Medicare and Medicaid?',
+      type: 'single_choice',
+      options: [
+        { id: 'mc1-a', text: 'Expand both programs significantly - lower Medicare age, expand Medicaid to all states', value: -85 },
+        { id: 'mc1-b', text: 'Strengthen current programs and fill coverage gaps', value: -40 },
+        { id: 'mc1-c', text: 'Add private options and competition to improve efficiency', value: 40 },
+        { id: 'mc1-d', text: 'Convert to block grants and give states more control', value: 85 },
+      ],
+      order: 1,
+      isRequired: true,
+    },
+
+    // Prescription Drugs
+    {
+      id: 'prescription-drugs-1',
+      issueId: 'prescription-drugs',
+      text: 'How should prescription drug prices be addressed?',
+      type: 'single_choice',
+      options: [
+        { id: 'pd1-a', text: 'Allow government to negotiate all drug prices and cap costs', value: -85 },
+        { id: 'pd1-b', text: 'Allow Medicare to negotiate prices for some drugs', value: -40 },
+        { id: 'pd1-c', text: 'Increase market competition and transparency', value: 40 },
+        { id: 'pd1-d', text: 'Let the free market determine prices without government interference', value: 85 },
+      ],
+      order: 1,
+      isRequired: true,
+    },
+
+    // Education
+    {
+      id: 'education-1',
+      issueId: 'education',
+      text: 'What approach to K-12 education do you support?',
+      type: 'single_choice',
+      options: [
+        { id: 'ed1-a', text: 'Significantly increase public school funding, reduce class sizes, pay teachers more', value: -80 },
+        { id: 'ed1-b', text: 'Increase funding while also supporting some charter school options', value: -30 },
+        { id: 'ed1-c', text: 'Promote school choice through vouchers and charter schools', value: 50 },
+        { id: 'ed1-d', text: 'Full parental choice - vouchers for private, religious, or homeschool', value: 85 },
+      ],
+      order: 1,
+      isRequired: true,
+    },
+
+    // Higher Education
+    {
+      id: 'higher-education-1',
+      issueId: 'higher-education',
+      text: 'What should be done about college costs and student debt?',
+      type: 'single_choice',
+      options: [
+        { id: 'he1-a', text: 'Free public college and cancel most student debt', value: -90 },
+        { id: 'he1-b', text: 'Debt-free community college and income-based repayment', value: -45 },
+        { id: 'he1-c', text: 'Expand Pell grants and vocational training alternatives', value: 30 },
+        { id: 'he1-d', text: 'Reduce government involvement - let market competition lower costs', value: 80 },
+      ],
+      order: 1,
+      isRequired: true,
+    },
+
+    // Climate Change
+    {
+      id: 'climate-change-1',
+      issueId: 'climate-change',
+      text: 'What action should be taken on climate change?',
+      type: 'single_choice',
+      options: [
+        { id: 'cc1-a', text: 'Aggressive action - Green New Deal, end fossil fuels by 2035', value: -95 },
+        { id: 'cc1-b', text: 'Strong action - net-zero by 2050, major investments in clean energy', value: -50 },
+        { id: 'cc1-c', text: 'Market-based solutions like carbon pricing, support innovation', value: 30 },
+        { id: 'cc1-d', text: 'No major government action - focus on adaptation, not prevention', value: 85 },
+      ],
+      order: 1,
+      isRequired: true,
+    },
+
+    // Clean Energy
+    {
+      id: 'clean-energy-1',
+      issueId: 'clean-energy',
+      text: 'How should we approach energy policy?',
+      type: 'single_choice',
+      options: [
+        { id: 'ce1-a', text: 'Rapidly transition to 100% renewable energy, phase out fossil fuels', value: -90 },
+        { id: 'ce1-b', text: 'Major investment in renewables while using natural gas as bridge fuel', value: -40 },
+        { id: 'ce1-c', text: 'All-of-the-above approach including oil, gas, nuclear, and renewables', value: 40 },
+        { id: 'ce1-d', text: 'Focus on energy independence through domestic fossil fuel production', value: 85 },
+      ],
+      order: 1,
+      isRequired: true,
+    },
+
+    // Immigration
+    {
+      id: 'immigration-1',
+      issueId: 'immigration',
+      text: 'What should be the approach to immigration?',
+      type: 'single_choice',
+      options: [
+        { id: 'im1-a', text: 'Welcome more immigrants, create easier paths to legal status, reduce enforcement', value: -85 },
+        { id: 'im1-b', text: 'Comprehensive reform with path to citizenship and reasonable enforcement', value: -35 },
+        { id: 'im1-c', text: 'Secure borders first, then consider legal immigration reform', value: 45 },
+        { id: 'im1-d', text: 'Significantly reduce immigration, build wall, increase deportations', value: 90 },
+      ],
+      order: 1,
+      isRequired: true,
+    },
+
+    // Path to Citizenship
+    {
+      id: 'path-to-citizenship-1',
+      issueId: 'path-to-citizenship',
+      text: 'What should happen with undocumented immigrants already in the US?',
+      type: 'single_choice',
+      options: [
+        { id: 'pc1-a', text: 'Clear path to citizenship for all, protect DACA recipients', value: -90 },
+        { id: 'pc1-b', text: 'Earned legalization after meeting requirements (taxes, background check)', value: -40 },
+        { id: 'pc1-c', text: 'Legal status but not citizenship, focus on enforcement', value: 40 },
+        { id: 'pc1-d', text: 'No amnesty - enforce existing laws and increase deportations', value: 90 },
+      ],
+      order: 1,
+      isRequired: true,
+    },
+
+    // Civil Rights
+    {
+      id: 'civil-rights-1',
+      issueId: 'civil-rights',
+      text: 'What approach should government take on civil rights and discrimination?',
+      type: 'single_choice',
+      options: [
+        { id: 'cr1-a', text: 'Strong federal enforcement, expand protected classes, support reparations study', value: -85 },
+        { id: 'cr1-b', text: 'Enforce existing civil rights laws and address systemic inequities', value: -40 },
+        { id: 'cr1-c', text: 'Protect individual rights, limit government mandates on private businesses', value: 40 },
+        { id: 'cr1-d', text: 'Reduce federal civil rights enforcement, let states and markets decide', value: 85 },
+      ],
+      order: 1,
+      isRequired: true,
+    },
+
+    // Voting Rights
+    {
+      id: 'voting-rights-1',
+      issueId: 'voting-rights',
+      text: 'What voting policies do you support?',
+      type: 'single_choice',
+      options: [
+        { id: 'vr1-a', text: 'Automatic registration, expand early/mail voting, make Election Day a holiday', value: -85 },
+        { id: 'vr1-b', text: 'Make voting easier while maintaining reasonable verification', value: -35 },
+        { id: 'vr1-c', text: 'Require voter ID, verify citizenship, clean up voter rolls', value: 50 },
+        { id: 'vr1-d', text: 'Strict voter ID, limit mail voting, tighten registration requirements', value: 90 },
+      ],
+      order: 1,
+      isRequired: true,
+    },
+
+    // Criminal Justice
+    {
+      id: 'criminal-justice-1',
+      issueId: 'criminal-justice',
+      text: 'What criminal justice reforms do you support?',
+      type: 'single_choice',
+      options: [
+        { id: 'cj1-a', text: 'End cash bail, abolish private prisons, defund police and invest in communities', value: -90 },
+        { id: 'cj1-b', text: 'Reform sentencing, invest in rehabilitation, community policing', value: -45 },
+        { id: 'cj1-c', text: 'Support police, focus on reducing crime, modest sentencing reform', value: 45 },
+        { id: 'cj1-d', text: 'Tough on crime, mandatory minimums, back the blue', value: 90 },
+      ],
+      order: 1,
+      isRequired: true,
+    },
+
+    // Foreign Policy
+    {
+      id: 'foreign-policy-1',
+      issueId: 'foreign-policy',
+      text: 'What should guide American foreign policy?',
+      type: 'single_choice',
+      options: [
+        { id: 'fp1-a', text: 'Diplomacy first, reduce military interventions, strengthen international institutions', value: -75 },
+        { id: 'fp1-b', text: 'Engaged diplomacy with allies, use military as last resort', value: -30 },
+        { id: 'fp1-c', text: 'Peace through strength, support allies, deter adversaries', value: 40 },
+        { id: 'fp1-d', text: 'America First, reduce foreign commitments, focus on national interests', value: 80 },
+      ],
+      order: 1,
+      isRequired: true,
+    },
+
+    // National Defense
+    {
+      id: 'defense-1',
+      issueId: 'defense',
+      text: 'What level of military spending do you support?',
+      type: 'single_choice',
+      options: [
+        { id: 'd1-a', text: 'Significantly reduce military budget, invest savings in domestic programs', value: -85 },
+        { id: 'd1-b', text: 'Modest reductions focused on waste, maintain core capabilities', value: -35 },
+        { id: 'd1-c', text: 'Maintain current levels, modernize equipment', value: 35 },
+        { id: 'd1-d', text: 'Increase military spending to maintain global superiority', value: 85 },
+      ],
+      order: 1,
+      isRequired: true,
+    },
+
+    // Gun Policy
+    {
+      id: 'gun-policy-1',
+      issueId: 'gun-policy',
+      text: 'What gun policies do you support?',
+      type: 'single_choice',
+      options: [
+        { id: 'gp1-a', text: 'Assault weapons ban, universal background checks, red flag laws, gun registry', value: -90 },
+        { id: 'gp1-b', text: 'Universal background checks and red flag laws, no assault weapons ban', value: -40 },
+        { id: 'gp1-c', text: 'Enforce existing laws better, protect Second Amendment rights', value: 45 },
+        { id: 'gp1-d', text: 'No new restrictions, constitutional carry, protect all gun rights', value: 90 },
+      ],
+      order: 1,
+      isRequired: true,
+    },
+
+    // Reproductive Rights
+    {
+      id: 'abortion-1',
+      issueId: 'abortion',
+      text: 'What is your position on abortion?',
+      type: 'single_choice',
+      options: [
+        { id: 'ab1-a', text: 'Legal without restrictions, codify Roe v. Wade, government funding', value: -90 },
+        { id: 'ab1-b', text: 'Legal with some restrictions (viability), keep government out of the decision', value: -40 },
+        { id: 'ab1-c', text: 'Legal only in limited cases (rape, incest, health), support alternatives', value: 45 },
+        { id: 'ab1-d', text: 'Oppose abortion in most/all cases, support life from conception', value: 90 },
+      ],
+      order: 1,
+      isRequired: true,
+    },
+
+    // LGBTQ+ Rights
+    {
+      id: 'lgbtq-rights-1',
+      issueId: 'lgbtq-rights',
+      text: 'What LGBTQ+ policies do you support?',
+      type: 'single_choice',
+      options: [
+        { id: 'lg1-a', text: 'Full equality, expand anti-discrimination protections, support gender-affirming care', value: -90 },
+        { id: 'lg1-b', text: 'Support marriage equality and workplace protections', value: -40 },
+        { id: 'lg1-c', text: 'Protect religious liberty, parental rights in schools, limit medical transitions for minors', value: 50 },
+        { id: 'lg1-d', text: 'Traditional marriage, religious exemptions, oppose gender ideology in schools', value: 90 },
+      ],
+      order: 1,
+      isRequired: true,
+    },
+
+    // Infrastructure
+    {
+      id: 'infrastructure-1',
+      issueId: 'infrastructure',
+      text: 'How should we approach infrastructure investment?',
+      type: 'single_choice',
+      options: [
+        { id: 'in1-a', text: 'Massive public investment in green infrastructure, public transit, broadband', value: -80 },
+        { id: 'in1-b', text: 'Bipartisan investment in roads, bridges, broadband, some clean energy', value: -25 },
+        { id: 'in1-c', text: 'Public-private partnerships, focus on traditional infrastructure', value: 35 },
+        { id: 'in1-d', text: 'Limit federal role, let states and private sector lead', value: 80 },
+      ],
+      order: 1,
+      isRequired: true,
+    },
+
+    // Housing
+    {
+      id: 'housing-1',
+      issueId: 'housing',
+      text: 'How should we address housing affordability?',
+      type: 'single_choice',
+      options: [
+        { id: 'ho1-a', text: 'Major public investment in affordable housing, rent control, tenant protections', value: -85 },
+        { id: 'ho1-b', text: 'Incentivize construction, expand housing vouchers, support first-time buyers', value: -35 },
+        { id: 'ho1-c', text: 'Reduce regulations to allow more building, limit rent control', value: 45 },
+        { id: 'ho1-d', text: 'Let the market work, reduce government involvement in housing', value: 85 },
+      ],
+      order: 1,
+      isRequired: true,
+    },
+  ];
+
+  const batch = firestore().batch();
+
+  for (const question of questions) {
+    const docRef = getCollection<Question>(Collections.QUESTIONS).doc(question.id);
+    batch.set(docRef, question);
+  }
+
+  await batch.commit();
+  console.log(`Seeded ${questions.length} questions successfully!`);
+};
+
+// Seed candidates with sample politicians (for development)
+export const seedCandidates = async (): Promise<void> => {
+  const candidates = [
+    // Progressive candidates (-80 to -100 spectrum)
+    {
+      displayName: 'Maya Chen',
+      email: 'maya.chen@example.com',
+      bio: {
+        summary: 'Environmental justice advocate and former community organizer fighting for a Green New Deal.',
+        background: 'Born to immigrant parents in Oakland, Maya spent 15 years organizing communities around climate and housing justice.',
+        education: [{ institution: 'UC Berkeley', degree: 'Environmental Science', year: 2008 }],
+        experience: [{ title: 'Executive Director', organization: 'Climate Justice Now', startYear: 2015, description: 'Led campaigns for renewable energy investment' }],
+        achievements: ['Passed local Green New Deal resolution', 'Organized 50,000-person climate march'],
+      },
+      reasonForRunning: 'To ensure a livable planet for future generations and economic justice for working families.',
+      topIssues: [
+        { issueId: 'climate-change', position: 'Aggressive action needed - full transition to renewables by 2035', priority: 1, spectrumPosition: -95 },
+        { issueId: 'healthcare', position: 'Medicare for All - single payer universal healthcare', priority: 2, spectrumPosition: -90 },
+        { issueId: 'minimum-wage', position: '$25/hour federal minimum wage indexed to inflation', priority: 3, spectrumPosition: -85 },
+      ],
+    },
+    {
+      displayName: 'Marcus Washington',
+      email: 'marcus.washington@example.com',
+      bio: {
+        summary: 'Civil rights attorney dedicated to criminal justice reform and ending mass incarceration.',
+        background: 'Public defender for 12 years, witnessed firsthand the inequities in our justice system.',
+        education: [{ institution: 'Howard University', degree: 'JD', year: 2010 }],
+        experience: [{ title: 'Senior Public Defender', organization: 'Philadelphia Public Defender', startYear: 2010, description: 'Defended over 1,000 clients' }],
+        achievements: ['Won landmark police accountability case', 'Founded innocence project chapter'],
+      },
+      reasonForRunning: 'To transform our criminal justice system and invest in communities, not prisons.',
+      topIssues: [
+        { issueId: 'criminal-justice', position: 'End cash bail, abolish private prisons, decriminalize drugs', priority: 1, spectrumPosition: -92 },
+        { issueId: 'civil-rights', position: 'Reparations study, federal anti-discrimination enforcement', priority: 2, spectrumPosition: -88 },
+        { issueId: 'education', position: 'Free public college, cancel student debt', priority: 3, spectrumPosition: -85 },
+      ],
+    },
+    {
+      displayName: 'Rosa Martinez',
+      email: 'rosa.martinez@example.com',
+      bio: {
+        summary: 'Labor organizer fighting for workers rights and immigrant justice.',
+        background: 'Daughter of farmworkers, organized hotel workers union for 10 years.',
+        education: [{ institution: 'UCLA', degree: 'Labor Studies', year: 2012 }],
+        experience: [{ title: 'Lead Organizer', organization: 'UNITE HERE', startYear: 2012, description: 'Organized 15,000 hospitality workers' }],
+        achievements: ['Won $15 minimum wage in 3 cities', 'Secured healthcare for gig workers'],
+      },
+      reasonForRunning: 'To give working people a voice and create an economy that works for everyone.',
+      topIssues: [
+        { issueId: 'minimum-wage', position: 'Living wage for all workers, strengthen union rights', priority: 1, spectrumPosition: -90 },
+        { issueId: 'immigration', position: 'Path to citizenship, abolish ICE, welcome refugees', priority: 2, spectrumPosition: -88 },
+        { issueId: 'healthcare', position: 'Healthcare is a human right - Medicare for All', priority: 3, spectrumPosition: -85 },
+      ],
+    },
+
+    // Moderately progressive candidates (-40 to -65 spectrum)
+    {
+      displayName: 'James O\'Brien',
+      email: 'james.obrien@example.com',
+      bio: {
+        summary: 'Former teacher and school board president focused on education equity.',
+        background: 'Taught in public schools for 20 years before entering politics.',
+        education: [{ institution: 'Boston College', degree: 'Education', year: 1998 }],
+        experience: [{ title: 'School Board President', organization: 'Boston Public Schools', startYear: 2018, description: 'Increased funding equity across districts' }],
+        achievements: ['Reduced achievement gap by 15%', 'Expanded pre-K access'],
+      },
+      reasonForRunning: 'Every child deserves a quality education regardless of zip code.',
+      topIssues: [
+        { issueId: 'education', position: 'Increase federal funding, reduce class sizes, pay teachers more', priority: 1, spectrumPosition: -60 },
+        { issueId: 'higher-education', position: 'Debt-free community college, income-based repayment', priority: 2, spectrumPosition: -55 },
+        { issueId: 'economy', position: 'Invest in job training and infrastructure', priority: 3, spectrumPosition: -45 },
+      ],
+    },
+    {
+      displayName: 'Sarah Kim',
+      email: 'sarah.kim@example.com',
+      bio: {
+        summary: 'Healthcare administrator working to expand access and lower costs.',
+        background: 'Ran community health centers serving 50,000 patients annually.',
+        education: [{ institution: 'Johns Hopkins', degree: 'Public Health', year: 2006 }],
+        experience: [{ title: 'CEO', organization: 'Community Health Network', startYear: 2014, description: 'Expanded services to 12 underserved communities' }],
+        achievements: ['Reduced ER visits by 30%', 'Pioneered telehealth programs'],
+      },
+      reasonForRunning: 'To make healthcare affordable and accessible for every American.',
+      topIssues: [
+        { issueId: 'healthcare', position: 'Public option, strengthen ACA, negotiate drug prices', priority: 1, spectrumPosition: -55 },
+        { issueId: 'prescription-drugs', position: 'Allow Medicare to negotiate, import from Canada', priority: 2, spectrumPosition: -60 },
+        { issueId: 'medicare', position: 'Lower Medicare age to 55, expand benefits', priority: 3, spectrumPosition: -50 },
+      ],
+    },
+    {
+      displayName: 'David Thompson',
+      email: 'david.thompson@example.com',
+      bio: {
+        summary: 'Environmental engineer promoting practical clean energy solutions.',
+        background: 'Built renewable energy projects across 15 states.',
+        education: [{ institution: 'MIT', degree: 'Engineering', year: 2004 }],
+        experience: [{ title: 'Founder', organization: 'GreenTech Solutions', startYear: 2010, description: 'Deployed 500MW of solar capacity' }],
+        achievements: ['Created 2,000 clean energy jobs', 'Reduced costs 40%'],
+      },
+      reasonForRunning: 'To accelerate the clean energy transition while creating good jobs.',
+      topIssues: [
+        { issueId: 'clean-energy', position: 'Tax incentives for renewables, modernize grid', priority: 1, spectrumPosition: -50 },
+        { issueId: 'climate-change', position: 'Net-zero by 2050, invest in innovation', priority: 2, spectrumPosition: -55 },
+        { issueId: 'infrastructure', position: 'Major investment in green infrastructure', priority: 3, spectrumPosition: -45 },
+      ],
+    },
+    {
+      displayName: 'Michelle Foster',
+      email: 'michelle.foster@example.com',
+      bio: {
+        summary: 'Former prosecutor focused on smart justice reform and community safety.',
+        background: 'Prosecuted violent crimes while advocating for rehabilitation programs.',
+        education: [{ institution: 'Georgetown Law', degree: 'JD', year: 2007 }],
+        experience: [{ title: 'Assistant DA', organization: 'District Attorney Office', startYear: 2007, description: 'Led conviction integrity unit' }],
+        achievements: ['Launched diversion programs', 'Reduced recidivism 25%'],
+      },
+      reasonForRunning: 'To build safer communities through smart, fair justice policies.',
+      topIssues: [
+        { issueId: 'criminal-justice', position: 'Reform sentencing, expand rehabilitation, community policing', priority: 1, spectrumPosition: -45 },
+        { issueId: 'gun-policy', position: 'Universal background checks, red flag laws', priority: 2, spectrumPosition: -55 },
+        { issueId: 'civil-rights', position: 'Strengthen voting rights, protect civil liberties', priority: 3, spectrumPosition: -50 },
+      ],
+    },
+
+    // Centrist candidates (-20 to +20 spectrum)
+    {
+      displayName: 'Robert Anderson',
+      email: 'robert.anderson@example.com',
+      bio: {
+        summary: 'Business owner and former mayor focused on pragmatic, bipartisan solutions.',
+        background: 'Built successful manufacturing company, served two terms as mayor.',
+        education: [{ institution: 'University of Michigan', degree: 'Business', year: 1995 }],
+        experience: [{ title: 'Mayor', organization: 'City of Grand Rapids', startYear: 2016, description: 'Balanced budget while improving services' }],
+        achievements: ['Attracted $500M in investment', 'Bipartisan infrastructure plan'],
+      },
+      reasonForRunning: 'To bring common-sense leadership and end partisan gridlock.',
+      topIssues: [
+        { issueId: 'economy', position: 'Pro-business policies balanced with worker protections', priority: 1, spectrumPosition: 5 },
+        { issueId: 'infrastructure', position: 'Bipartisan infrastructure investment', priority: 2, spectrumPosition: -10 },
+        { issueId: 'taxes', position: 'Simplify tax code, modest middle-class cuts', priority: 3, spectrumPosition: 15 },
+      ],
+    },
+    {
+      displayName: 'Patricia Williams',
+      email: 'patricia.williams@example.com',
+      bio: {
+        summary: 'Retired military officer committed to strong defense and diplomatic engagement.',
+        background: '25 years in the Army, served in multiple peacekeeping missions.',
+        education: [{ institution: 'West Point', degree: 'Military Science', year: 1992 }],
+        experience: [{ title: 'Colonel', organization: 'US Army', startYear: 1992, endYear: 2017, description: 'Commanded 3,000 troops' }],
+        achievements: ['Bronze Star recipient', 'Led successful humanitarian missions'],
+      },
+      reasonForRunning: 'To keep America safe while pursuing smart diplomacy.',
+      topIssues: [
+        { issueId: 'defense', position: 'Strong military, strategic alliances, smart spending', priority: 1, spectrumPosition: 10 },
+        { issueId: 'foreign-policy', position: 'Engaged diplomacy, support allies, deter adversaries', priority: 2, spectrumPosition: 5 },
+        { issueId: 'immigration', position: 'Secure borders with humane, orderly legal process', priority: 3, spectrumPosition: 0 },
+      ],
+    },
+    {
+      displayName: 'Michael Chen',
+      email: 'michael.chen@example.com',
+      bio: {
+        summary: 'Tech entrepreneur promoting innovation and economic opportunity.',
+        background: 'Founded two successful startups, created 500 jobs.',
+        education: [{ institution: 'Stanford', degree: 'Computer Science', year: 2005 }],
+        experience: [{ title: 'CEO', organization: 'TechForward Inc', startYear: 2010, description: 'Built company to $100M valuation' }],
+        achievements: ['Forbes 30 Under 30', 'Founded coding bootcamp for underserved youth'],
+      },
+      reasonForRunning: 'To ensure America leads in innovation while sharing prosperity.',
+      topIssues: [
+        { issueId: 'economy', position: 'Support entrepreneurship, reduce red tape, invest in R&D', priority: 1, spectrumPosition: 15 },
+        { issueId: 'education', position: 'STEM education, vocational training, school choice pilots', priority: 2, spectrumPosition: 10 },
+        { issueId: 'higher-education', position: 'Expand Pell grants, employer partnerships', priority: 3, spectrumPosition: 0 },
+      ],
+    },
+    {
+      displayName: 'Jennifer Brooks',
+      email: 'jennifer.brooks@example.com',
+      bio: {
+        summary: 'Nonprofit leader bridging divides on housing and community development.',
+        background: 'Led Habitat for Humanity chapter, built 500 homes.',
+        education: [{ institution: 'Notre Dame', degree: 'Social Work', year: 2003 }],
+        experience: [{ title: 'Executive Director', organization: 'Habitat for Humanity', startYear: 2010, description: 'Tripled home production' }],
+        achievements: ['National nonprofit leader of the year', 'Bipartisan housing coalition'],
+      },
+      reasonForRunning: 'To make homeownership achievable and strengthen communities.',
+      topIssues: [
+        { issueId: 'housing', position: 'Incentivize construction, public-private partnerships', priority: 1, spectrumPosition: -15 },
+        { issueId: 'infrastructure', position: 'Invest in community infrastructure and broadband', priority: 2, spectrumPosition: -10 },
+        { issueId: 'economy', position: 'Support small businesses, workforce development', priority: 3, spectrumPosition: 5 },
+      ],
+    },
+    {
+      displayName: 'Christopher Davis',
+      email: 'christopher.davis@example.com',
+      bio: {
+        summary: 'Farmer and rural advocate fighting for agricultural communities.',
+        background: 'Third-generation farmer, led state farm bureau.',
+        education: [{ institution: 'Iowa State', degree: 'Agriculture', year: 2000 }],
+        experience: [{ title: 'President', organization: 'State Farm Bureau', startYear: 2015, description: 'Advocated for 50,000 farmers' }],
+        achievements: ['Expanded broadband to rural areas', 'Trade deal improvements'],
+      },
+      reasonForRunning: 'To ensure rural America is not forgotten and farmers can thrive.',
+      topIssues: [
+        { issueId: 'economy', position: 'Fair trade deals, support family farms', priority: 1, spectrumPosition: 10 },
+        { issueId: 'infrastructure', position: 'Rural broadband, roads, and bridges', priority: 2, spectrumPosition: 0 },
+        { issueId: 'clean-energy', position: 'Biofuels, wind energy on farmland', priority: 3, spectrumPosition: -5 },
+      ],
+    },
+
+    // Moderately conservative candidates (+40 to +65 spectrum)
+    {
+      displayName: 'William Turner',
+      email: 'william.turner@example.com',
+      bio: {
+        summary: 'Small business owner advocating for lower taxes and less regulation.',
+        background: 'Built chain of hardware stores across three states.',
+        education: [{ institution: 'Texas A&M', degree: 'Business', year: 1990 }],
+        experience: [{ title: 'Owner', organization: 'Turner Hardware', startYear: 1995, description: 'Grew to 25 locations, 400 employees' }],
+        achievements: ['Small Business of the Year', 'Chamber of Commerce president'],
+      },
+      reasonForRunning: 'To get government out of the way so businesses can create jobs.',
+      topIssues: [
+        { issueId: 'taxes', position: 'Cut taxes for small businesses and families', priority: 1, spectrumPosition: 60 },
+        { issueId: 'economy', position: 'Reduce regulations, support free enterprise', priority: 2, spectrumPosition: 55 },
+        { issueId: 'healthcare', position: 'Market-based solutions, health savings accounts', priority: 3, spectrumPosition: 50 },
+      ],
+    },
+    {
+      displayName: 'Elizabeth Morgan',
+      email: 'elizabeth.morgan@example.com',
+      bio: {
+        summary: 'Former school principal promoting parental choice and educational excellence.',
+        background: 'Led turnaround of failing schools, champion of charter schools.',
+        education: [{ institution: 'Vanderbilt', degree: 'Education Leadership', year: 1998 }],
+        experience: [{ title: 'Principal', organization: 'Success Academy', startYear: 2005, description: 'Improved test scores 40%' }],
+        achievements: ['Principal of the Year', 'Launched STEM magnet program'],
+      },
+      reasonForRunning: 'To empower parents and give every child access to excellent education.',
+      topIssues: [
+        { issueId: 'education', position: 'School choice, charter schools, parental rights', priority: 1, spectrumPosition: 55 },
+        { issueId: 'higher-education', position: 'Vocational alternatives, reduce college costs', priority: 2, spectrumPosition: 45 },
+        { issueId: 'taxes', position: 'Education tax credits for families', priority: 3, spectrumPosition: 50 },
+      ],
+    },
+    {
+      displayName: 'Thomas Wright',
+      email: 'thomas.wright@example.com',
+      bio: {
+        summary: 'Sheriff focused on law and order and supporting police officers.',
+        background: '30 years in law enforcement, elected sheriff twice.',
+        education: [{ institution: 'Sam Houston State', degree: 'Criminal Justice', year: 1990 }],
+        experience: [{ title: 'Sheriff', organization: 'County Sheriff Department', startYear: 2012, description: 'Reduced crime 20%' }],
+        achievements: ['Officer of the Year', 'Implemented community policing'],
+      },
+      reasonForRunning: 'To restore law and order and support the men and women in blue.',
+      topIssues: [
+        { issueId: 'criminal-justice', position: 'Back the blue, tough on crime, victims rights', priority: 1, spectrumPosition: 60 },
+        { issueId: 'immigration', position: 'Secure border, enforce laws, merit-based system', priority: 2, spectrumPosition: 55 },
+        { issueId: 'gun-policy', position: 'Protect Second Amendment, enforce existing laws', priority: 3, spectrumPosition: 65 },
+      ],
+    },
+    {
+      displayName: 'Katherine Hayes',
+      email: 'katherine.hayes@example.com',
+      bio: {
+        summary: 'Healthcare executive promoting patient-centered, market-based reforms.',
+        background: 'Led hospital system, reduced costs while improving care.',
+        education: [{ institution: 'Duke', degree: 'Healthcare Administration', year: 2002 }],
+        experience: [{ title: 'CEO', organization: 'Regional Medical Center', startYear: 2012, description: 'Improved quality rankings' }],
+        achievements: ['Top 100 hospitals', 'Pioneered price transparency'],
+      },
+      reasonForRunning: 'To fix healthcare through competition and innovation, not government control.',
+      topIssues: [
+        { issueId: 'healthcare', position: 'Market competition, price transparency, HSAs', priority: 1, spectrumPosition: 55 },
+        { issueId: 'prescription-drugs', position: 'Competition and transparency over price controls', priority: 2, spectrumPosition: 45 },
+        { issueId: 'medicare', position: 'Protect Medicare, add private options', priority: 3, spectrumPosition: 50 },
+      ],
+    },
+    {
+      displayName: 'Richard Palmer',
+      email: 'richard.palmer@example.com',
+      bio: {
+        summary: 'Energy executive promoting American energy independence.',
+        background: 'Led diversified energy company across oil, gas, and renewables.',
+        education: [{ institution: 'Texas Tech', degree: 'Petroleum Engineering', year: 1988 }],
+        experience: [{ title: 'CEO', organization: 'Palmer Energy', startYear: 2005, description: 'Managed 5,000 employees' }],
+        achievements: ['Increased domestic production', 'Invested in carbon capture'],
+      },
+      reasonForRunning: 'To achieve energy independence and keep prices low for families.',
+      topIssues: [
+        { issueId: 'clean-energy', position: 'All-of-the-above energy, including oil and gas', priority: 1, spectrumPosition: 55 },
+        { issueId: 'climate-change', position: 'Innovation over regulation, natural gas bridge', priority: 2, spectrumPosition: 45 },
+        { issueId: 'economy', position: 'Energy jobs, manufacturing renaissance', priority: 3, spectrumPosition: 50 },
+      ],
+    },
+
+    // Strongly conservative candidates (+80 to +100 spectrum)
+    {
+      displayName: 'John Mitchell',
+      email: 'john.mitchell@example.com',
+      bio: {
+        summary: 'Constitutional conservative fighting to limit government and protect liberty.',
+        background: 'Constitutional lawyer, argued cases before Supreme Court.',
+        education: [{ institution: 'Yale Law', degree: 'JD', year: 1995 }],
+        experience: [{ title: 'Senior Counsel', organization: 'Liberty Legal Foundation', startYear: 2000, description: 'Defended constitutional rights' }],
+        achievements: ['Won religious liberty cases', 'State legislator'],
+      },
+      reasonForRunning: 'To restore constitutional government and protect individual liberty.',
+      topIssues: [
+        { issueId: 'taxes', position: 'Flat tax, dramatically reduce federal spending', priority: 1, spectrumPosition: 90 },
+        { issueId: 'gun-policy', position: 'Absolute Second Amendment rights, constitutional carry', priority: 2, spectrumPosition: 95 },
+        { issueId: 'civil-rights', position: 'Religious liberty, limited federal power', priority: 3, spectrumPosition: 85 },
+      ],
+    },
+    {
+      displayName: 'Margaret Sullivan',
+      email: 'margaret.sullivan@example.com',
+      bio: {
+        summary: 'Pro-life advocate and family values champion.',
+        background: 'Founded crisis pregnancy center network.',
+        education: [{ institution: 'Liberty University', degree: 'Public Policy', year: 2000 }],
+        experience: [{ title: 'President', organization: 'Family First Foundation', startYear: 2005, description: 'Built 50 centers nationwide' }],
+        achievements: ['Helped 10,000 women choose life', 'Family policy advisor'],
+      },
+      reasonForRunning: 'To protect the unborn and strengthen American families.',
+      topIssues: [
+        { issueId: 'abortion', position: 'Pro-life, support heartbeat bills, defund Planned Parenthood', priority: 1, spectrumPosition: 95 },
+        { issueId: 'education', position: 'Parental rights, homeschool freedom, no CRT', priority: 2, spectrumPosition: 85 },
+        { issueId: 'lgbtq-rights', position: 'Traditional marriage, religious exemptions, parental consent', priority: 3, spectrumPosition: 90 },
+      ],
+    },
+    {
+      displayName: 'James Richardson',
+      email: 'james.richardson@example.com',
+      bio: {
+        summary: 'Border hawk and immigration enforcement advocate.',
+        background: 'Former Border Patrol agent, 20 years on the front lines.',
+        education: [{ institution: 'University of Arizona', degree: 'Criminal Justice', year: 1998 }],
+        experience: [{ title: 'Sector Chief', organization: 'Border Patrol', startYear: 1998, endYear: 2018, description: 'Led 2,000 agents' }],
+        achievements: ['Record drug seizures', 'Anti-trafficking task force'],
+      },
+      reasonForRunning: 'To finally secure our border and enforce our immigration laws.',
+      topIssues: [
+        { issueId: 'immigration', position: 'Build the wall, end catch-and-release, no amnesty', priority: 1, spectrumPosition: 95 },
+        { issueId: 'criminal-justice', position: 'Tough on crime, mandatory minimums, death penalty', priority: 2, spectrumPosition: 85 },
+        { issueId: 'defense', position: 'Rebuild military, peace through strength', priority: 3, spectrumPosition: 80 },
+      ],
+    },
+    {
+      displayName: 'Donald Peterson',
+      email: 'donald.peterson@example.com',
+      bio: {
+        summary: 'Fiscal conservative demanding balanced budgets and spending cuts.',
+        background: 'Accountant and budget watchdog, exposed government waste.',
+        education: [{ institution: 'BYU', degree: 'Accounting', year: 1992 }],
+        experience: [{ title: 'Director', organization: 'Citizens Against Government Waste', startYear: 2005, description: 'Identified $500B in waste' }],
+        achievements: ['Balanced budget amendment advocate', 'State budget reform'],
+      },
+      reasonForRunning: 'To stop the runaway spending and save future generations from debt.',
+      topIssues: [
+        { issueId: 'taxes', position: 'No new taxes, cut spending, balanced budget amendment', priority: 1, spectrumPosition: 90 },
+        { issueId: 'medicare', position: 'Reform entitlements, premium support, raise retirement age', priority: 2, spectrumPosition: 80 },
+        { issueId: 'economy', position: 'Free market, end corporate welfare, deregulate', priority: 3, spectrumPosition: 85 },
+      ],
+    },
+    {
+      displayName: 'Nancy Crawford',
+      email: 'nancy.crawford@example.com',
+      bio: {
+        summary: 'Foreign policy hawk committed to American strength abroad.',
+        background: 'Defense policy analyst, advised on national security.',
+        education: [{ institution: 'Georgetown', degree: 'International Relations', year: 1996 }],
+        experience: [{ title: 'Senior Fellow', organization: 'Heritage Foundation', startYear: 2008, description: 'Defense and foreign policy analysis' }],
+        achievements: ['Published national security strategy', 'Pentagon advisory board'],
+      },
+      reasonForRunning: 'To restore American leadership and deter our adversaries.',
+      topIssues: [
+        { issueId: 'defense', position: 'Massive military buildup, confront China and Russia', priority: 1, spectrumPosition: 90 },
+        { issueId: 'foreign-policy', position: 'America First, skeptical of UN, strong on allies', priority: 2, spectrumPosition: 85 },
+        { issueId: 'immigration', position: 'National security vetting, end visa lottery', priority: 3, spectrumPosition: 75 },
+      ],
+    },
+
+    // Additional diverse candidates
+    {
+      displayName: 'Angela Price',
+      email: 'angela.price@example.com',
+      bio: {
+        summary: 'Urban planner focused on affordable housing and sustainable cities.',
+        background: 'Transformed blighted neighborhoods into thriving communities.',
+        education: [{ institution: 'Columbia', degree: 'Urban Planning', year: 2008 }],
+        experience: [{ title: 'Planning Director', organization: 'City Planning Department', startYear: 2015, description: 'Led comprehensive plan update' }],
+        achievements: ['Built 5,000 affordable units', 'Transit-oriented development'],
+      },
+      reasonForRunning: 'To make our cities livable, affordable, and sustainable.',
+      topIssues: [
+        { issueId: 'housing', position: 'Major public investment in affordable housing', priority: 1, spectrumPosition: -65 },
+        { issueId: 'infrastructure', position: 'Public transit, complete streets, green buildings', priority: 2, spectrumPosition: -60 },
+        { issueId: 'climate-change', position: 'Urban sustainability, building codes, green spaces', priority: 3, spectrumPosition: -55 },
+      ],
+    },
+    {
+      displayName: 'Steven Clark',
+      email: 'steven.clark@example.com',
+      bio: {
+        summary: 'Libertarian-leaning entrepreneur advocating for freedom and limited government.',
+        background: 'Built multiple companies, tech investor.',
+        education: [{ institution: 'Carnegie Mellon', degree: 'Computer Science', year: 2002 }],
+        experience: [{ title: 'Investor', organization: 'Freedom Ventures', startYear: 2010, description: 'Backed 50 startups' }],
+        achievements: ['Created 2,000 jobs', 'Criminal justice reform advocate'],
+      },
+      reasonForRunning: 'To maximize individual freedom and minimize government intrusion.',
+      topIssues: [
+        { issueId: 'taxes', position: 'Dramatically lower taxes, consumption-based system', priority: 1, spectrumPosition: 75 },
+        { issueId: 'criminal-justice', position: 'End drug war, reduce incarceration, restore rights', priority: 2, spectrumPosition: -30 },
+        { issueId: 'civil-rights', position: 'Maximum individual liberty, limited government', priority: 3, spectrumPosition: 20 },
+      ],
+    },
+  ];
+
+  const batch = firestore().batch();
+
+  for (const candidate of candidates) {
+    // Create user document
+    const userRef = getCollection<User>(Collections.USERS).doc();
+    const now = firestore.Timestamp.now();
+
+    batch.set(userRef, {
+      id: userRef.id,
+      email: candidate.email,
+      displayName: candidate.displayName,
+      role: 'candidate' as const,
+      state: 'verified' as const,
+      verificationStatus: 'verified' as const,
+      selectedIssues: candidate.topIssues.map(i => i.issueId),
+      questionnaireResponses: [],
+      dealbreakers: [],
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    // Create candidate document
+    const candidateRef = getCollection<Candidate>(Collections.CANDIDATES).doc();
+    batch.set(candidateRef, {
+      id: candidateRef.id,
+      userId: userRef.id,
+      status: 'approved' as const,
+      signatureDocUrl: '',
+      declarationData: { encryptedPayload: '', keyId: '' },
+      reasonForRunning: candidate.reasonForRunning,
+      topIssues: candidate.topIssues,
+      bio: candidate.bio,
+      profileViews: Math.floor(Math.random() * 10000) + 500,
+      endorsementCount: Math.floor(Math.random() * 5000) + 100,
+      trendingScore: Math.floor(Math.random() * 100),
+      publishedAt: now,
+      createdAt: now,
+      updatedAt: now,
+    } as Candidate);
+  }
+
+  await batch.commit();
+  console.log(`Seeded ${candidates.length} candidates successfully!`);
+};
+
 // ==================== ENDORSEMENT OPERATIONS ====================
 
 export const createEndorsement = async (
   odid: string,
   candidateId: string
 ): Promise<string> => {
-  // Check if user already endorsed this candidate
-  const existing = await getCollection<Endorsement>(Collections.ENDORSEMENTS)
-    .where('odid', '==', odid)
-    .where('candidateId', '==', candidateId)
-    .where('isActive', '==', true)
-    .limit(1)
-    .get();
+  // Check if user already endorsed this candidate (filter in memory to avoid index)
+  const allEndorsements = await getCollection<Endorsement>(Collections.ENDORSEMENTS).get();
+  const existing = (allEndorsements?.docs || []).find((doc) => {
+    const e = doc.data() as Endorsement;
+    return e.odid === odid && e.candidateId === candidateId && e.isActive === true;
+  });
 
-  if (!existing.empty) {
+  if (existing) {
     throw new Error('You have already endorsed this candidate');
   }
 
@@ -292,15 +1256,15 @@ export const revokeEndorsement = async (
   odid: string,
   candidateId: string
 ): Promise<void> => {
-  const snapshot = await getCollection<Endorsement>(Collections.ENDORSEMENTS)
-    .where('odid', '==', odid)
-    .where('candidateId', '==', candidateId)
-    .where('isActive', '==', true)
-    .limit(1)
-    .get();
+  // Filter in memory to avoid composite index requirement
+  const allEndorsements = await getCollection<Endorsement>(Collections.ENDORSEMENTS).get();
+  const matchingDoc = (allEndorsements?.docs || []).find((doc) => {
+    const e = doc.data() as Endorsement;
+    return e.odid === odid && e.candidateId === candidateId && e.isActive === true;
+  });
 
-  if (!snapshot.empty) {
-    await snapshot.docs[0].ref.update({ isActive: false });
+  if (matchingDoc) {
+    await matchingDoc.ref.update({ isActive: false });
     // Decrement candidate's endorsement count
     await updateCandidate(candidateId, {
       endorsementCount: firestore.FieldValue.increment(-1) as unknown as number,
@@ -309,24 +1273,38 @@ export const revokeEndorsement = async (
 };
 
 export const getUserEndorsements = async (odid: string): Promise<Endorsement[]> => {
-  const snapshot = await getCollection<Endorsement>(Collections.ENDORSEMENTS)
-    .where('odid', '==', odid)
-    .where('isActive', '==', true)
-    .get();
-  return snapshot.docs.map((doc) => doc.data() as Endorsement);
+  try {
+    // Filter in memory to avoid composite index requirement
+    const snapshot = await getCollection<Endorsement>(Collections.ENDORSEMENTS).get();
+    return (snapshot?.docs || [])
+      .map((doc) => doc.data() as Endorsement)
+      .filter((e) => e.odid === odid && e.isActive === true);
+  } catch (error) {
+    console.warn('Error fetching user endorsements:', error);
+    return [];
+  }
 };
 
 export const hasUserEndorsedCandidate = async (
   odid: string,
   candidateId: string
 ): Promise<boolean> => {
-  const snapshot = await getCollection<Endorsement>(Collections.ENDORSEMENTS)
-    .where('odid', '==', odid)
-    .where('candidateId', '==', candidateId)
-    .where('isActive', '==', true)
-    .limit(1)
-    .get();
-  return !snapshot.empty;
+  try {
+    // Fetch all endorsements and filter in memory to avoid composite index
+    const snapshot = await getCollection<Endorsement>(Collections.ENDORSEMENTS).get();
+    const hasEndorsed = (snapshot?.docs || []).some((doc) => {
+      const endorsement = doc.data() as Endorsement;
+      return (
+        endorsement.odid === odid &&
+        endorsement.candidateId === candidateId &&
+        endorsement.isActive === true
+      );
+    });
+    return hasEndorsed;
+  } catch (error) {
+    console.warn('Error checking endorsement status:', error);
+    return false;
+  }
 };
 
 // ==================== CONVERSATION/MESSAGE OPERATIONS ====================
@@ -452,11 +1430,64 @@ export const subscribeToNotifications = (
 export const getQuestions = async (issueIds: string[]): Promise<Question[]> => {
   if (issueIds.length === 0) return [];
 
-  const snapshot = await getCollection<Question>(Collections.QUESTIONS)
-    .where('issueId', 'in', issueIds)
-    .orderBy('order')
-    .get();
-  return snapshot.docs.map((doc) => doc.data() as Question);
+  try {
+    // Fetch all questions and filter in memory to avoid composite index requirement
+    const snapshot = await getCollection<Question>(Collections.QUESTIONS).get();
+    const questions = (snapshot?.docs?.map((doc) => doc.data() as Question) || [])
+      .filter((q) => issueIds.includes(q.issueId))
+      .sort((a, b) => (a.order || 0) - (b.order || 0));
+    return questions;
+  } catch (error) {
+    console.warn('Error fetching questions:', error);
+    return [];
+  }
+};
+
+// Check if questions exist and seed them if not
+export const ensureQuestionsExist = async (): Promise<void> => {
+  try {
+    const snapshot = await getCollection<Question>(Collections.QUESTIONS).limit(1).get();
+    if (snapshot.empty) {
+      console.log('No questions found, seeding...');
+      await seedQuestions();
+      console.log('Questions seeded!');
+    }
+  } catch (error) {
+    console.warn('Error checking questions:', error);
+  }
+};
+
+// Clear and reseed all data (issues, questions, candidates) with correct IDs
+export const reseedAllData = async (): Promise<void> => {
+  console.log('Reseeding all data...');
+
+  // Delete existing issues
+  const issuesSnapshot = await getCollection<Issue>(Collections.ISSUES).get();
+  const batch1 = firestore().batch();
+  issuesSnapshot.docs.forEach((doc) => batch1.delete(doc.ref));
+  await batch1.commit();
+  console.log('Deleted old issues');
+
+  // Delete existing questions
+  const questionsSnapshot = await getCollection<Question>(Collections.QUESTIONS).get();
+  const batch2 = firestore().batch();
+  questionsSnapshot.docs.forEach((doc) => batch2.delete(doc.ref));
+  await batch2.commit();
+  console.log('Deleted old questions');
+
+  // Delete existing candidates
+  const candidatesSnapshot = await getCollection<Candidate>(Collections.CANDIDATES).get();
+  const batch3 = firestore().batch();
+  candidatesSnapshot.docs.forEach((doc) => batch3.delete(doc.ref));
+  await batch3.commit();
+  console.log('Deleted old candidates');
+
+  // Reseed everything
+  await seedIssues();
+  await seedQuestions();
+  await seedCandidates();
+
+  console.log('All data reseeded successfully!');
 };
 
 // ==================== PARTY CONFIG OPERATIONS ====================

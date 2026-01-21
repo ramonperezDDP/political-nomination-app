@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, FlatList, Pressable } from 'react-native';
-import { Text, useTheme, SegmentedButtons, IconButton, Tooltip } from 'react-native-paper';
+import React, { useState, useEffect, useCallback } from 'react';
+import { StyleSheet, View, FlatList, Pressable, Alert } from 'react-native';
+import { Text, useTheme, SegmentedButtons, IconButton, Tooltip, Button } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -8,6 +8,8 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import {
   getEndorsementLeaderboard,
   getTrendingLeaderboard,
+  seedCandidates,
+  getCandidatesWithUsers,
 } from '@/services/firebase/firestore';
 import { useConfigStore } from '@/stores';
 import { Card, UserAvatar, RankBadge, LoadingScreen, EmptyState } from '@/components/ui';
@@ -15,92 +17,41 @@ import type { LeaderboardEntry } from '@/types';
 
 type LeaderboardType = 'endorsements' | 'trending';
 
-// Mock data for demonstration
-const MOCK_LEADERBOARD: LeaderboardEntry[] = [
-  {
-    candidateId: 'c1',
-    candidateName: 'Sarah Johnson',
-    photoUrl: undefined,
-    endorsementCount: 1560,
-    profileViews: 45200,
-    trendingScore: 95,
-    rank: 1,
-    alignmentScore: 91,
-  },
-  {
-    candidateId: 'c2',
-    candidateName: 'Jane Smith',
-    photoUrl: undefined,
-    endorsementCount: 1250,
-    profileViews: 38100,
-    trendingScore: 88,
-    rank: 2,
-    alignmentScore: 85,
-  },
-  {
-    candidateId: 'c3',
-    candidateName: 'John Doe',
-    photoUrl: undefined,
-    endorsementCount: 980,
-    profileViews: 29800,
-    trendingScore: 76,
-    rank: 3,
-    alignmentScore: 72,
-  },
-  {
-    candidateId: 'c4',
-    candidateName: 'Michael Chen',
-    photoUrl: undefined,
-    endorsementCount: 850,
-    profileViews: 22400,
-    trendingScore: 68,
-    rank: 4,
-  },
-  {
-    candidateId: 'c5',
-    candidateName: 'Emily Davis',
-    photoUrl: undefined,
-    endorsementCount: 720,
-    profileViews: 18900,
-    trendingScore: 62,
-    rank: 5,
-  },
-  {
-    candidateId: 'c6',
-    candidateName: 'Robert Wilson',
-    photoUrl: undefined,
-    endorsementCount: 650,
-    profileViews: 15600,
-    trendingScore: 55,
-    rank: 6,
-  },
-  {
-    candidateId: 'c7',
-    candidateName: 'Lisa Anderson',
-    photoUrl: undefined,
-    endorsementCount: 580,
-    profileViews: 12300,
-    trendingScore: 48,
-    rank: 7,
-  },
-  {
-    candidateId: 'c8',
-    candidateName: 'David Martinez',
-    photoUrl: undefined,
-    endorsementCount: 510,
-    profileViews: 9800,
-    trendingScore: 42,
-    rank: 8,
-  },
-];
-
 export default function LeaderboardScreen() {
   const theme = useTheme();
   const { partyConfig } = useConfigStore();
   const [leaderboardType, setLeaderboardType] = useState<LeaderboardType>('endorsements');
-  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>(MOCK_LEADERBOARD);
-  const [isLoading, setIsLoading] = useState(false);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSeeding, setIsSeeding] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
+
+  const fetchLeaderboard = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const data = await getCandidatesWithUsers(leaderboardType);
+      setLeaderboard(data);
+    } catch (error) {
+      console.warn('Error fetching leaderboard:', error);
+    }
+    setIsLoading(false);
+  }, [leaderboardType]);
+
+  useEffect(() => {
+    fetchLeaderboard();
+  }, [fetchLeaderboard]);
+
+  const handleSeedCandidates = async () => {
+    setIsSeeding(true);
+    try {
+      await seedCandidates();
+      Alert.alert('Success', '24 sample candidates have been created!');
+      fetchLeaderboard();
+    } catch (error: any) {
+      Alert.alert('Error', error.message);
+    }
+    setIsSeeding(false);
+  };
 
   // Get endorsement cutoffs from config
   const cutoffs = partyConfig?.endorsementCutoffs || [
@@ -260,12 +211,23 @@ export default function LeaderboardScreen() {
         )}
       </View>
 
-      {leaderboard.length === 0 ? (
-        <EmptyState
-          icon="trophy-outline"
-          title="No candidates yet"
-          message="Check back soon as candidates begin their campaigns"
-        />
+      {leaderboard.length === 0 && !isLoading ? (
+        <View style={styles.emptyContainer}>
+          <EmptyState
+            icon="trophy-outline"
+            title="No candidates yet"
+            message="Tap below to populate sample candidates for testing"
+          />
+          <Button
+            mode="contained"
+            onPress={handleSeedCandidates}
+            loading={isSeeding}
+            disabled={isSeeding}
+            style={styles.seedButton}
+          >
+            Load Sample Candidates
+          </Button>
+        </View>
       ) : (
         <FlatList
           data={leaderboard}
@@ -286,6 +248,15 @@ const styles = StyleSheet.create({
   header: {
     padding: 16,
     paddingBottom: 8,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  seedButton: {
+    marginTop: 16,
   },
   titleRow: {
     flexDirection: 'row',
