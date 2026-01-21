@@ -217,7 +217,11 @@ export default function PSACard({ feedItem, isActive = true }: PSACardProps) {
             onPress={handleEndorseToggle}
             loading={isEndorsing}
             icon={hasEndorsed ? 'check' : 'thumb-up'}
-            style={styles.endorseButton}
+            style={[
+              styles.endorseButton,
+              hasEndorsed && { backgroundColor: theme.colors.surfaceVariant },
+            ]}
+            labelStyle={hasEndorsed ? { color: theme.colors.onSurfaceVariant } : undefined}
           >
             {hasEndorsed ? 'Endorsed' : 'Endorse'}
           </PrimaryButton>
