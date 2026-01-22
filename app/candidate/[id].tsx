@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, ScrollView, Dimensions, FlatList } from 'react-native';
-import { Text, useTheme, SegmentedButtons, Chip, Divider } from 'react-native-paper';
+import React, { useEffect, useState, useMemo } from 'react';
+import { StyleSheet, View, ScrollView, Dimensions, FlatList, Pressable, Modal } from 'react-native';
+import { Text, useTheme, SegmentedButtons, Chip, Divider, IconButton, Portal } from 'react-native-paper';
 import { useLocalSearchParams, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -41,9 +41,43 @@ export default function CandidateProfileScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [isEndorsing, setIsEndorsing] = useState(false);
   const [displayedEndorsementCount, setDisplayedEndorsementCount] = useState(0);
+  const [showAlignmentTooltip, setShowAlignmentTooltip] = useState(false);
 
   // Check endorsement status from global store
   const hasEndorsed = id ? hasEndorsedCandidate(id) : false;
+
+  // Calculate alignment score and matching details
+  const alignmentDetails = useMemo(() => {
+    if (!candidate || !currentUser) {
+      return { score: 0, matchedIssues: [], hasDealbreaker: false, matchedIssueNames: [] };
+    }
+
+    const candidateIssueIds = candidate.topIssues?.map((ti) => ti.issueId) || [];
+    const userIssues = currentUser.selectedIssues || [];
+    const userDealbreakers = currentUser.dealbreakers || [];
+
+    const matchedIssues = candidateIssueIds.filter((id) => userIssues.includes(id));
+    const matchRatio = userIssues.length > 0 ? matchedIssues.length / userIssues.length : 0;
+
+    // Check for dealbreakers
+    const hasDealbreaker = userDealbreakers.some((dealbreaker) => {
+      const position = candidate.topIssues?.find((p) => p.issueId === dealbreaker);
+      return position && Math.abs(position.spectrumPosition) > 80;
+    });
+
+    // Calculate score
+    const matchBonus = matchedIssues.length * 12;
+    const ratioBonus = matchRatio * 25;
+    const baseScore = Math.round(40 + matchBonus + ratioBonus);
+    const score = Math.min(100, Math.max(0, baseScore));
+
+    // Get matched issue names for display
+    const matchedIssueNames = matchedIssues.map(
+      (issueId) => issues.find((i) => i.id === issueId)?.name || issueId
+    );
+
+    return { score, matchedIssues, hasDealbreaker, matchedIssueNames, userIssueCount: userIssues.length };
+  }, [candidate, currentUser, issues]);
 
   // Sync endorsement count when candidate loads
   useEffect(() => {
@@ -354,12 +388,25 @@ export default function CandidateProfileScreen() {
               </Text>
             </View>
             <View style={styles.statDivider} />
-            <View style={styles.stat}>
-              <AlignmentBadge score={85} size="small" />
+            <Pressable
+              style={styles.stat}
+              onPress={() => setShowAlignmentTooltip(true)}
+              accessibilityRole="button"
+              accessibilityLabel={`${alignmentDetails.score}% match. Tap for details.`}
+            >
+              <View style={styles.alignmentRow}>
+                <AlignmentBadge score={alignmentDetails.score} size="small" />
+                <MaterialCommunityIcons
+                  name="information-outline"
+                  size={16}
+                  color={theme.colors.primary}
+                  style={{ marginLeft: 4 }}
+                />
+              </View>
               <Text variant="bodySmall" style={{ color: theme.colors.outline, marginTop: 4 }}>
                 Match
               </Text>
-            </View>
+            </Pressable>
           </View>
 
           {/* Top Issues Chips */}
@@ -413,6 +460,98 @@ export default function CandidateProfileScreen() {
         {activeTab === 'bio' && renderBioTab()}
         {activeTab === 'psas' && renderPSAsTab()}
       </ScrollView>
+
+      {/* Alignment Score Tooltip Modal */}
+      <Modal
+        visible={showAlignmentTooltip}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowAlignmentTooltip(false)}
+      >
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => setShowAlignmentTooltip(false)}
+        >
+          <Pressable
+            style={[styles.tooltipContainer, { backgroundColor: theme.colors.surface }]}
+            onPress={(e) => e.stopPropagation()}
+          >
+            <View style={styles.tooltipHeader}>
+              <Text variant="titleMedium" style={{ fontWeight: 'bold' }}>
+                Alignment Score Explained
+              </Text>
+              <IconButton
+                icon="close"
+                size={20}
+                onPress={() => setShowAlignmentTooltip(false)}
+              />
+            </View>
+
+            <View style={[styles.scoreHighlight, { backgroundColor: theme.colors.primaryContainer }]}>
+              <Text variant="displaySmall" style={{ fontWeight: 'bold', color: theme.colors.primary }}>
+                {alignmentDetails.score}%
+              </Text>
+              <Text variant="bodyMedium" style={{ color: theme.colors.onPrimaryContainer }}>
+                Overall Match
+              </Text>
+            </View>
+
+            <Divider style={{ marginVertical: 16 }} />
+
+            <View style={styles.tooltipSection}>
+              <View style={styles.tooltipRow}>
+                <MaterialCommunityIcons
+                  name="checkbox-marked-circle"
+                  size={20}
+                  color={theme.colors.primary}
+                />
+                <Text variant="bodyMedium" style={{ marginLeft: 8, flex: 1 }}>
+                  <Text style={{ fontWeight: 'bold' }}>{alignmentDetails.matchedIssues.length}</Text> of{' '}
+                  <Text style={{ fontWeight: 'bold' }}>{alignmentDetails.userIssueCount || 0}</Text> priority issues match
+                </Text>
+              </View>
+
+              {alignmentDetails.matchedIssueNames.length > 0 && (
+                <View style={styles.matchedIssuesList}>
+                  <Text variant="labelMedium" style={{ color: theme.colors.outline, marginBottom: 8 }}>
+                    Matching Issues:
+                  </Text>
+                  <View style={styles.issueChipsWrap}>
+                    {alignmentDetails.matchedIssueNames.map((name) => (
+                      <Chip
+                        key={name}
+                        style={styles.matchedIssueChip}
+                        textStyle={{ fontSize: 12 }}
+                      >
+                        {name}
+                      </Chip>
+                    ))}
+                  </View>
+                </View>
+              )}
+
+              {alignmentDetails.hasDealbreaker && (
+                <View style={[styles.tooltipRow, { marginTop: 12 }]}>
+                  <MaterialCommunityIcons
+                    name="alert-circle"
+                    size={20}
+                    color={theme.colors.error}
+                  />
+                  <Text variant="bodyMedium" style={{ marginLeft: 8, color: theme.colors.error }}>
+                    Contains a dealbreaker position
+                  </Text>
+                </View>
+              )}
+            </View>
+
+            <Divider style={{ marginVertical: 16 }} />
+
+            <Text variant="bodySmall" style={{ color: theme.colors.outline, textAlign: 'center' }}>
+              Score is based on shared policy priorities between you and this candidate.
+            </Text>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -543,5 +682,57 @@ const styles = StyleSheet.create({
   },
   psaInfo: {
     padding: 12,
+  },
+  alignmentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  tooltipContainer: {
+    width: '100%',
+    maxWidth: 360,
+    borderRadius: 16,
+    padding: 20,
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+  },
+  tooltipHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  scoreHighlight: {
+    alignItems: 'center',
+    padding: 20,
+    borderRadius: 12,
+  },
+  tooltipSection: {
+    marginBottom: 8,
+  },
+  tooltipRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  matchedIssuesList: {
+    marginTop: 12,
+    marginLeft: 28,
+  },
+  issueChipsWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  matchedIssueChip: {
+    height: 28,
   },
 });
