@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, ScrollView, Pressable } from 'react-native';
-import { Text, useTheme, SegmentedButtons, IconButton, Divider } from 'react-native-paper';
+import { StyleSheet, View, ScrollView, Pressable, Alert } from 'react-native';
+import { Text, useTheme, SegmentedButtons, IconButton, Divider, TextInput, Modal, Portal } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
+import Slider from '@react-native-community/slider';
 
 import { useAuthStore, useCandidateStore, useConfigStore } from '@/stores';
 import { uploadProfilePhoto, uploadPSAVideo, uploadPSAThumbnail } from '@/services/firebase/storage';
@@ -15,6 +16,7 @@ import {
   UserAvatar,
   LoadingOverlay,
 } from '@/components/ui';
+import type { TopIssue } from '@/types';
 
 type EditorTab = 'profile' | 'issues' | 'psas';
 
@@ -45,6 +47,12 @@ export default function CreationScreen() {
   const [newPsaDescription, setNewPsaDescription] = useState('');
   const [newPsaVideo, setNewPsaVideo] = useState<{ uri: string; name: string } | null>(null);
 
+  // Issues editing state
+  const [editingIssue, setEditingIssue] = useState<TopIssue | null>(null);
+  const [editPosition, setEditPosition] = useState('');
+  const [editSpectrum, setEditSpectrum] = useState(0);
+  const [issuePositions, setIssuePositions] = useState<TopIssue[]>([]);
+
   useEffect(() => {
     if (user?.id) {
       fetchCandidateByUser(user.id);
@@ -56,8 +64,22 @@ export default function CreationScreen() {
       fetchPSAs(candidate.id);
       setDisplayName(user?.displayName || '');
       setBio(candidate.bio?.summary || '');
+
+      // Initialize issue positions from candidate data or create empty ones for all issues
+      if (candidate.topIssues && candidate.topIssues.length > 0) {
+        setIssuePositions(candidate.topIssues);
+      } else {
+        // Create empty positions for all issues
+        const emptyPositions: TopIssue[] = issues.map((issue, index) => ({
+          issueId: issue.id,
+          position: '',
+          priority: index + 1,
+          spectrumPosition: 0,
+        }));
+        setIssuePositions(emptyPositions);
+      }
     }
-  }, [candidate?.id]);
+  }, [candidate?.id, issues]);
 
   const handlePickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -192,54 +214,224 @@ export default function CreationScreen() {
     </ScrollView>
   );
 
-  const renderIssuesTab = () => (
-    <ScrollView style={styles.tabContent}>
-      <Text variant="titleMedium" style={styles.sectionTitle}>
-        Your Top Issues
-      </Text>
-      <Text variant="bodyMedium" style={{ color: theme.colors.outline, marginBottom: 16 }}>
-        Select and order the issues most important to your campaign.
-      </Text>
+  const handleEditIssue = (topIssue: TopIssue) => {
+    setEditingIssue(topIssue);
+    setEditPosition(topIssue.position);
+    setEditSpectrum(topIssue.spectrumPosition);
+  };
 
-      {candidate?.topIssues?.map((topIssue, index) => {
-        const issue = issues.find((i) => i.id === topIssue.issueId);
-        return (
-          <Card key={topIssue.issueId} style={styles.issueCard}>
-            <View style={styles.issueCardContent}>
-              <Text variant="titleLarge" style={styles.issueRank}>
-                #{index + 1}
-              </Text>
-              <View style={styles.issueInfo}>
-                <Text variant="titleSmall">{issue?.name || topIssue.issueId}</Text>
-                <Text variant="bodySmall" style={{ color: theme.colors.outline }}>
-                  {topIssue.position}
-                </Text>
+  const handleSaveIssueEdit = () => {
+    if (!editingIssue) return;
+
+    setIssuePositions((prev) =>
+      prev.map((p) =>
+        p.issueId === editingIssue.issueId
+          ? { ...p, position: editPosition, spectrumPosition: editSpectrum }
+          : p
+      )
+    );
+    setEditingIssue(null);
+  };
+
+  const handleMovePriority = (issueId: string, direction: 'up' | 'down') => {
+    setIssuePositions((prev) => {
+      const sorted = [...prev].sort((a, b) => a.priority - b.priority);
+      const index = sorted.findIndex((p) => p.issueId === issueId);
+
+      if (direction === 'up' && index > 0) {
+        // Swap priorities with the item above
+        const temp = sorted[index].priority;
+        sorted[index].priority = sorted[index - 1].priority;
+        sorted[index - 1].priority = temp;
+      } else if (direction === 'down' && index < sorted.length - 1) {
+        // Swap priorities with the item below
+        const temp = sorted[index].priority;
+        sorted[index].priority = sorted[index + 1].priority;
+        sorted[index + 1].priority = temp;
+      }
+
+      return sorted.sort((a, b) => a.priority - b.priority);
+    });
+  };
+
+  const handleSaveAllIssues = async () => {
+    if (!candidate?.id) return;
+
+    setUploading(true);
+    try {
+      await updateCandidateProfile(candidate.id, {
+        topIssues: issuePositions,
+      });
+      Alert.alert('Success', 'Your issue positions have been saved.');
+    } catch (error) {
+      console.error('Error saving issues:', error);
+      Alert.alert('Error', 'Failed to save issue positions.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const getSpectrumLabel = (value: number) => {
+    if (value <= -60) return 'Strongly Progressive';
+    if (value <= -20) return 'Progressive';
+    if (value <= 20) return 'Moderate';
+    if (value <= 60) return 'Conservative';
+    return 'Strongly Conservative';
+  };
+
+  const renderIssuesTab = () => {
+    const sortedPositions = [...issuePositions].sort((a, b) => a.priority - b.priority);
+
+    return (
+      <ScrollView style={styles.tabContent}>
+        <Text variant="titleMedium" style={styles.sectionTitle}>
+          Your Positions on All Issues
+        </Text>
+        <Text variant="bodyMedium" style={{ color: theme.colors.outline, marginBottom: 8 }}>
+          State your position on each issue. Drag to reorder by priority (most important first).
+        </Text>
+        <Text variant="labelSmall" style={{ color: theme.colors.primary, marginBottom: 16 }}>
+          {issuePositions.filter((p) => p.position).length} of {issues.length} positions completed
+        </Text>
+
+        {sortedPositions.map((topIssue, index) => {
+          const issue = issues.find((i) => i.id === topIssue.issueId);
+          const hasPosition = topIssue.position.length > 0;
+
+          return (
+            <Card
+              key={topIssue.issueId}
+              style={[
+                styles.issueCard,
+                !hasPosition && { borderLeftWidth: 3, borderLeftColor: theme.colors.error },
+              ]}
+            >
+              <View style={styles.issueCardContent}>
+                <View style={styles.priorityControls}>
+                  <IconButton
+                    icon="chevron-up"
+                    size={18}
+                    disabled={index === 0}
+                    onPress={() => handleMovePriority(topIssue.issueId, 'up')}
+                  />
+                  <Text variant="titleMedium" style={styles.issueRank}>
+                    {index + 1}
+                  </Text>
+                  <IconButton
+                    icon="chevron-down"
+                    size={18}
+                    disabled={index === sortedPositions.length - 1}
+                    onPress={() => handleMovePriority(topIssue.issueId, 'down')}
+                  />
+                </View>
+                <View style={styles.issueInfo}>
+                  <Text variant="titleSmall">{issue?.name || topIssue.issueId}</Text>
+                  {hasPosition ? (
+                    <Text
+                      variant="bodySmall"
+                      style={{ color: theme.colors.outline }}
+                      numberOfLines={2}
+                    >
+                      {topIssue.position}
+                    </Text>
+                  ) : (
+                    <Text variant="bodySmall" style={{ color: theme.colors.error }}>
+                      Position required
+                    </Text>
+                  )}
+                  <Text
+                    variant="labelSmall"
+                    style={{ color: theme.colors.primary, marginTop: 4 }}
+                  >
+                    {getSpectrumLabel(topIssue.spectrumPosition)}
+                  </Text>
+                </View>
+                <IconButton
+                  icon="pencil"
+                  onPress={() => handleEditIssue(topIssue)}
+                />
               </View>
-              <IconButton icon="pencil" onPress={() => {}} />
-            </View>
-          </Card>
-        );
-      })}
+            </Card>
+          );
+        })}
 
-      {(!candidate?.topIssues || candidate.topIssues.length === 0) && (
-        <Card style={styles.emptyCard}>
-          <View style={styles.emptyContent}>
-            <MaterialCommunityIcons
-              name="clipboard-list-outline"
-              size={48}
-              color={theme.colors.outline}
-            />
-            <Text variant="bodyMedium" style={{ color: theme.colors.outline, marginTop: 8 }}>
-              No issues configured yet
+        <PrimaryButton
+          onPress={handleSaveAllIssues}
+          loading={uploading}
+          style={{ marginTop: 16, marginBottom: 32 }}
+        >
+          Save All Positions
+        </PrimaryButton>
+
+        {/* Edit Issue Modal */}
+        <Portal>
+          <Modal
+            visible={!!editingIssue}
+            onDismiss={() => setEditingIssue(null)}
+            contentContainerStyle={[
+              styles.modalContent,
+              { backgroundColor: theme.colors.surface },
+            ]}
+          >
+            <Text variant="titleLarge" style={{ fontWeight: 'bold', marginBottom: 16 }}>
+              {issues.find((i) => i.id === editingIssue?.issueId)?.name}
             </Text>
-            <SecondaryButton onPress={() => {}} style={{ marginTop: 16 }}>
-              Add Issues
-            </SecondaryButton>
-          </View>
-        </Card>
-      )}
-    </ScrollView>
-  );
+
+            <Text variant="labelMedium" style={{ marginBottom: 8 }}>
+              Your Position
+            </Text>
+            <TextInput
+              mode="outlined"
+              value={editPosition}
+              onChangeText={setEditPosition}
+              multiline
+              numberOfLines={4}
+              placeholder="Describe your position on this issue..."
+              style={{ marginBottom: 16 }}
+            />
+
+            <Text variant="labelMedium" style={{ marginBottom: 8 }}>
+              Political Spectrum: {getSpectrumLabel(editSpectrum)}
+            </Text>
+            <View style={styles.spectrumSliderContainer}>
+              <Text variant="labelSmall" style={{ color: theme.colors.outline }}>
+                Progressive
+              </Text>
+              <Slider
+                style={styles.spectrumSlider}
+                minimumValue={-100}
+                maximumValue={100}
+                step={5}
+                value={editSpectrum}
+                onValueChange={setEditSpectrum}
+                minimumTrackTintColor={theme.colors.primary}
+                maximumTrackTintColor={theme.colors.surfaceVariant}
+              />
+              <Text variant="labelSmall" style={{ color: theme.colors.outline }}>
+                Conservative
+              </Text>
+            </View>
+
+            <View style={styles.modalButtons}>
+              <SecondaryButton
+                onPress={() => setEditingIssue(null)}
+                style={{ flex: 1, marginRight: 8 }}
+              >
+                Cancel
+              </SecondaryButton>
+              <PrimaryButton
+                onPress={handleSaveIssueEdit}
+                style={{ flex: 1, marginLeft: 8 }}
+                disabled={!editPosition.trim()}
+              >
+                Save
+              </PrimaryButton>
+            </View>
+          </Modal>
+        </Portal>
+      </ScrollView>
+    );
+  };
 
   const renderPSAsTab = () => (
     <ScrollView style={styles.tabContent}>
@@ -401,13 +593,35 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 4,
   },
+  priorityControls: {
+    alignItems: 'center',
+    marginRight: 8,
+  },
   issueRank: {
     fontWeight: 'bold',
-    marginRight: 12,
-    width: 40,
+    width: 30,
+    textAlign: 'center',
   },
   issueInfo: {
     flex: 1,
+  },
+  modalContent: {
+    margin: 20,
+    padding: 20,
+    borderRadius: 12,
+  },
+  spectrumSliderContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  spectrumSlider: {
+    flex: 1,
+    marginHorizontal: 8,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    marginTop: 8,
   },
   emptyCard: {
     padding: 32,

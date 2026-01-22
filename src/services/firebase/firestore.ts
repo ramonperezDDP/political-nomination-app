@@ -750,6 +750,172 @@ export const seedQuestions = async (): Promise<void> => {
   console.log(`Seeded ${questions.length} questions successfully!`);
 };
 
+// All issue IDs for generating complete candidate positions
+const ALL_ISSUE_IDS = [
+  'economy', 'taxes', 'minimum-wage', 'healthcare', 'medicare', 'prescription-drugs',
+  'education', 'higher-education', 'climate-change', 'clean-energy', 'immigration',
+  'path-to-citizenship', 'civil-rights', 'voting-rights', 'criminal-justice',
+  'foreign-policy', 'defense', 'gun-policy', 'abortion', 'lgbtq-rights',
+  'infrastructure', 'housing',
+];
+
+// Position templates by political leaning (spectrum: -100 = progressive, +100 = conservative)
+const POSITION_TEMPLATES: Record<string, Record<string, { position: string; baseSpectrum: number }>> = {
+  progressive: {
+    'economy': { position: 'Strong government investment in jobs programs, worker protections, and reducing wealth inequality through progressive policies', baseSpectrum: -85 },
+    'taxes': { position: 'Higher taxes on wealthy and corporations to fund social programs, close tax loopholes', baseSpectrum: -90 },
+    'minimum-wage': { position: '$25/hour federal minimum wage indexed to inflation, strengthen union rights', baseSpectrum: -88 },
+    'healthcare': { position: 'Medicare for All - single payer universal healthcare as a human right', baseSpectrum: -92 },
+    'medicare': { position: 'Expand Medicare to cover all Americans, add dental, vision, and hearing', baseSpectrum: -90 },
+    'prescription-drugs': { position: 'Government price controls on all drugs, allow imports, public manufacturing option', baseSpectrum: -85 },
+    'education': { position: 'Fully fund public education, ban for-profit charter schools, pay teachers $80k minimum', baseSpectrum: -88 },
+    'higher-education': { position: 'Free public college for all, cancel all student debt', baseSpectrum: -92 },
+    'climate-change': { position: 'Green New Deal, net-zero by 2035, treat climate as existential threat', baseSpectrum: -95 },
+    'clean-energy': { position: '100% renewable energy by 2035, ban fracking, end fossil fuel subsidies', baseSpectrum: -93 },
+    'immigration': { position: 'Welcome refugees, path to citizenship for all, abolish ICE, no border wall', baseSpectrum: -90 },
+    'path-to-citizenship': { position: 'Immediate citizenship path for DACA recipients and all undocumented immigrants', baseSpectrum: -92 },
+    'civil-rights': { position: 'Federal reparations study, end qualified immunity, strong civil rights enforcement', baseSpectrum: -88 },
+    'voting-rights': { position: 'Automatic voter registration, DC and PR statehood, end electoral college', baseSpectrum: -90 },
+    'criminal-justice': { position: 'Abolish private prisons, end cash bail, decriminalize drugs, defund police', baseSpectrum: -93 },
+    'foreign-policy': { position: 'Diplomatic solutions first, reduce military footprint, end forever wars', baseSpectrum: -80 },
+    'defense': { position: 'Cut military budget by 25%, redirect to domestic needs', baseSpectrum: -85 },
+    'gun-policy': { position: 'Assault weapons ban, universal background checks, red flag laws, gun buybacks', baseSpectrum: -88 },
+    'abortion': { position: 'Codify Roe, abortion access without restrictions, fund reproductive healthcare', baseSpectrum: -95 },
+    'lgbtq-rights': { position: 'Full equality, ban conversion therapy, protect trans rights, pass Equality Act', baseSpectrum: -92 },
+    'infrastructure': { position: 'Massive public investment in green infrastructure, public transit, high-speed rail', baseSpectrum: -82 },
+    'housing': { position: 'National rent control, social housing, end homelessness with Housing First', baseSpectrum: -88 },
+  },
+  moderate_progressive: {
+    'economy': { position: 'Balanced approach with targeted investments in infrastructure and job training', baseSpectrum: -45 },
+    'taxes': { position: 'Modest tax increases on wealthy to fund key programs, simplify tax code', baseSpectrum: -50 },
+    'minimum-wage': { position: '$17/hour federal minimum wage, phased in over 3 years', baseSpectrum: -55 },
+    'healthcare': { position: 'Public option alongside private insurance, strengthen ACA marketplace', baseSpectrum: -50 },
+    'medicare': { position: 'Lower Medicare eligibility to 55, negotiate drug prices', baseSpectrum: -55 },
+    'prescription-drugs': { position: 'Allow Medicare to negotiate prices, cap out-of-pocket costs', baseSpectrum: -52 },
+    'education': { position: 'Increase federal funding, support teachers, expand pre-K access', baseSpectrum: -48 },
+    'higher-education': { position: 'Free community college, income-based repayment for loans', baseSpectrum: -55 },
+    'climate-change': { position: 'Rejoin Paris Agreement, invest in clean energy, net-zero by 2050', baseSpectrum: -60 },
+    'clean-energy': { position: 'Incentives for renewable adoption, phase out coal, keep natural gas as bridge', baseSpectrum: -55 },
+    'immigration': { position: 'Comprehensive reform with path to citizenship and reasonable border security', baseSpectrum: -45 },
+    'path-to-citizenship': { position: 'Earned citizenship for long-term residents and DACA recipients', baseSpectrum: -50 },
+    'civil-rights': { position: 'Strengthen civil rights enforcement, police reform with accountability', baseSpectrum: -52 },
+    'voting-rights': { position: 'Expand early voting, fight gerrymandering, secure elections', baseSpectrum: -55 },
+    'criminal-justice': { position: 'End mandatory minimums, reform cash bail, invest in rehabilitation', baseSpectrum: -58 },
+    'foreign-policy': { position: 'Strong alliances, diplomacy first, targeted sanctions when needed', baseSpectrum: -35 },
+    'defense': { position: 'Maintain strong defense, audit Pentagon spending, invest in cyber security', baseSpectrum: -30 },
+    'gun-policy': { position: 'Universal background checks, red flag laws, respect 2nd Amendment', baseSpectrum: -50 },
+    'abortion': { position: 'Protect Roe, keep abortion safe, legal, and rare, support family planning', baseSpectrum: -60 },
+    'lgbtq-rights': { position: 'Support marriage equality and anti-discrimination protections', baseSpectrum: -55 },
+    'infrastructure': { position: 'Bipartisan infrastructure investment in roads, bridges, broadband', baseSpectrum: -40 },
+    'housing': { position: 'Expand affordable housing tax credits, help first-time buyers', baseSpectrum: -48 },
+  },
+  centrist: {
+    'economy': { position: 'Pro-growth policies that work for business and workers, reduce regulations', baseSpectrum: 5 },
+    'taxes': { position: 'Lower rates, broaden base, simplify code, maintain fiscal responsibility', baseSpectrum: 10 },
+    'minimum-wage': { position: '$12/hour federal minimum, let states go higher if they choose', baseSpectrum: -15 },
+    'healthcare': { position: 'Fix ACA, increase competition, reduce costs through market solutions', baseSpectrum: 0 },
+    'medicare': { position: 'Preserve Medicare, consider premium support for future generations', baseSpectrum: 15 },
+    'prescription-drugs': { position: 'Increase generic competition, streamline FDA approval', baseSpectrum: 10 },
+    'education': { position: 'Local control, school choice, accountability standards', baseSpectrum: 20 },
+    'higher-education': { position: 'Reform student loans, promote vocational training alternatives', baseSpectrum: 5 },
+    'climate-change': { position: 'Market-based solutions like carbon pricing, technology innovation', baseSpectrum: -10 },
+    'clean-energy': { position: 'All-of-the-above energy policy including nuclear and natural gas', baseSpectrum: 5 },
+    'immigration': { position: 'Secure borders first, then address status of undocumented', baseSpectrum: 15 },
+    'path-to-citizenship': { position: 'Legal status for DACA, earned pathway for others with requirements', baseSpectrum: 0 },
+    'civil-rights': { position: 'Equal enforcement of existing laws, oppose discrimination', baseSpectrum: -5 },
+    'voting-rights': { position: 'Secure elections with voter ID, maintain ballot access', baseSpectrum: 20 },
+    'criminal-justice': { position: 'Support police with reforms, tough on violent crime, fair sentencing', baseSpectrum: 10 },
+    'foreign-policy': { position: 'Peace through strength, support allies, confront adversaries', baseSpectrum: 20 },
+    'defense': { position: 'Strong military, modernize forces, maintain readiness', baseSpectrum: 30 },
+    'gun-policy': { position: 'Enforce existing laws, support responsible ownership, protect rights', baseSpectrum: 25 },
+    'abortion': { position: 'Reduce abortions through support services, some reasonable restrictions', baseSpectrum: 10 },
+    'lgbtq-rights': { position: 'Civil unions, oppose discrimination, respect religious freedom', baseSpectrum: 5 },
+    'infrastructure': { position: 'Public-private partnerships, prioritize maintenance over new projects', baseSpectrum: 15 },
+    'housing': { position: 'Reduce regulations to increase supply, oppose rent control', baseSpectrum: 25 },
+  },
+  moderate_conservative: {
+    'economy': { position: 'Free market solutions, reduce regulations, lower taxes to spur growth', baseSpectrum: 55 },
+    'taxes': { position: 'Lower taxes across the board, flatten tax brackets, cut corporate rate', baseSpectrum: 60 },
+    'minimum-wage': { position: 'Oppose federal minimum wage increases, let markets determine wages', baseSpectrum: 50 },
+    'healthcare': { position: 'Repeal ACA mandates, health savings accounts, sell insurance across state lines', baseSpectrum: 55 },
+    'medicare': { position: 'Preserve for current seniors, transition to premium support for younger workers', baseSpectrum: 50 },
+    'prescription-drugs': { position: 'Remove regulations, speed up generic approvals, free market pricing', baseSpectrum: 48 },
+    'education': { position: 'School choice, charter schools, vouchers, local control', baseSpectrum: 55 },
+    'higher-education': { position: 'Get government out of student loans, promote trade schools', baseSpectrum: 52 },
+    'climate-change': { position: 'Acknowledge climate change, oppose economically harmful mandates', baseSpectrum: 40 },
+    'clean-energy': { position: 'All-of-the-above including fossil fuels, no mandates or bans', baseSpectrum: 50 },
+    'immigration': { position: 'Secure border first, merit-based legal immigration, E-Verify', baseSpectrum: 55 },
+    'path-to-citizenship': { position: 'Legal status possible after border security, no amnesty', baseSpectrum: 45 },
+    'civil-rights': { position: 'Colorblind policies, oppose affirmative action preferences', baseSpectrum: 50 },
+    'voting-rights': { position: 'Voter ID required, clean voter rolls, oppose mail-in ballot expansion', baseSpectrum: 55 },
+    'criminal-justice': { position: 'Back the blue, tough on crime, oppose defunding police', baseSpectrum: 52 },
+    'foreign-policy': { position: 'America first, strong military, fair trade deals', baseSpectrum: 55 },
+    'defense': { position: 'Increase military spending, modernize nuclear arsenal', baseSpectrum: 60 },
+    'gun-policy': { position: 'Protect 2nd Amendment, oppose new restrictions, support concealed carry', baseSpectrum: 65 },
+    'abortion': { position: 'Pro-life with exceptions for rape, incest, life of mother', baseSpectrum: 55 },
+    'lgbtq-rights': { position: 'Oppose special protections, protect religious liberty', baseSpectrum: 50 },
+    'infrastructure': { position: 'Private sector solutions, toll roads, oppose federal spending increases', baseSpectrum: 52 },
+    'housing': { position: 'Free market housing, reduce zoning regulations, no rent control', baseSpectrum: 55 },
+  },
+  conservative: {
+    'economy': { position: 'Dramatically reduce government, slash regulations, free enterprise', baseSpectrum: 85 },
+    'taxes': { position: 'Major tax cuts, flat tax or fair tax, abolish IRS', baseSpectrum: 90 },
+    'minimum-wage': { position: 'Abolish federal minimum wage, government should not set wages', baseSpectrum: 88 },
+    'healthcare': { position: 'Full repeal of Obamacare, free market healthcare, no mandates', baseSpectrum: 85 },
+    'medicare': { position: 'Transition to fully private system, phase out government healthcare', baseSpectrum: 80 },
+    'prescription-drugs': { position: 'Complete deregulation, let free market set prices', baseSpectrum: 82 },
+    'education': { position: 'Abolish Department of Education, full school choice, end public school monopoly', baseSpectrum: 88 },
+    'higher-education': { position: 'End all federal student aid, privatize higher education', baseSpectrum: 85 },
+    'climate-change': { position: 'Climate change is overstated, oppose all climate regulations', baseSpectrum: 88 },
+    'clean-energy': { position: 'Drill baby drill, expand fossil fuels, end all green energy subsidies', baseSpectrum: 90 },
+    'immigration': { position: 'Build the wall, mass deportations, end birthright citizenship', baseSpectrum: 92 },
+    'path-to-citizenship': { position: 'No amnesty ever, deport all illegals, legal immigration only', baseSpectrum: 88 },
+    'civil-rights': { position: 'End all affirmative action, no reparations, equal treatment only', baseSpectrum: 80 },
+    'voting-rights': { position: 'Strict voter ID, purge rolls, in-person voting only', baseSpectrum: 85 },
+    'criminal-justice': { position: 'Tough on crime, mandatory minimums, support police fully', baseSpectrum: 82 },
+    'foreign-policy': { position: 'America first, no foreign aid, strong borders, military strength', baseSpectrum: 80 },
+    'defense': { position: 'Massive military buildup, peace through strength', baseSpectrum: 88 },
+    'gun-policy': { position: 'Absolute 2nd Amendment rights, constitutional carry, no restrictions', baseSpectrum: 92 },
+    'abortion': { position: 'Abortion is murder, ban all abortions, personhood at conception', baseSpectrum: 95 },
+    'lgbtq-rights': { position: 'Traditional marriage only, oppose transgender policies, religious freedom first', baseSpectrum: 88 },
+    'infrastructure': { position: 'Privatize infrastructure, toll roads, no federal involvement', baseSpectrum: 78 },
+    'housing': { position: 'Complete deregulation, eliminate HUD, free market only', baseSpectrum: 85 },
+  },
+};
+
+// Generate all issue positions for a candidate based on their political leaning
+const generateAllIssuePositions = (
+  leaning: 'progressive' | 'moderate_progressive' | 'centrist' | 'moderate_conservative' | 'conservative',
+  priorityIssues: string[], // Issues in priority order (index 0 = top priority)
+  customPositions?: Record<string, { position: string; spectrum: number }> // Override specific positions
+): Array<{ issueId: string; position: string; priority: number; spectrumPosition: number }> => {
+  const template = POSITION_TEMPLATES[leaning];
+
+  return ALL_ISSUE_IDS.map((issueId) => {
+    // Check for custom override
+    if (customPositions && customPositions[issueId]) {
+      return {
+        issueId,
+        position: customPositions[issueId].position,
+        priority: priorityIssues.indexOf(issueId) + 1 || ALL_ISSUE_IDS.length,
+        spectrumPosition: customPositions[issueId].spectrum,
+      };
+    }
+
+    const templatePosition = template[issueId];
+    // Add some variance to spectrum position (-8 to +8)
+    const variance = Math.floor(Math.random() * 17) - 8;
+    const spectrum = Math.max(-100, Math.min(100, templatePosition.baseSpectrum + variance));
+
+    return {
+      issueId,
+      position: templatePosition.position,
+      priority: priorityIssues.indexOf(issueId) + 1 || ALL_ISSUE_IDS.length,
+      spectrumPosition: spectrum,
+    };
+  }).sort((a, b) => a.priority - b.priority);
+};
+
 // Seed candidates with sample politicians (for development)
 export const seedCandidates = async (): Promise<void> => {
   const candidates = [
@@ -1177,6 +1343,26 @@ export const seedCandidates = async (): Promise<void> => {
   const batch = firestore().batch();
 
   for (const candidate of candidates) {
+    // Determine political leaning based on average spectrum position
+    const avgSpectrum = candidate.topIssues.reduce((sum, i) => sum + i.spectrumPosition, 0) / candidate.topIssues.length;
+    let leaning: 'progressive' | 'moderate_progressive' | 'centrist' | 'moderate_conservative' | 'conservative';
+    if (avgSpectrum <= -70) leaning = 'progressive';
+    else if (avgSpectrum <= -30) leaning = 'moderate_progressive';
+    else if (avgSpectrum <= 30) leaning = 'centrist';
+    else if (avgSpectrum <= 70) leaning = 'moderate_conservative';
+    else leaning = 'conservative';
+
+    // Get priority issues from the candidate's stated top issues
+    const priorityIssues = candidate.topIssues.map(i => i.issueId);
+
+    // Generate full positions for all issues, using stated positions as custom overrides
+    const customPositions: Record<string, { position: string; spectrum: number }> = {};
+    candidate.topIssues.forEach(i => {
+      customPositions[i.issueId] = { position: i.position, spectrum: i.spectrumPosition };
+    });
+
+    const fullTopIssues = generateAllIssuePositions(leaning, priorityIssues, customPositions);
+
     // Create user document
     const userRef = getCollection<User>(Collections.USERS).doc();
     const now = firestore.Timestamp.now();
@@ -1188,14 +1374,14 @@ export const seedCandidates = async (): Promise<void> => {
       role: 'candidate' as const,
       state: 'verified' as const,
       verificationStatus: 'verified' as const,
-      selectedIssues: candidate.topIssues.map(i => i.issueId),
+      selectedIssues: priorityIssues,
       questionnaireResponses: [],
       dealbreakers: [],
       createdAt: now,
       updatedAt: now,
     });
 
-    // Create candidate document
+    // Create candidate document with ALL issue positions
     const candidateRef = getCollection<Candidate>(Collections.CANDIDATES).doc();
     batch.set(candidateRef, {
       id: candidateRef.id,
@@ -1204,7 +1390,7 @@ export const seedCandidates = async (): Promise<void> => {
       signatureDocUrl: '',
       declarationData: { encryptedPayload: '', keyId: '' },
       reasonForRunning: candidate.reasonForRunning,
-      topIssues: candidate.topIssues,
+      topIssues: fullTopIssues,
       bio: candidate.bio,
       profileViews: Math.floor(Math.random() * 10000) + 500,
       endorsementCount: Math.floor(Math.random() * 5000) + 100,
@@ -1216,7 +1402,7 @@ export const seedCandidates = async (): Promise<void> => {
   }
 
   await batch.commit();
-  console.log(`Seeded ${candidates.length} candidates successfully!`);
+  console.log(`Seeded ${candidates.length} candidates with full issue positions successfully!`);
 };
 
 // ==================== ENDORSEMENT OPERATIONS ====================
