@@ -7,14 +7,16 @@ import { Video, ResizeMode, AVPlaybackStatus } from 'expo-av';
 
 import { Card, UserAvatar, AlignmentBadge, Chip, PrimaryButton } from '@/components/ui';
 import { useAuthStore, useUserStore } from '@/stores';
-import type { FeedItem } from '@/types';
+import type { FeedItem, Issue } from '@/types';
 
 interface PSACardProps {
   feedItem: FeedItem;
   isActive?: boolean;
+  selectedIssueId?: string | null;
+  issues?: Issue[];
 }
 
-export default function PSACard({ feedItem, isActive = true }: PSACardProps) {
+export default function PSACard({ feedItem, isActive = true, selectedIssueId, issues = [] }: PSACardProps) {
   const theme = useTheme();
   const { user } = useAuthStore();
   const { hasEndorsedCandidate, endorseCandidate, revokeEndorsement } = useUserStore();
@@ -25,10 +27,30 @@ export default function PSACard({ feedItem, isActive = true }: PSACardProps) {
   const [isEndorsing, setIsEndorsing] = useState(false);
   const [displayedEndorsementCount, setDisplayedEndorsementCount] = useState(0);
 
-  const { psa, candidate, alignmentScore, matchedIssues, hasDealbreaker } = feedItem;
+  const { psa, candidate, alignmentScore, matchedIssues, hasDealbreaker, candidatePositions } = feedItem;
 
   // Check endorsement status from global store
   const hasEndorsed = hasEndorsedCandidate(candidate.id);
+
+  // Get the position for the selected issue, if any
+  const getSelectedIssueContent = () => {
+    if (!selectedIssueId || !candidatePositions) {
+      return { title: psa.title, description: psa.description };
+    }
+
+    const position = candidatePositions.find((p) => p.issueId === selectedIssueId);
+    if (!position) {
+      return { title: psa.title, description: psa.description };
+    }
+
+    const issueName = issues.find((i) => i.id === selectedIssueId)?.name || 'This Issue';
+    return {
+      title: `My Position on ${issueName}`,
+      description: position.position || psa.description,
+    };
+  };
+
+  const { title: displayTitle, description: displayDescription } = getSelectedIssueContent();
 
   // Initialize and sync endorsement count
   useEffect(() => {
@@ -127,7 +149,7 @@ export default function PSACard({ feedItem, isActive = true }: PSACardProps) {
               color={theme.colors.outline}
             />
             <Text variant="bodyMedium" style={{ color: theme.colors.outline, marginTop: 8 }}>
-              {psa.title}
+              {displayTitle}
             </Text>
           </View>
         )}
@@ -194,14 +216,14 @@ export default function PSACard({ feedItem, isActive = true }: PSACardProps) {
 
         {/* PSA Title & Description */}
         <Text variant="titleSmall" style={styles.psaTitle} numberOfLines={1}>
-          {psa.title}
+          {displayTitle}
         </Text>
         <Text
           variant="bodySmall"
           style={{ color: theme.colors.outline }}
-          numberOfLines={2}
+          numberOfLines={3}
         >
-          {psa.description}
+          {displayDescription}
         </Text>
 
         {/* Matched Issues */}

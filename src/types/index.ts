@@ -208,6 +208,7 @@ export interface FeedItem {
   alignmentScore: number;
   matchedIssues: string[];
   hasDealbreaker: boolean;
+  candidatePositions: TopIssue[];
 }
 
 export interface CandidatePreview {

@@ -101,6 +101,7 @@ const generateFeedItem = (
     alignmentScore: score,
     matchedIssues,
     hasDealbreaker,
+    candidatePositions: candidate.topIssues || [],
   };
 };
 
@@ -246,7 +247,11 @@ export default function ForYouScreen() {
   };
 
   const renderPSACard = ({ item }: { item: FeedItem }) => (
-    <PSACard feedItem={item} />
+    <PSACard
+      feedItem={item}
+      selectedIssueId={selectedIssue}
+      issues={issues}
+    />
   );
 
   if (isLoading) {
