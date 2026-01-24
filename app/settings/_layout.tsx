@@ -18,6 +18,13 @@ export default function SettingsLayout() {
       }}
     >
       <Stack.Screen
+        name="personal-info"
+        options={{
+          title: 'Personal Information',
+          headerBackTitle: 'Profile',
+        }}
+      />
+      <Stack.Screen
         name="dealbreakers"
         options={{
           title: 'Manage Dealbreakers',
@@ -28,6 +35,13 @@ export default function SettingsLayout() {
         name="issues"
         options={{
           title: 'Policy Preferences',
+          headerBackTitle: 'Profile',
+        }}
+      />
+      <Stack.Screen
+        name="endorsements"
+        options={{
+          title: 'My Endorsements',
           headerBackTitle: 'Profile',
         }}
       />

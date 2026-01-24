@@ -10,11 +10,13 @@ import {
   getCandidatePSAs,
   incrementCandidateViews,
   getUser,
+  inferGenderFromName,
 } from '@/services/firebase/firestore';
 import { useAuthStore, useConfigStore, useUserStore } from '@/stores';
 import {
   Card,
-  UserAvatar,
+  CandidateAvatar,
+  calculateAverageSpectrum,
   AlignmentBadge,
   PrimaryButton,
   SecondaryButton,
@@ -359,9 +361,11 @@ export default function CandidateProfileScreen() {
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Profile Header */}
         <View style={styles.header}>
-          <UserAvatar
-            photoUrl={candidateUser?.photoUrl}
+          <CandidateAvatar
+            candidateId={id || ''}
             displayName={candidateUser?.displayName || 'Candidate'}
+            gender={candidateUser?.gender || inferGenderFromName(candidateUser?.displayName || '')}
+            spectrumPosition={calculateAverageSpectrum(candidate?.topIssues || [])}
             size={100}
           />
           <Text variant="headlineMedium" style={styles.name}>

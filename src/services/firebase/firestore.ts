@@ -21,6 +21,56 @@ import type {
 
 type Timestamp = FirebaseFirestoreTypes.Timestamp;
 
+// Common first names for gender inference
+const FEMALE_NAMES = new Set([
+  'maya', 'rosa', 'sarah', 'michelle', 'patricia', 'jennifer', 'elizabeth',
+  'katherine', 'margaret', 'nancy', 'angela', 'mary', 'linda', 'barbara',
+  'susan', 'jessica', 'karen', 'nancy', 'betty', 'helen', 'sandra', 'donna',
+  'carol', 'ruth', 'sharon', 'michelle', 'laura', 'sarah', 'kimberly',
+  'deborah', 'stephanie', 'rebecca', 'sharon', 'kathleen', 'amy', 'anna',
+  'shirley', 'angela', 'brenda', 'pamela', 'emma', 'nicole', 'helen',
+  'samantha', 'katherine', 'christine', 'debra', 'rachel', 'carolyn',
+  'janet', 'catherine', 'maria', 'heather', 'diane', 'julie', 'olivia',
+  'joyce', 'virginia', 'victoria', 'kelly', 'lauren', 'christina', 'joan',
+  'evelyn', 'judith', 'megan', 'andrea', 'cheryl', 'hannah', 'jacqueline',
+  'martha', 'gloria', 'teresa', 'ann', 'sara', 'madison', 'frances', 'kathryn',
+  'janice', 'jean', 'abigail', 'alice', 'judy', 'sophia', 'grace', 'denise',
+  'amber', 'doris', 'marilyn', 'danielle', 'beverly', 'isabella', 'theresa',
+  'diana', 'natalie', 'brittany', 'charlotte', 'marie', 'kayla', 'alexis', 'lori',
+]);
+
+const MALE_NAMES = new Set([
+  'marcus', 'james', 'david', 'robert', 'michael', 'william', 'thomas',
+  'richard', 'john', 'donald', 'steven', 'christopher', 'joseph', 'charles',
+  'daniel', 'matthew', 'anthony', 'mark', 'paul', 'steven', 'andrew', 'joshua',
+  'kenneth', 'kevin', 'brian', 'george', 'timothy', 'ronald', 'edward', 'jason',
+  'jeffrey', 'ryan', 'jacob', 'gary', 'nicholas', 'eric', 'jonathan', 'stephen',
+  'larry', 'justin', 'scott', 'brandon', 'benjamin', 'samuel', 'raymond',
+  'gregory', 'frank', 'alexander', 'patrick', 'jack', 'dennis', 'jerry',
+  'tyler', 'aaron', 'jose', 'adam', 'nathan', 'henry', 'douglas', 'zachary',
+  'peter', 'kyle', 'noah', 'ethan', 'jeremy', 'walter', 'christian', 'keith',
+  'roger', 'terry', 'austin', 'sean', 'gerald', 'carl', 'dylan', 'harold',
+  'jordan', 'jesse', 'bryan', 'lawrence', 'arthur', 'gabriel', 'bruce', 'albert',
+  'willie', 'alan', 'wayne', 'elijah', 'randy', 'roy', 'vincent', 'ralph',
+  'eugene', 'russell', 'bobby', 'mason', 'philip', 'louis', 'harry', 'billy',
+]);
+
+/**
+ * Infers gender from a display name using common first name patterns.
+ * Returns undefined if gender cannot be determined.
+ */
+export const inferGenderFromName = (displayName: string): 'male' | 'female' | undefined => {
+  if (!displayName) return undefined;
+
+  // Extract first name and normalize
+  const firstName = displayName.split(' ')[0].toLowerCase().trim();
+
+  if (FEMALE_NAMES.has(firstName)) return 'female';
+  if (MALE_NAMES.has(firstName)) return 'male';
+
+  return undefined;
+};
+
 // Generic helper to get collection reference
 const getCollection = <T extends FirebaseFirestoreTypes.DocumentData>(collectionName: string) =>
   firestore().collection(collectionName) as FirebaseFirestoreTypes.CollectionReference<T>;
@@ -91,7 +141,9 @@ export const getCandidate = async (candidateId: string): Promise<Candidate | nul
   const doc = await getCollection<Candidate>(Collections.CANDIDATES)
     .doc(candidateId)
     .get();
-  return doc.exists ? (doc.data() as Candidate) : null;
+  if (!doc.exists) return null;
+  const candidate = doc.data() as Candidate;
+  return fillMissingIssuePositions(candidate);
 };
 
 export const getCandidateByUserId = async (
@@ -101,7 +153,9 @@ export const getCandidateByUserId = async (
     .where('userId', '==', userId)
     .limit(1)
     .get();
-  return snapshot.empty ? null : (snapshot.docs[0].data() as Candidate);
+  if (snapshot.empty) return null;
+  const candidate = snapshot.docs[0].data() as Candidate;
+  return fillMissingIssuePositions(candidate);
 };
 
 export const updateCandidate = async (
@@ -126,7 +180,8 @@ export const getApprovedCandidates = async (
     const approved = allCandidates
       .filter((c) => c.status === 'approved')
       .sort((a, b) => (b.endorsementCount || 0) - (a.endorsementCount || 0))
-      .slice(0, limit);
+      .slice(0, limit)
+      .map(fillMissingIssuePositions); // Fill in any missing issue positions
 
     console.log('Approved candidates:', approved.length);
     return approved;
@@ -198,15 +253,27 @@ export const getCandidatesWithUsers = async (
       const candidate = candidates[i];
       // Fetch user data for display name
       const user = await getUser(candidate.userId);
+      const displayName = user?.displayName || 'Unknown Candidate';
+
+      // Calculate average spectrum position from top issues
+      const topIssues = candidate.topIssues || [];
+      const averageSpectrum = topIssues.length > 0
+        ? topIssues.reduce((sum, issue) => sum + (issue.spectrumPosition || 0), 0) / topIssues.length
+        : 0;
+
+      // Use stored gender or infer from name
+      const gender = user?.gender || inferGenderFromName(displayName);
 
       entries.push({
         candidateId: candidate.id,
-        candidateName: user?.displayName || 'Unknown Candidate',
+        candidateName: displayName,
         photoUrl: user?.photoUrl,
+        gender,
         endorsementCount: candidate.endorsementCount || 0,
         profileViews: candidate.profileViews || 0,
         trendingScore: candidate.trendingScore || 0,
         rank: i + 1,
+        averageSpectrum: Math.round(averageSpectrum),
       });
     }
 
@@ -222,14 +289,22 @@ export const getCandidatesWithUsers = async (
 export const createCandidateApplication = async (
   data: Omit<CandidateApplication, 'id' | 'submittedAt'>
 ): Promise<string> => {
-  const docRef = await getCollection<CandidateApplication>(
-    Collections.CANDIDATE_APPLICATIONS
-  ).add({
-    ...data,
-    submittedAt: firestore.Timestamp.now(),
-  } as CandidateApplication);
-  await docRef.update({ id: docRef.id });
-  return docRef.id;
+  try {
+    console.log('createCandidateApplication - Adding document to collection:', Collections.CANDIDATE_APPLICATIONS);
+    const docRef = await getCollection<CandidateApplication>(
+      Collections.CANDIDATE_APPLICATIONS
+    ).add({
+      ...data,
+      submittedAt: firestore.Timestamp.now(),
+    } as CandidateApplication);
+    console.log('createCandidateApplication - Document added, updating with id:', docRef.id);
+    await docRef.update({ id: docRef.id });
+    console.log('createCandidateApplication - Success!');
+    return docRef.id;
+  } catch (error: any) {
+    console.error('createCandidateApplication error:', error.code, error.message);
+    throw error;
+  }
 };
 
 export const getCandidateApplication = async (
@@ -916,13 +991,63 @@ const generateAllIssuePositions = (
   }).sort((a, b) => a.priority - b.priority);
 };
 
+// Helper to fill in missing issue positions for candidates with incomplete data
+const fillMissingIssuePositions = (candidate: Candidate): Candidate => {
+  const existingIssues = candidate.topIssues || [];
+
+  // If candidate already has all issues, return as-is
+  if (existingIssues.length >= ALL_ISSUE_IDS.length) {
+    return candidate;
+  }
+
+  // Determine political leaning from existing positions
+  const avgSpectrum = existingIssues.length > 0
+    ? existingIssues.reduce((sum, i) => sum + i.spectrumPosition, 0) / existingIssues.length
+    : 0;
+
+  let leaning: 'progressive' | 'moderate_progressive' | 'centrist' | 'moderate_conservative' | 'conservative';
+  if (avgSpectrum <= -70) leaning = 'progressive';
+  else if (avgSpectrum <= -30) leaning = 'moderate_progressive';
+  else if (avgSpectrum <= 30) leaning = 'centrist';
+  else if (avgSpectrum <= 70) leaning = 'moderate_conservative';
+  else leaning = 'conservative';
+
+  // Get existing issue IDs and their priorities
+  const existingIssueIds = new Set(existingIssues.map(i => i.issueId));
+  const priorityIssues = existingIssues
+    .sort((a, b) => a.priority - b.priority)
+    .map(i => i.issueId);
+
+  // Build custom positions from existing data
+  const customPositions: Record<string, { position: string; spectrum: number }> = {};
+  existingIssues.forEach(i => {
+    customPositions[i.issueId] = { position: i.position, spectrum: i.spectrumPosition };
+  });
+
+  // Generate all positions (this will use existing ones via customPositions)
+  const fullTopIssues = generateAllIssuePositions(leaning, priorityIssues, customPositions);
+
+  return {
+    ...candidate,
+    topIssues: fullTopIssues,
+  };
+};
+
 // Seed candidates with sample politicians (for development)
 export const seedCandidates = async (): Promise<void> => {
-  const candidates = [
+  const candidates: Array<{
+    displayName: string;
+    email: string;
+    gender: 'male' | 'female';
+    bio: any;
+    reasonForRunning: string;
+    topIssues: any[];
+  }> = [
     // Progressive candidates (-80 to -100 spectrum)
     {
       displayName: 'Maya Chen',
       email: 'maya.chen@example.com',
+      gender: 'female',
       bio: {
         summary: 'Environmental justice advocate and former community organizer fighting for a Green New Deal.',
         background: 'Born to immigrant parents in Oakland, Maya spent 15 years organizing communities around climate and housing justice.',
@@ -940,6 +1065,7 @@ export const seedCandidates = async (): Promise<void> => {
     {
       displayName: 'Marcus Washington',
       email: 'marcus.washington@example.com',
+      gender: 'male',
       bio: {
         summary: 'Civil rights attorney dedicated to criminal justice reform and ending mass incarceration.',
         background: 'Public defender for 12 years, witnessed firsthand the inequities in our justice system.',
@@ -957,6 +1083,7 @@ export const seedCandidates = async (): Promise<void> => {
     {
       displayName: 'Rosa Martinez',
       email: 'rosa.martinez@example.com',
+      gender: 'female',
       bio: {
         summary: 'Labor organizer fighting for workers rights and immigrant justice.',
         background: 'Daughter of farmworkers, organized hotel workers union for 10 years.',
@@ -976,6 +1103,7 @@ export const seedCandidates = async (): Promise<void> => {
     {
       displayName: 'James O\'Brien',
       email: 'james.obrien@example.com',
+      gender: 'male',
       bio: {
         summary: 'Former teacher and school board president focused on education equity.',
         background: 'Taught in public schools for 20 years before entering politics.',
@@ -992,6 +1120,7 @@ export const seedCandidates = async (): Promise<void> => {
     },
     {
       displayName: 'Sarah Kim',
+      gender: 'female',
       email: 'sarah.kim@example.com',
       bio: {
         summary: 'Healthcare administrator working to expand access and lower costs.',
@@ -1009,6 +1138,7 @@ export const seedCandidates = async (): Promise<void> => {
     },
     {
       displayName: 'David Thompson',
+      gender: 'male',
       email: 'david.thompson@example.com',
       bio: {
         summary: 'Environmental engineer promoting practical clean energy solutions.',
@@ -1026,6 +1156,7 @@ export const seedCandidates = async (): Promise<void> => {
     },
     {
       displayName: 'Michelle Foster',
+      gender: 'female',
       email: 'michelle.foster@example.com',
       bio: {
         summary: 'Former prosecutor focused on smart justice reform and community safety.',
@@ -1045,6 +1176,7 @@ export const seedCandidates = async (): Promise<void> => {
     // Centrist candidates (-20 to +20 spectrum)
     {
       displayName: 'Robert Anderson',
+      gender: 'male',
       email: 'robert.anderson@example.com',
       bio: {
         summary: 'Business owner and former mayor focused on pragmatic, bipartisan solutions.',
@@ -1062,6 +1194,7 @@ export const seedCandidates = async (): Promise<void> => {
     },
     {
       displayName: 'Patricia Williams',
+      gender: 'female',
       email: 'patricia.williams@example.com',
       bio: {
         summary: 'Retired military officer committed to strong defense and diplomatic engagement.',
@@ -1079,6 +1212,7 @@ export const seedCandidates = async (): Promise<void> => {
     },
     {
       displayName: 'Michael Chen',
+      gender: 'male',
       email: 'michael.chen@example.com',
       bio: {
         summary: 'Tech entrepreneur promoting innovation and economic opportunity.',
@@ -1096,6 +1230,7 @@ export const seedCandidates = async (): Promise<void> => {
     },
     {
       displayName: 'Jennifer Brooks',
+      gender: 'female',
       email: 'jennifer.brooks@example.com',
       bio: {
         summary: 'Nonprofit leader bridging divides on housing and community development.',
@@ -1113,6 +1248,7 @@ export const seedCandidates = async (): Promise<void> => {
     },
     {
       displayName: 'Christopher Davis',
+      gender: 'male',
       email: 'christopher.davis@example.com',
       bio: {
         summary: 'Farmer and rural advocate fighting for agricultural communities.',
@@ -1132,6 +1268,7 @@ export const seedCandidates = async (): Promise<void> => {
     // Moderately conservative candidates (+40 to +65 spectrum)
     {
       displayName: 'William Turner',
+      gender: 'male',
       email: 'william.turner@example.com',
       bio: {
         summary: 'Small business owner advocating for lower taxes and less regulation.',
@@ -1149,6 +1286,7 @@ export const seedCandidates = async (): Promise<void> => {
     },
     {
       displayName: 'Elizabeth Morgan',
+      gender: 'female',
       email: 'elizabeth.morgan@example.com',
       bio: {
         summary: 'Former school principal promoting parental choice and educational excellence.',
@@ -1166,6 +1304,7 @@ export const seedCandidates = async (): Promise<void> => {
     },
     {
       displayName: 'Thomas Wright',
+      gender: 'male',
       email: 'thomas.wright@example.com',
       bio: {
         summary: 'Sheriff focused on law and order and supporting police officers.',
@@ -1183,6 +1322,7 @@ export const seedCandidates = async (): Promise<void> => {
     },
     {
       displayName: 'Katherine Hayes',
+      gender: 'female',
       email: 'katherine.hayes@example.com',
       bio: {
         summary: 'Healthcare executive promoting patient-centered, market-based reforms.',
@@ -1200,6 +1340,7 @@ export const seedCandidates = async (): Promise<void> => {
     },
     {
       displayName: 'Richard Palmer',
+      gender: 'male',
       email: 'richard.palmer@example.com',
       bio: {
         summary: 'Energy executive promoting American energy independence.',
@@ -1219,6 +1360,7 @@ export const seedCandidates = async (): Promise<void> => {
     // Strongly conservative candidates (+80 to +100 spectrum)
     {
       displayName: 'John Mitchell',
+      gender: 'male',
       email: 'john.mitchell@example.com',
       bio: {
         summary: 'Constitutional conservative fighting to limit government and protect liberty.',
@@ -1236,6 +1378,7 @@ export const seedCandidates = async (): Promise<void> => {
     },
     {
       displayName: 'Margaret Sullivan',
+      gender: 'female',
       email: 'margaret.sullivan@example.com',
       bio: {
         summary: 'Pro-life advocate and family values champion.',
@@ -1253,6 +1396,7 @@ export const seedCandidates = async (): Promise<void> => {
     },
     {
       displayName: 'James Richardson',
+      gender: 'male',
       email: 'james.richardson@example.com',
       bio: {
         summary: 'Border hawk and immigration enforcement advocate.',
@@ -1270,6 +1414,7 @@ export const seedCandidates = async (): Promise<void> => {
     },
     {
       displayName: 'Donald Peterson',
+      gender: 'male',
       email: 'donald.peterson@example.com',
       bio: {
         summary: 'Fiscal conservative demanding balanced budgets and spending cuts.',
@@ -1287,6 +1432,7 @@ export const seedCandidates = async (): Promise<void> => {
     },
     {
       displayName: 'Nancy Crawford',
+      gender: 'female',
       email: 'nancy.crawford@example.com',
       bio: {
         summary: 'Foreign policy hawk committed to American strength abroad.',
@@ -1306,6 +1452,7 @@ export const seedCandidates = async (): Promise<void> => {
     // Additional diverse candidates
     {
       displayName: 'Angela Price',
+      gender: 'female',
       email: 'angela.price@example.com',
       bio: {
         summary: 'Urban planner focused on affordable housing and sustainable cities.',
@@ -1323,6 +1470,7 @@ export const seedCandidates = async (): Promise<void> => {
     },
     {
       displayName: 'Steven Clark',
+      gender: 'male',
       email: 'steven.clark@example.com',
       bio: {
         summary: 'Libertarian-leaning entrepreneur advocating for freedom and limited government.',
@@ -1371,6 +1519,7 @@ export const seedCandidates = async (): Promise<void> => {
       id: userRef.id,
       email: candidate.email,
       displayName: candidate.displayName,
+      gender: candidate.gender,
       role: 'candidate' as const,
       state: 'verified' as const,
       verificationStatus: 'verified' as const,

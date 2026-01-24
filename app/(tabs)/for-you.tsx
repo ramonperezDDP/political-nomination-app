@@ -12,7 +12,7 @@ import { Text, useTheme, Menu, Divider, IconButton, TouchableRipple } from 'reac
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAuthStore, useConfigStore } from '@/stores';
-import { getCandidatesForFeed, reseedAllData } from '@/services/firebase/firestore';
+import { getCandidatesForFeed, reseedAllData, inferGenderFromName } from '@/services/firebase/firestore';
 import PSACard from '@/components/feed/PSACard';
 import { EmptyState, LoadingScreen, SearchInput } from '@/components/ui';
 import type { FeedItem, Candidate, User } from '@/types';
@@ -93,10 +93,14 @@ const generateFeedItem = (
       id: candidate.id,
       displayName: user?.displayName || 'Candidate',
       photoUrl: user?.photoUrl,
+      gender: user?.gender || inferGenderFromName(user?.displayName || ''),
       topIssues: candidateIssueIds.slice(0, 3).map(
         (id) => issues.find((i) => i.id === id)?.name || id
       ),
       endorsementCount: candidate.endorsementCount || 0,
+      averageSpectrum: candidate.topIssues?.length
+        ? Math.round(candidate.topIssues.reduce((sum, i) => sum + i.spectrumPosition, 0) / candidate.topIssues.length)
+        : 0,
     },
     alignmentScore: score,
     matchedIssues,

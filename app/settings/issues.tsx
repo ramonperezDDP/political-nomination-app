@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { useAuthStore, useUserStore, useConfigStore } from '@/stores';
-import { PrimaryButton, Card, LoadingOverlay } from '@/components/ui';
+import { PrimaryButton, SecondaryButton, Card, LoadingOverlay } from '@/components/ui';
 
 export default function ManageIssuesScreen() {
   const theme = useTheme();
@@ -251,13 +251,21 @@ export default function ManageIssuesScreen() {
           </ScrollView>
         )}
 
-        <PrimaryButton
-          onPress={handleSave}
-          disabled={!isValid || !hasChanges}
-          style={styles.saveButton}
-        >
-          Save Changes
-        </PrimaryButton>
+        <View style={styles.buttonRow}>
+          <SecondaryButton
+            onPress={() => router.back()}
+            style={styles.cancelButton}
+          >
+            Cancel
+          </SecondaryButton>
+          <PrimaryButton
+            onPress={handleSave}
+            disabled={!isValid || !hasChanges}
+            style={styles.saveButton}
+          >
+            Save Changes
+          </PrimaryButton>
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -327,7 +335,14 @@ const styles = StyleSheet.create({
   chip: {
     marginRight: 8,
   },
+  buttonRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  cancelButton: {
+    flex: 1,
+  },
   saveButton: {
-    width: '100%',
+    flex: 1,
   },
 });

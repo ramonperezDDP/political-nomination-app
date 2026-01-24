@@ -1,4 +1,5 @@
 import storage from '@react-native-firebase/storage';
+import { Platform } from 'react-native';
 import { StoragePaths } from './config';
 
 export interface UploadResult {
@@ -13,6 +14,23 @@ export interface UploadProgress {
   progress: number;
 }
 
+// Normalize file URI for Firebase Storage
+const normalizeUri = (uri: string): string => {
+  // On iOS, sometimes URIs have the file:// prefix that needs to be handled
+  // On Android, content:// URIs need to be used directly
+  if (Platform.OS === 'ios' && uri.startsWith('file://')) {
+    return uri;
+  }
+  if (Platform.OS === 'android' && uri.startsWith('content://')) {
+    return uri;
+  }
+  // Add file:// prefix if missing on iOS
+  if (Platform.OS === 'ios' && !uri.startsWith('file://') && !uri.startsWith('content://')) {
+    return `file://${uri}`;
+  }
+  return uri;
+};
+
 // Upload file with progress callback
 export const uploadFile = async (
   path: string,
@@ -20,8 +38,11 @@ export const uploadFile = async (
   onProgress?: (progress: UploadProgress) => void
 ): Promise<UploadResult> => {
   try {
+    const normalizedUri = normalizeUri(localUri);
+    console.log('Uploading file from:', normalizedUri, 'to path:', path);
+
     const reference = storage().ref(path);
-    const task = reference.putFile(localUri);
+    const task = reference.putFile(normalizedUri);
 
     if (onProgress) {
       task.on('state_changed', (snapshot) => {
@@ -35,9 +56,20 @@ export const uploadFile = async (
 
     await task;
     const url = await reference.getDownloadURL();
+    console.log('Upload successful, URL:', url);
     return { success: true, url };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    console.error('Upload error:', error.code, error.message);
+    // Provide more specific error messages
+    let errorMessage = error.message;
+    if (error.code === 'storage/unauthorized') {
+      errorMessage = 'Storage access denied. Please check Firebase Storage rules.';
+    } else if (error.code === 'storage/canceled') {
+      errorMessage = 'Upload was cancelled.';
+    } else if (error.code === 'storage/unknown') {
+      errorMessage = 'An unknown error occurred. Please try again.';
+    }
+    return { success: false, error: errorMessage };
   }
 };
 

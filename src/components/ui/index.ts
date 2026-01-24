@@ -9,6 +9,7 @@ export { Card, CardWithHeader, CardWithImage } from './Card';
 
 // Avatars
 export { AvatarImage, AvatarText, AvatarIcon, UserAvatar, AvatarGroup } from './Avatar';
+export { CandidateAvatar, calculateAverageSpectrum } from './CandidateAvatar';
 
 // Loading states
 export { LoadingSpinner, LoadingOverlay, LoadingScreen, Skeleton, SkeletonCard } from './Loading';

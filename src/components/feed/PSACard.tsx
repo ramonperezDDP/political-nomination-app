@@ -5,7 +5,7 @@ import { router } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Video, ResizeMode, AVPlaybackStatus } from 'expo-av';
 
-import { Card, UserAvatar, AlignmentBadge, Chip, PrimaryButton } from '@/components/ui';
+import { Card, CandidateAvatar, AlignmentBadge, Chip, PrimaryButton } from '@/components/ui';
 import { useAuthStore, useUserStore } from '@/stores';
 import type { FeedItem, Issue } from '@/types';
 
@@ -181,9 +181,11 @@ export default function PSACard({ feedItem, isActive = true, selectedIssueId, is
       <View style={styles.infoSection}>
         {/* Candidate Info */}
         <Pressable onPress={handleViewProfile} style={styles.candidateRow}>
-          <UserAvatar
-            photoUrl={candidate.photoUrl}
+          <CandidateAvatar
+            candidateId={candidate.id}
             displayName={candidate.displayName}
+            gender={candidate.gender}
+            spectrumPosition={candidate.averageSpectrum}
             size={48}
           />
           <View style={styles.candidateInfo}>

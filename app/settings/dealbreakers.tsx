@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { useAuthStore, useUserStore } from '@/stores';
-import { PrimaryButton, Card, LoadingOverlay } from '@/components/ui';
+import { PrimaryButton, SecondaryButton, Card, LoadingOverlay } from '@/components/ui';
 
 // Common dealbreaker positions that users might want to filter on
 const DEALBREAKER_OPTIONS = [
@@ -250,14 +250,22 @@ export default function ManageDealbreakersScreen() {
           </ScrollView>
         )}
 
-        <PrimaryButton
-          onPress={handleSave}
-          loading={isLoading}
-          disabled={!hasChanges}
-          style={styles.saveButton}
-        >
-          Save Changes
-        </PrimaryButton>
+        <View style={styles.buttonRow}>
+          <SecondaryButton
+            onPress={() => router.back()}
+            style={styles.cancelButton}
+          >
+            Cancel
+          </SecondaryButton>
+          <PrimaryButton
+            onPress={handleSave}
+            loading={isLoading}
+            disabled={!hasChanges}
+            style={styles.saveButton}
+          >
+            Save Changes
+          </PrimaryButton>
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -319,7 +327,14 @@ const styles = StyleSheet.create({
   chip: {
     marginRight: 8,
   },
+  buttonRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  cancelButton: {
+    flex: 1,
+  },
   saveButton: {
-    width: '100%',
+    flex: 1,
   },
 });

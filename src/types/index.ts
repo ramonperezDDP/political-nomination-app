@@ -5,11 +5,14 @@ export type UserRole = 'unregistered' | 'constituent' | 'candidate' | 'admin';
 export type UserState = 'unverified' | 'verified' | 'pn_applicant' | 'approved_pn';
 export type VerificationStatus = 'pending' | 'verified' | 'failed';
 
+export type Gender = 'male' | 'female' | 'non-binary' | 'prefer-not-to-say';
+
 export interface User {
   id: string;
   email: string;
   displayName: string;
   photoUrl?: string;
+  gender?: Gender;
   role: UserRole;
   state: UserState;
   verificationStatus: VerificationStatus;
@@ -193,11 +196,13 @@ export interface LeaderboardEntry {
   candidateId: string;
   candidateName: string;
   photoUrl?: string;
+  gender?: Gender;
   endorsementCount: number;
   profileViews: number;
   trendingScore: number;
   rank: number;
   alignmentScore?: number;
+  averageSpectrum: number; // -100 to 100, calculated from topIssues
 }
 
 // Feed Types
@@ -215,8 +220,10 @@ export interface CandidatePreview {
   id: string;
   displayName: string;
   photoUrl?: string;
+  gender?: Gender;
   topIssues: string[];
   endorsementCount: number;
+  averageSpectrum: number; // -100 to 100
 }
 
 // Notification Types

@@ -105,11 +105,25 @@ export const useCandidateStore = create<CandidateState>((set, get) => ({
     set({ isLoading: true, error: null });
 
     try {
+      console.log('Creating candidate application with data:', JSON.stringify(applicationData, null, 2));
       const applicationId = await createCandidateApplication(applicationData);
-      const application = await getUserCandidateApplication(userId);
-      set({ application, isLoading: false });
+      console.log('Application created with ID:', applicationId);
+
+      // Try to fetch the application, but don't fail if this errors
+      // (it might need a Firestore index that hasn't been created yet)
+      try {
+        const application = await getUserCandidateApplication(userId);
+        console.log('Fetched application:', application);
+        set({ application, isLoading: false });
+      } catch (fetchError: any) {
+        console.warn('Could not fetch application after creation:', fetchError.message);
+        // Still return success since the application was created
+        set({ isLoading: false });
+      }
+
       return applicationId;
     } catch (error: any) {
+      console.error('Error in submitApplication:', error.code, error.message, error);
       set({ error: error.message, isLoading: false });
       return null;
     }

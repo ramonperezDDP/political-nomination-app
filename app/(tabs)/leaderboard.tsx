@@ -12,7 +12,7 @@ import {
   getCandidatesWithUsers,
 } from '@/services/firebase/firestore';
 import { useConfigStore } from '@/stores';
-import { Card, UserAvatar, RankBadge, LoadingScreen, EmptyState } from '@/components/ui';
+import { Card, CandidateAvatar, RankBadge, LoadingScreen, EmptyState } from '@/components/ui';
 import type { LeaderboardEntry } from '@/types';
 
 type LeaderboardType = 'endorsements' | 'trending';
@@ -99,9 +99,11 @@ export default function LeaderboardScreen() {
           >
             <View style={styles.tileContent}>
               <RankBadge rank={item.rank} style={styles.rankBadge} />
-              <UserAvatar
-                photoUrl={item.photoUrl}
+              <CandidateAvatar
+                candidateId={item.candidateId}
                 displayName={item.candidateName}
+                gender={item.gender}
+                spectrumPosition={item.averageSpectrum}
                 size={48}
               />
               <View style={styles.candidateInfo}>

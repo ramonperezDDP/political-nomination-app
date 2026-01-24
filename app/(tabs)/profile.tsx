@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View, ScrollView, Pressable } from 'react-native';
+import { StyleSheet, View, ScrollView, Pressable, Linking, Alert } from 'react-native';
 import { Text, useTheme, Divider, List } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -29,6 +29,27 @@ export default function ProfileScreen() {
     router.replace('/(auth)/login');
   };
 
+  const openUrl = async (url: string) => {
+    try {
+      const supported = await Linking.canOpenURL(url);
+      if (supported) {
+        await Linking.openURL(url);
+      } else {
+        Alert.alert('Error', 'Cannot open this link');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to open link');
+    }
+  };
+
+  const handleContactSupport = () => {
+    Linking.openURL('mailto:support@politicalnomination.app?subject=Support%20Request');
+  };
+
+  const handleSendFeedback = () => {
+    Linking.openURL('mailto:feedback@politicalnomination.app?subject=App%20Feedback');
+  };
+
   const menuSections = [
     {
       title: 'Account',
@@ -38,7 +59,7 @@ export default function ProfileScreen() {
           icon: 'account-edit',
           label: 'Personal Information',
           description: 'Update your name and contact details',
-          onPress: () => {},
+          onPress: () => router.push('/settings/personal-info'),
         },
         {
           id: 'policy-preferences',
@@ -63,15 +84,15 @@ export default function ProfileScreen() {
           id: 'endorsements',
           icon: 'thumb-up',
           label: 'My Endorsements',
-          description: `${endorsements.length} candidates endorsed`,
-          onPress: () => {},
+          description: `${endorsements.length} candidate${endorsements.length !== 1 ? 's' : ''} endorsed`,
+          onPress: () => router.push('/settings/endorsements'),
         },
         {
-          id: 'history',
-          icon: 'history',
-          label: 'Viewing History',
-          description: 'Recently viewed candidates',
-          onPress: () => {},
+          id: 'for-you',
+          icon: 'card-account-details',
+          label: 'Browse Candidates',
+          description: 'Discover candidates that match your values',
+          onPress: () => router.push('/(tabs)/for-you'),
         },
       ],
     },
@@ -113,21 +134,21 @@ export default function ProfileScreen() {
           icon: 'help-circle',
           label: 'Help Center',
           description: 'FAQs and support articles',
-          onPress: () => {},
+          onPress: () => openUrl('https://politicalnomination.app/help'),
         },
         {
           id: 'contact',
           icon: 'email',
           label: 'Contact Support',
           description: 'Get help from our team',
-          onPress: () => {},
+          onPress: handleContactSupport,
         },
         {
           id: 'feedback',
           icon: 'message-alert',
           label: 'Send Feedback',
           description: 'Help us improve the app',
-          onPress: () => {},
+          onPress: handleSendFeedback,
         },
       ],
     },
@@ -139,14 +160,14 @@ export default function ProfileScreen() {
           icon: 'file-document',
           label: 'Terms of Service',
           description: undefined,
-          onPress: () => {},
+          onPress: () => openUrl('https://politicalnomination.app/terms'),
         },
         {
           id: 'privacy',
           icon: 'shield-lock',
           label: 'Privacy Policy',
           description: undefined,
-          onPress: () => {},
+          onPress: () => openUrl('https://politicalnomination.app/privacy'),
         },
       ],
     },

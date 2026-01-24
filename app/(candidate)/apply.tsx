@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
-import { StyleSheet, View, ScrollView } from 'react-native';
-import { Text, useTheme, ProgressBar, Checkbox, TextInput } from 'react-native-paper';
+import React, { useState, useEffect, useCallback, useRef, memo } from 'react';
+import { StyleSheet, View, ScrollView, Alert, Pressable } from 'react-native';
+import { Text, useTheme, ProgressBar, Checkbox, TextInput, IconButton, Modal, Portal } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
+import Slider from '@react-native-community/slider';
 
-import { useAuthStore, useCandidateStore } from '@/stores';
+import { useAuthStore, useCandidateStore, useConfigStore } from '@/stores';
 import {
   uploadSignatureDoc,
   uploadIdDoc,
@@ -19,13 +20,137 @@ import {
   Input,
   LoadingOverlay,
 } from '@/components/ui';
+import type { TopIssue, Issue } from '@/types';
 
-type ApplicationStep = 'intro' | 'signatures' | 'documents' | 'declaration' | 'review';
+// Separate modal component to manage its own state and prevent re-render issues
+interface IssueEditModalProps {
+  visible: boolean;
+  issue: Issue | undefined;
+  initialPosition: string;
+  initialSpectrum: number;
+  onDismiss: () => void;
+  onSave: (position: string, spectrum: number) => void;
+}
+
+const IssueEditModal = memo(function IssueEditModal({
+  visible,
+  issue,
+  initialPosition,
+  initialSpectrum,
+  onDismiss,
+  onSave,
+}: IssueEditModalProps) {
+  const theme = useTheme();
+  const positionRef = useRef(initialPosition);
+  const [spectrum, setSpectrum] = useState(initialSpectrum);
+  const [hasContent, setHasContent] = useState(initialPosition.trim().length > 0);
+  const inputKey = useRef(0);
+
+  // Reset when modal opens with new issue
+  useEffect(() => {
+    if (visible) {
+      positionRef.current = initialPosition;
+      setSpectrum(initialSpectrum);
+      setHasContent(initialPosition.trim().length > 0);
+      inputKey.current += 1; // Force TextInput to remount with new defaultValue
+    }
+  }, [visible, issue?.id]);
+
+  const getSpectrumLabel = (value: number) => {
+    if (value <= -60) return 'Strongly Progressive';
+    if (value <= -20) return 'Progressive';
+    if (value <= 20) return 'Moderate';
+    if (value <= 60) return 'Conservative';
+    return 'Strongly Conservative';
+  };
+
+  const handleTextChange = (text: string) => {
+    positionRef.current = text;
+    setHasContent(text.trim().length > 0);
+  };
+
+  const handleSave = () => {
+    onSave(positionRef.current, spectrum);
+  };
+
+  if (!visible || !issue) return null;
+
+  return (
+    <Portal>
+      <Modal
+        visible={visible}
+        onDismiss={onDismiss}
+        dismissable={false}
+        dismissableBackButton={false}
+        contentContainerStyle={[styles.modal, { backgroundColor: theme.colors.surface }]}
+      >
+        <View style={{ flex: 1, maxHeight: '100%' }}>
+          <ScrollView keyboardShouldPersistTaps="handled" style={{ flexGrow: 0 }}>
+            <Text variant="titleLarge" style={styles.modalTitle}>
+              {issue.name}
+            </Text>
+
+            <Text variant="bodyMedium" style={{ color: theme.colors.outline, marginBottom: 16 }}>
+              {issue.description}
+            </Text>
+
+            <TextInput
+              key={inputKey.current}
+              label="Your Position"
+              defaultValue={initialPosition}
+              onChangeText={handleTextChange}
+              multiline
+              numberOfLines={4}
+              mode="outlined"
+              placeholder="Describe your stance on this issue..."
+              style={styles.positionInput}
+            />
+
+            <Text variant="titleSmall" style={{ marginTop: 16, marginBottom: 8 }}>
+              Political Spectrum: {getSpectrumLabel(spectrum)}
+            </Text>
+            <View style={styles.spectrumContainer}>
+              <Text variant="labelSmall">Progressive</Text>
+              <Slider
+                style={styles.slider}
+                minimumValue={-100}
+                maximumValue={100}
+                value={spectrum}
+                onSlidingComplete={setSpectrum}
+                step={1}
+                minimumTrackTintColor={theme.colors.primary}
+                maximumTrackTintColor={theme.colors.surfaceVariant}
+                thumbTintColor={theme.colors.primary}
+              />
+              <Text variant="labelSmall">Conservative</Text>
+            </View>
+          </ScrollView>
+
+          <View style={styles.modalButtons}>
+            <SecondaryButton onPress={onDismiss} style={{ flex: 1 }}>
+              Cancel
+            </SecondaryButton>
+            <PrimaryButton
+              onPress={handleSave}
+              disabled={!hasContent}
+              style={{ flex: 1 }}
+            >
+              Save
+            </PrimaryButton>
+          </View>
+        </View>
+      </Modal>
+    </Portal>
+  );
+});
+
+type ApplicationStep = 'intro' | 'signatures' | 'documents' | 'issues' | 'declaration' | 'review';
 
 export default function ApplyScreen() {
   const theme = useTheme();
   const { user } = useAuthStore();
   const { submitApplication, isLoading } = useCandidateStore();
+  const { issues } = useConfigStore();
 
   const [currentStep, setCurrentStep] = useState<ApplicationStep>('intro');
   const [uploading, setUploading] = useState(false);
@@ -40,22 +165,85 @@ export default function ApplyScreen() {
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [agreedToTruthfulness, setAgreedToTruthfulness] = useState(false);
 
+  // Issue positions state
+  const [issuePositions, setIssuePositions] = useState<TopIssue[]>([]);
+  const [editingIssue, setEditingIssue] = useState<TopIssue | null>(null);
+
+  // Initialize issue positions when issues load
+  useEffect(() => {
+    if (issues.length > 0 && issuePositions.length === 0) {
+      const initialPositions: TopIssue[] = issues.map((issue, index) => ({
+        issueId: issue.id,
+        position: '',
+        priority: index + 1,
+        spectrumPosition: 0,
+      }));
+      setIssuePositions(initialPositions);
+    }
+  }, [issues]);
+
   const getProgress = () => {
     switch (currentStep) {
       case 'intro':
         return 0;
       case 'signatures':
-        return 0.25;
+        return 0.17;
       case 'documents':
+        return 0.33;
+      case 'issues':
         return 0.5;
       case 'declaration':
-        return 0.75;
+        return 0.67;
       case 'review':
         return 1;
       default:
         return 0;
     }
   };
+
+  // Issue editing helpers
+  const handleEditIssue = useCallback((topIssue: TopIssue) => {
+    setEditingIssue(topIssue);
+  }, []);
+
+  const handleSaveIssueEdit = useCallback((position: string, spectrum: number) => {
+    if (!editingIssue) return;
+
+    setIssuePositions((prev) =>
+      prev.map((p) =>
+        p.issueId === editingIssue.issueId
+          ? { ...p, position, spectrumPosition: spectrum }
+          : p
+      )
+    );
+    setEditingIssue(null);
+  }, [editingIssue]);
+
+  const handleDismissEditModal = useCallback(() => {
+    setEditingIssue(null);
+  }, []);
+
+  const handleMovePriority = (issueId: string, direction: 'up' | 'down') => {
+    setIssuePositions((prev) => {
+      const sorted = [...prev].sort((a, b) => a.priority - b.priority);
+      const index = sorted.findIndex((p) => p.issueId === issueId);
+
+      if (direction === 'up' && index > 0) {
+        const temp = sorted[index].priority;
+        sorted[index].priority = sorted[index - 1].priority;
+        sorted[index - 1].priority = temp;
+      } else if (direction === 'down' && index < sorted.length - 1) {
+        const temp = sorted[index].priority;
+        sorted[index].priority = sorted[index + 1].priority;
+        sorted[index + 1].priority = temp;
+      }
+
+      return sorted.sort((a, b) => a.priority - b.priority);
+    });
+  };
+
+  const completedPositions = issuePositions.filter((p) => p.position.length > 0).length;
+  const hasMinimumPositions = completedPositions >= 5; // Require at least 5 positions
 
   const handleDocumentPick = async (
     type: 'signature' | 'id' | 'resume',
@@ -79,31 +267,47 @@ export default function ApplyScreen() {
   };
 
   const handleSubmit = async () => {
-    if (!user?.id || !signatureDoc || !idDoc) return;
+    if (!user?.id || !signatureDoc || !idDoc) {
+      Alert.alert('Missing Information', 'Please ensure all required documents are uploaded.');
+      return;
+    }
 
     setUploading(true);
     try {
       // Upload documents
-      const [signatureResult, idResult, resumeResult] = await Promise.all([
-        uploadSignatureDoc(user.id, signatureDoc.uri),
-        uploadIdDoc(user.id, idDoc.uri),
-        resumeDoc ? uploadResume(user.id, resumeDoc.uri) : Promise.resolve({ success: true, url: '' }),
-      ]);
-
-      if (!signatureResult.success || !idResult.success) {
-        throw new Error('Failed to upload documents');
+      console.log('Uploading signature doc:', signatureDoc.uri);
+      const signatureResult = await uploadSignatureDoc(user.id, signatureDoc.uri);
+      if (!signatureResult.success) {
+        throw new Error(`Signature upload failed: ${signatureResult.error || 'Unknown error'}`);
       }
 
-      // Submit application
-      await submitApplication(user.id, {
+      console.log('Uploading ID doc:', idDoc.uri);
+      const idResult = await uploadIdDoc(user.id, idDoc.uri);
+      if (!idResult.success) {
+        throw new Error(`ID upload failed: ${idResult.error || 'Unknown error'}`);
+      }
+
+      let resumeUrl = '';
+      if (resumeDoc) {
+        console.log('Uploading resume:', resumeDoc.uri);
+        const resumeResult = await uploadResume(user.id, resumeDoc.uri);
+        if (!resumeResult.success) {
+          console.warn('Resume upload failed:', resumeResult.error);
+          // Resume is optional, so we continue
+        } else {
+          resumeUrl = resumeResult.url || '';
+        }
+      }
+
+      console.log('Submitting application...');
+      // Submit application - Firestore doesn't accept undefined values
+      const applicationData: any = {
         userId: user.id,
         status: 'pending',
         signatureDocUrl: signatureResult.url!,
         idDocUrl: idResult.url!,
-        resumeUrl: resumeResult.url || undefined,
         criminalHistoryDisclosure: {
           hasConvictions,
-          convictionDetails: hasConvictions ? convictionDetails : undefined,
           hasArrestHistory: false,
         },
         declarationOfIntent: {
@@ -113,13 +317,50 @@ export default function ApplyScreen() {
           address: '',
           agreedToTerms,
           signatureDataUrl: '',
-          signedAt: {} as any,
+          signedAt: new Date(),
         },
-      });
+      };
 
-      router.replace('/(tabs)/profile');
-    } catch (error) {
+      // Only add optional fields if they have values
+      if (resumeUrl) {
+        applicationData.resumeUrl = resumeUrl;
+      }
+      if (hasConvictions && convictionDetails) {
+        applicationData.criminalHistoryDisclosure.convictionDetails = convictionDetails;
+      }
+
+      // Add policy positions - only include ones with content
+      const completedIssuePositions = issuePositions
+        .filter((p) => p.position.length > 0)
+        .sort((a, b) => a.priority - b.priority);
+
+      if (completedIssuePositions.length > 0) {
+        applicationData.topIssues = completedIssuePositions;
+      }
+
+      // Add reason for running
+      if (reasonForRunning) {
+        applicationData.reasonForRunning = reasonForRunning;
+      }
+
+      const applicationId = await submitApplication(user.id, applicationData);
+
+      if (!applicationId) {
+        throw new Error('Failed to create application. Please try again.');
+      }
+
+      Alert.alert(
+        'Application Submitted',
+        'Your application has been submitted successfully. We will review it and notify you of the outcome.',
+        [{ text: 'OK', onPress: () => router.replace('/(tabs)/profile') }]
+      );
+    } catch (error: any) {
       console.error('Error submitting application:', error);
+      Alert.alert(
+        'Submission Failed',
+        error.message || 'An unexpected error occurred. Please try again.',
+        [{ text: 'OK' }]
+      );
     } finally {
       setUploading(false);
     }
@@ -166,12 +407,20 @@ export default function ApplyScreen() {
         ))}
       </View>
 
-      <PrimaryButton
-        onPress={() => setCurrentStep('signatures')}
-        style={styles.actionButton}
-      >
-        Start Application
-      </PrimaryButton>
+      <View style={styles.introButtons}>
+        <SecondaryButton
+          onPress={() => router.back()}
+          style={styles.introCancelButton}
+        >
+          Cancel
+        </SecondaryButton>
+        <PrimaryButton
+          onPress={() => setCurrentStep('signatures')}
+          style={styles.introStartButton}
+        >
+          Start Application
+        </PrimaryButton>
+      </View>
     </View>
   );
 
@@ -285,7 +534,7 @@ export default function ApplyScreen() {
           Back
         </SecondaryButton>
         <PrimaryButton
-          onPress={() => setCurrentStep('declaration')}
+          onPress={() => setCurrentStep('issues')}
           disabled={!idDoc}
           style={styles.navButton}
         >
@@ -294,6 +543,130 @@ export default function ApplyScreen() {
       </View>
     </View>
   );
+
+  const renderIssuesStep = () => {
+    const sortedPositions = [...issuePositions].sort((a, b) => a.priority - b.priority);
+
+    return (
+      <View style={styles.stepContent}>
+        <Text variant="headlineSmall" style={styles.stepTitle}>
+          Policy Positions
+        </Text>
+        <Text
+          variant="bodyMedium"
+          style={[styles.stepDescription, { color: theme.colors.outline }]}
+        >
+          State your position on key issues. Voters will see these to understand where you stand.
+          Complete at least 5 positions to continue.
+        </Text>
+
+        <View style={styles.progressIndicator}>
+          <Text
+            variant="titleMedium"
+            style={{ color: hasMinimumPositions ? theme.colors.primary : theme.colors.error }}
+          >
+            {completedPositions} of {issues.length} positions completed
+          </Text>
+          {!hasMinimumPositions && (
+            <Text variant="bodySmall" style={{ color: theme.colors.error }}>
+              (minimum 5 required)
+            </Text>
+          )}
+        </View>
+
+        <ScrollView style={styles.issuesList} showsVerticalScrollIndicator={false}>
+          {sortedPositions.map((topIssue, index) => {
+            const issue = issues.find((i) => i.id === topIssue.issueId);
+            const hasPosition = topIssue.position.length > 0;
+
+            return (
+              <Card
+                key={topIssue.issueId}
+                style={[
+                  styles.issueCard,
+                  !hasPosition && { borderLeftWidth: 3, borderLeftColor: theme.colors.outline },
+                  hasPosition && { borderLeftWidth: 3, borderLeftColor: theme.colors.primary },
+                ]}
+              >
+                <View style={styles.issueCardContent}>
+                  <View style={styles.priorityControls}>
+                    <IconButton
+                      icon="chevron-up"
+                      size={16}
+                      disabled={index === 0}
+                      onPress={() => handleMovePriority(topIssue.issueId, 'up')}
+                    />
+                    <Text variant="labelLarge" style={styles.issueRank}>
+                      #{index + 1}
+                    </Text>
+                    <IconButton
+                      icon="chevron-down"
+                      size={16}
+                      disabled={index === sortedPositions.length - 1}
+                      onPress={() => handleMovePriority(topIssue.issueId, 'down')}
+                    />
+                  </View>
+                  <Pressable
+                    style={styles.issueInfo}
+                    onPress={() => handleEditIssue(topIssue)}
+                  >
+                    <Text variant="titleSmall">{issue?.name || topIssue.issueId}</Text>
+                    {hasPosition ? (
+                      <Text
+                        variant="bodySmall"
+                        numberOfLines={2}
+                        style={{ color: theme.colors.outline, marginTop: 4 }}
+                      >
+                        {topIssue.position}
+                      </Text>
+                    ) : (
+                      <Text
+                        variant="bodySmall"
+                        style={{ color: theme.colors.error, marginTop: 4, fontStyle: 'italic' }}
+                      >
+                        Tap to add your position
+                      </Text>
+                    )}
+                  </Pressable>
+                  <IconButton
+                    icon="pencil"
+                    size={20}
+                    onPress={() => handleEditIssue(topIssue)}
+                  />
+                </View>
+              </Card>
+            );
+          })}
+        </ScrollView>
+
+        <View style={styles.navigationButtons}>
+          <SecondaryButton
+            onPress={() => setCurrentStep('documents')}
+            style={styles.navButton}
+          >
+            Back
+          </SecondaryButton>
+          <PrimaryButton
+            onPress={() => setCurrentStep('declaration')}
+            disabled={!hasMinimumPositions}
+            style={styles.navButton}
+          >
+            Continue
+          </PrimaryButton>
+        </View>
+
+        {/* Edit Issue Modal */}
+        <IssueEditModal
+          visible={editingIssue !== null}
+          issue={editingIssue ? issues.find((i) => i.id === editingIssue.issueId) : undefined}
+          initialPosition={editingIssue?.position || ''}
+          initialSpectrum={editingIssue?.spectrumPosition || 0}
+          onDismiss={handleDismissEditModal}
+          onSave={handleSaveIssueEdit}
+        />
+      </View>
+    );
+  };
 
   const renderDeclarationStep = () => (
     <ScrollView style={styles.scrollStep}>
@@ -364,7 +737,7 @@ export default function ApplyScreen() {
 
       <View style={styles.navigationButtons}>
         <SecondaryButton
-          onPress={() => setCurrentStep('documents')}
+          onPress={() => setCurrentStep('issues')}
           style={styles.navButton}
         >
           Back
@@ -380,7 +753,13 @@ export default function ApplyScreen() {
     </ScrollView>
   );
 
-  const renderReviewStep = () => (
+  const renderReviewStep = () => {
+    const topPositions = [...issuePositions]
+      .filter((p) => p.position.length > 0)
+      .sort((a, b) => a.priority - b.priority)
+      .slice(0, 5);
+
+    return (
     <ScrollView style={styles.scrollStep}>
       <Text variant="headlineSmall" style={styles.stepTitle}>
         Review Application
@@ -423,6 +802,35 @@ export default function ApplyScreen() {
         </Text>
       </Card>
 
+      <Card style={styles.reviewCard}>
+        <Text variant="titleSmall">Policy Positions ({completedPositions} completed)</Text>
+        {topPositions.map((pos, index) => {
+          const issue = issues.find((i) => i.id === pos.issueId);
+          return (
+            <View key={pos.issueId} style={styles.reviewItem}>
+              <Text variant="labelMedium" style={{ color: theme.colors.primary, width: 24 }}>
+                #{index + 1}
+              </Text>
+              <View style={{ flex: 1 }}>
+                <Text variant="bodyMedium">{issue?.name || pos.issueId}</Text>
+                <Text
+                  variant="bodySmall"
+                  numberOfLines={1}
+                  style={{ color: theme.colors.outline }}
+                >
+                  {pos.position}
+                </Text>
+              </View>
+            </View>
+          );
+        })}
+        {completedPositions > 5 && (
+          <Text variant="bodySmall" style={{ color: theme.colors.outline, marginTop: 8 }}>
+            +{completedPositions - 5} more positions
+          </Text>
+        )}
+      </Card>
+
       <View style={styles.navigationButtons}>
         <SecondaryButton
           onPress={() => setCurrentStep('declaration')}
@@ -439,7 +847,8 @@ export default function ApplyScreen() {
         </PrimaryButton>
       </View>
     </ScrollView>
-  );
+    );
+  };
 
   const renderCurrentStep = () => {
     switch (currentStep) {
@@ -449,6 +858,8 @@ export default function ApplyScreen() {
         return renderSignaturesStep();
       case 'documents':
         return renderDocumentsStep();
+      case 'issues':
+        return renderIssuesStep();
       case 'declaration':
         return renderDeclarationStep();
       case 'review':
@@ -582,5 +993,73 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     marginTop: 'auto',
+  },
+  introButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 'auto',
+  },
+  introCancelButton: {
+    flex: 1,
+  },
+  introStartButton: {
+    flex: 1,
+  },
+  // Issues step styles
+  progressIndicator: {
+    marginBottom: 16,
+    alignItems: 'center',
+  },
+  issuesList: {
+    flex: 1,
+    marginBottom: 16,
+  },
+  issueCard: {
+    marginBottom: 8,
+    padding: 8,
+  },
+  issueCardContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  priorityControls: {
+    alignItems: 'center',
+    width: 40,
+  },
+  issueRank: {
+    fontWeight: 'bold',
+  },
+  issueInfo: {
+    flex: 1,
+    paddingHorizontal: 8,
+  },
+  // Modal styles
+  modal: {
+    margin: 20,
+    padding: 20,
+    borderRadius: 12,
+    maxHeight: '85%',
+    minHeight: 400,
+  },
+  modalTitle: {
+    fontWeight: 'bold',
+    marginBottom: 12,
+  },
+  positionInput: {
+    marginBottom: 8,
+  },
+  spectrumContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  slider: {
+    flex: 1,
+    marginHorizontal: 8,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 16,
   },
 });
