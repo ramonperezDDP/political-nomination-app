@@ -107,23 +107,30 @@ npm install
 cd ..
 ```
 
-### 3. Configure Environment Variables
+### 3. Configure Firebase (Required for Native Builds)
+
+For **native iOS and Android builds**, Firebase configuration is read directly from platform-specific files:
+
+1. Download `GoogleService-Info.plist` from Firebase Console > Project Settings > iOS app
+2. Download `google-services.json` from Firebase Console > Project Settings > Android app
+3. Place `GoogleService-Info.plist` in the project root (it will be copied to the iOS bundle)
+4. Place `google-services.json` in `android/app/` directory
+
+**Important:** No `.env` file is required for native builds. The React Native Firebase SDK reads configuration directly from these platform-specific files.
+
+### 4. Configure Environment Variables (Web Only)
+
+Environment variables are only needed for **web builds**:
 
 ```bash
-# Copy the example environment file
+# Copy the example environment file (only for web deployment)
 cp .env.example .env
 
 # Edit .env with your configuration values
 nano .env  # or use your preferred editor
 ```
 
-Required environment variables (see [Environment Variables](#environment-variables) section for details).
-
-### 4. Configure Firebase
-
-1. Download `GoogleService-Info.plist` from Firebase Console (iOS)
-2. Download `google-services.json` from Firebase Console (Android)
-3. Place files in the project root
+See [Environment Variables](#environment-variables) section for details on web configuration.
 
 ### 5. Run the Application
 
@@ -533,7 +540,17 @@ service firebase.storage {
 
 ## Environment Variables
 
-### Required Variables
+### Native Builds (iOS/Android)
+
+**No `.env` file is required for native builds.** Firebase configuration is automatically read from:
+- **iOS**: `GoogleService-Info.plist`
+- **Android**: `google-services.json`
+
+### Web Builds
+
+For web deployment, create a `.env` file with the following variables:
+
+#### Required Variables (Web)
 
 | Variable | Description | Example |
 |----------|-------------|---------|
@@ -544,12 +561,10 @@ service firebase.storage {
 | `EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | FCM sender ID | `123456789` |
 | `EXPO_PUBLIC_FIREBASE_APP_ID_WEB` | Web app ID | `1:123:web:abc` |
 
-### Optional Variables
+#### Optional Variables
 
 | Variable | Description | Example |
 |----------|-------------|---------|
-| `EXPO_PUBLIC_FIREBASE_APP_ID_IOS` | iOS app ID | `1:123:ios:abc` |
-| `EXPO_PUBLIC_FIREBASE_APP_ID_ANDROID` | Android app ID | `1:123:android:abc` |
 | `EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID` | Analytics ID | `G-XXXXXXX` |
 | `EXPO_PUBLIC_ONFIDO_API_TOKEN` | Onfido API token | `api_live_...` |
 | `EXPO_PUBLIC_ONFIDO_WORKFLOW_RUN_ID` | Onfido workflow ID | `workflow-id` |
@@ -703,10 +718,55 @@ npx expo export --platform web
 
 #### Firebase Connection Issues
 
-1. Verify environment variables are set correctly
-2. Check Firebase project settings
-3. Ensure Firestore/Auth services are enabled
-4. Check security rules allow the operations
+1. Verify environment variables are set correctly (web only)
+2. Verify `GoogleService-Info.plist` exists in project root (iOS)
+3. Verify `google-services.json` exists in `android/app/` (Android)
+4. Check Firebase project settings
+5. Ensure Firestore/Auth services are enabled
+6. Check security rules allow the operations
+
+#### Black Screen on iOS Simulator
+
+If the app shows a black screen when loading:
+
+1. **Metro bundler not ready**: On first run, Metro needs to build the cache which can take 30+ seconds. Wait for the "Bundled" message in the terminal.
+
+2. **Clear caches and restart**:
+   ```bash
+   # Kill any existing Metro processes
+   pkill -f "expo"
+
+   # Clear Metro and Watchman caches
+   watchman watch-del-all
+
+   # Start with clean cache
+   npx expo start --clear
+   ```
+
+3. **Reload the app**: Once Metro shows "Bundled", reload the app:
+   - Press `Cmd+R` in the simulator, or
+   - Shake device (`Ctrl+Cmd+Z`) to open dev menu and select "Reload"
+
+4. **Restart the app in simulator**:
+   ```bash
+   xcrun simctl terminate booted com.politicalnomination.app
+   xcrun simctl launch booted com.politicalnomination.app
+   ```
+
+#### Metro Bundler Issues
+
+If Metro isn't bundling or seems stuck:
+
+```bash
+# Check if something is using port 8081
+lsof -i :8081
+
+# Kill process on port 8081
+lsof -ti:8081 | xargs kill -9
+
+# Start Metro fresh with verbose output
+EXPO_DEBUG=true npx expo start --clear
+```
 
 ### Logs and Monitoring
 
