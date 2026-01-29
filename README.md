@@ -12,6 +12,7 @@ A cross-platform mobile application for democratic nominations, built with React
 - [Firebase Configuration](#firebase-configuration)
 - [Environment Variables](#environment-variables)
 - [Running the Application](#running-the-application)
+- [iOS Simulator Quick Start](#ios-simulator-quick-start)
 - [Deployment Options](#deployment-options)
 - [Troubleshooting](#troubleshooting)
 - [Additional Documentation](#additional-documentation)
@@ -613,6 +614,171 @@ npm run serve
 
 # Deploy to Firebase
 npm run deploy
+```
+
+---
+
+## iOS Simulator Quick Start
+
+This section provides step-by-step instructions for running the app on iOS Simulator from a clean state.
+
+### Prerequisites
+
+- macOS with Xcode 15+ installed
+- Xcode Command Line Tools: `xcode-select --install`
+- Node.js 18.x and npm 9.x+
+- `GoogleService-Info.plist` in project root (download from Firebase Console)
+
+### Clean Start (From Scratch)
+
+Use these steps when you want to start fresh or after pulling new changes:
+
+#### Step 1: Stop All Running Processes
+
+```bash
+# Kill any running Expo/Metro processes
+pkill -9 -f "expo" 2>/dev/null
+pkill -9 -f "metro" 2>/dev/null
+pkill -9 -f "node.*political" 2>/dev/null
+
+# Shutdown all iOS simulators
+xcrun simctl shutdown all 2>/dev/null
+
+# Close Simulator app
+pkill -9 Simulator 2>/dev/null
+```
+
+#### Step 2: Verify Port is Clear
+
+```bash
+# Check that port 8081 is free
+lsof -i :8081
+
+# If something is using it, kill it
+lsof -ti:8081 | xargs kill -9 2>/dev/null
+```
+
+#### Step 3: Install Dependencies (if needed)
+
+```bash
+# Only needed after fresh clone or package.json changes
+npm install
+```
+
+#### Step 4: Start Metro Bundler
+
+```bash
+# Start Expo/Metro dev server
+npx expo start
+```
+
+Wait until you see:
+```
+Starting Metro Bundler
+Waiting on http://localhost:8081
+```
+
+#### Step 5: Boot iOS Simulator
+
+In a **new terminal window**:
+
+```bash
+# Open Simulator app
+open -a Simulator
+
+# Boot a specific device (e.g., iPhone 16e)
+xcrun simctl boot "iPhone 16e"
+```
+
+#### Step 6: Launch the App
+
+```bash
+# Launch the app in the booted simulator
+xcrun simctl launch booted com.politicalnomination.app
+```
+
+### One-Liner Quick Start
+
+If the app is already built and installed on the simulator, use this single command sequence:
+
+```bash
+# Stop everything, start fresh, and launch
+pkill -9 -f "expo" 2>/dev/null; \
+pkill -9 -f "node.*political" 2>/dev/null; \
+xcrun simctl shutdown all 2>/dev/null; \
+sleep 2 && \
+npx expo start &
+sleep 20 && \
+open -a Simulator && \
+sleep 3 && \
+xcrun simctl boot "iPhone 16e" 2>/dev/null; \
+sleep 3 && \
+xcrun simctl launch booted com.politicalnomination.app
+```
+
+### Verifying Everything is Running
+
+```bash
+# Check Metro bundler is running
+curl -s http://localhost:8081/status
+# Should output: packager-status:running
+
+# Check simulator is booted
+xcrun simctl list devices booted
+
+# Check app is installed
+xcrun simctl listapps booted | grep politicalnomination
+```
+
+### Common Commands Reference
+
+| Task | Command |
+|------|---------|
+| Start Metro | `npx expo start` |
+| Start with clean cache | `npx expo start --clear` |
+| List available simulators | `xcrun simctl list devices available` |
+| Boot simulator | `xcrun simctl boot "iPhone 16e"` |
+| Shutdown all simulators | `xcrun simctl shutdown all` |
+| Launch app | `xcrun simctl launch booted com.politicalnomination.app` |
+| Terminate app | `xcrun simctl terminate booted com.politicalnomination.app` |
+| Reload app in simulator | Press `Cmd+R` or shake device (`Ctrl+Cmd+Z`) |
+| Check Metro status | `curl -s http://localhost:8081/status` |
+| Check port 8081 | `lsof -i :8081` |
+
+### Troubleshooting Quick Start
+
+#### Metro won't start / hangs at "Starting project"
+
+```bash
+# Reinstall node_modules
+rm -rf node_modules
+npm install
+npx expo start
+```
+
+#### App shows blank screen
+
+1. Wait for Metro to show "iOS Bundled" message
+2. Reload the app: `Cmd+R` in simulator
+3. Or terminate and relaunch:
+   ```bash
+   xcrun simctl terminate booted com.politicalnomination.app
+   xcrun simctl launch booted com.politicalnomination.app
+   ```
+
+#### "App not installed" error
+
+The app needs to be built first:
+```bash
+npx expo run:ios
+```
+This will build and install the app (takes 5-15 minutes on first run).
+
+#### Port 8081 already in use
+
+```bash
+lsof -ti:8081 | xargs kill -9
+npx expo start
 ```
 
 ---
