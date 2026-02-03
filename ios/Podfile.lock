@@ -1211,7 +1211,7 @@ PODS:
     - ExpoModulesCore
   - EXNotifications (0.29.14):
     - ExpoModulesCore
-  - Expo (52.0.48):
+  - Expo (52.0.49):
     - ExpoModulesCore
   - expo-dev-client (5.0.20):
     - EXManifests
@@ -1527,17 +1527,6 @@ PODS:
     - GTMSessionFetcher/Core (< 5.0, >= 3.4)
   - fmt (9.1.0)
   - glog (0.3.5)
-  - GoogleUtilities (8.1.0):
-    - GoogleUtilities/AppDelegateSwizzler (= 8.1.0)
-    - GoogleUtilities/Environment (= 8.1.0)
-    - GoogleUtilities/Logger (= 8.1.0)
-    - GoogleUtilities/MethodSwizzler (= 8.1.0)
-    - GoogleUtilities/Network (= 8.1.0)
-    - "GoogleUtilities/NSData+zlib (= 8.1.0)"
-    - GoogleUtilities/Privacy (= 8.1.0)
-    - GoogleUtilities/Reachability (= 8.1.0)
-    - GoogleUtilities/SwizzlerTestHelpers (= 8.1.0)
-    - GoogleUtilities/UserDefaults (= 8.1.0)
   - GoogleUtilities/AppDelegateSwizzler (8.1.0):
     - GoogleUtilities/Environment
     - GoogleUtilities/Logger
@@ -1548,9 +1537,6 @@ PODS:
   - GoogleUtilities/Logger (8.1.0):
     - GoogleUtilities/Environment
     - GoogleUtilities/Privacy
-  - GoogleUtilities/MethodSwizzler (8.1.0):
-    - GoogleUtilities/Logger
-    - GoogleUtilities/Privacy
   - GoogleUtilities/Network (8.1.0):
     - GoogleUtilities/Logger
     - "GoogleUtilities/NSData+zlib"
@@ -1560,11 +1546,6 @@ PODS:
     - GoogleUtilities/Privacy
   - GoogleUtilities/Privacy (8.1.0)
   - GoogleUtilities/Reachability (8.1.0):
-    - GoogleUtilities/Logger
-    - GoogleUtilities/Privacy
-  - GoogleUtilities/SwizzlerTestHelpers (8.1.0):
-    - GoogleUtilities/MethodSwizzler
-  - GoogleUtilities/UserDefaults (8.1.0):
     - GoogleUtilities/Logger
     - GoogleUtilities/Privacy
   - "gRPC-C++ (1.69.0)":
@@ -1659,11 +1640,7 @@ PODS:
     - gRPC-Core/Privacy (= 1.69.0)
   - gRPC-Core/Interface (1.69.0)
   - gRPC-Core/Privacy (1.69.0)
-  - GTMSessionFetcher (4.5.0):
-    - GTMSessionFetcher/Full (= 4.5.0)
   - GTMSessionFetcher/Core (4.5.0)
-  - GTMSessionFetcher/Full (4.5.0):
-    - GTMSessionFetcher/Core
   - hermes-engine (0.76.5):
     - hermes-engine/Pre-built (= 0.76.5)
   - hermes-engine/Pre-built (0.76.5)
@@ -3379,19 +3356,8 @@ DEPENDENCIES:
   - ExpoSplashScreen (from `../node_modules/expo-splash-screen/ios`)
   - EXUpdatesInterface (from `../node_modules/expo-updates-interface/ios`)
   - FBLazyVector (from `../node_modules/react-native/Libraries/FBLazyVector`)
-  - FirebaseAppCheckInterop
-  - FirebaseAuth
-  - FirebaseAuthInterop
-  - FirebaseCore
-  - FirebaseCoreExtension
-  - FirebaseCoreInternal
-  - FirebaseFirestore
-  - FirebaseFirestoreInternal
-  - FirebaseStorage
   - fmt (from `../node_modules/react-native/third-party-podspecs/fmt.podspec`)
   - glog (from `../node_modules/react-native/third-party-podspecs/glog.podspec`)
-  - GoogleUtilities
-  - GTMSessionFetcher
   - hermes-engine (from `../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec`)
   - RCT-Folly (from `../node_modules/react-native/third-party-podspecs/RCT-Folly.podspec`)
   - RCT-Folly/Fabric (from `../node_modules/react-native/third-party-podspecs/RCT-Folly.podspec`)
@@ -3453,7 +3419,6 @@ DEPENDENCIES:
   - React-utils (from `../node_modules/react-native/ReactCommon/react/utils`)
   - ReactCodegen (from `build/generated/ios`)
   - ReactCommon/turbomodule/core (from `../node_modules/react-native/ReactCommon`)
-  - RecaptchaInterop
   - "RNCAsyncStorage (from `../node_modules/@react-native-async-storage/async-storage`)"
   - "RNFBApp (from `../node_modules/@react-native-firebase/app`)"
   - "RNFBAuth (from `../node_modules/@react-native-firebase/auth`)"
@@ -3700,7 +3665,7 @@ SPEC CHECKSUMS:
   EXJSONUtils: 01fc7492b66c234e395dcffdd5f53439c5c29c93
   EXManifests: a19d50504b8826546a4782770317bc83fffec87d
   EXNotifications: 9d3d17e52c95f377750d4a2ae553a716313dd4aa
-  Expo: 3889933926fade17d8607f449c57b87c4022433f
+  Expo: 4bb70893882e6382b41d1e910d7226c6a1b85f0a
   expo-dev-client: db44302cdbe0ec55b0ef1849c9a23a76dec6dbac
   expo-dev-launcher: 98946caa932a286e7983febfeb3b02a131dcacce
   expo-dev-menu: 20fc5f3d3dcea7d915a353bfae72b727f8c656a9
@@ -3798,10 +3763,10 @@ SPEC CHECKSUMS:
   ReactCommon: 7da12c0f59956995a153de45835b64c89e0a4a57
   RecaptchaInterop: 11e0b637842dfb48308d242afc3f448062325aba
   RNCAsyncStorage: aa75595c1aefa18f868452091fa0c411a516ce11
-  RNFBApp: a448037d2df74af9d374a0b765be12ff1e844dc0
-  RNFBAuth: 006c81cb97cd6597a36f14ec332b229626283823
-  RNFBFirestore: 03f3648f47529a14b54e9b427c722898c9046917
-  RNFBStorage: f058204f5e684a95797ac78e2d3918fc3dd07b17
+  RNFBApp: 4105e54d9ca4a1c10893a032268470f670181110
+  RNFBAuth: 68dcd5fc893659b68b63646b1ff54d59001cb21a
+  RNFBFirestore: 80b3fb2371c3289343766b8bb5a72a4abf4cc052
+  RNFBStorage: f1869dc67955c3cfe17ed7d18e075e9783346c2b
   RNGestureHandler: 987692c2cbd41ad765a9195675f96b65ab1c0c99
   RNReanimated: 80f5a5dc0ff2cc7b2681ab01a7059bf5de479caa
   RNScreens: 9d4263adf1791e32fdc1a7c8aac8a401f75e83da
@@ -3809,6 +3774,6 @@ SPEC CHECKSUMS:
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
   Yoga: 7548e4449365bf0ef60db4aefe58abff37fcabec
 
-PODFILE CHECKSUM: 4c24fd97292a0375c1bcb31836aafb3b87946877
+PODFILE CHECKSUM: 6654a3eb94a240a93f64b6b1a65ee16890614096
 
 COCOAPODS: 1.16.2

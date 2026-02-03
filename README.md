@@ -69,9 +69,10 @@ The Political Nomination App is a participatory democracy platform that enables:
 
 ### System Requirements
 
-- **Node.js**: 18.x LTS (required)
+- **Node.js**: 20.x LTS (recommended) - Node 25+ has known compatibility issues
 - **npm**: 9.x or higher
 - **Git**: 2.40 or higher
+- **Watchman**: Recommended for better Metro performance (`brew install watchman`)
 
 ### Accounts Required
 
@@ -832,6 +833,13 @@ eas submit --platform android
 ---
 
 ## Troubleshooting
+
+> **For comprehensive troubleshooting, see [TROUBLESHOOTING.md](./TROUBLESHOOTING.md)** which covers:
+> - Node.js version requirements (use Node 20 LTS)
+> - iOS build issues (gRPC/Firebase conflicts)
+> - Metro bundler hanging issues
+> - Dev server connection problems
+> - Quick recovery steps
 
 ### Common Issues
 

@@ -7,35 +7,35 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		129F2FA3FC734B23B6232340 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 3E8C46F789CD4734AEE9A3E9 /* GoogleService-Info.plist */; };
 		13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB01A68108700A75B9A /* AppDelegate.mm */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		13B07FC11A68108700A75B9A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB71A68108700A75B9A /* main.m */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
+		9216F948ACB9487BB4D2D545 /* noop-file.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11F8F9A51414417694896ACD /* noop-file.swift */; };
+		93EC60F5201393B47F74D630 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 8E730CE44A33AFF429093184 /* PrivacyInfo.xcprivacy */; };
+		961F726029107C407D3316C8 /* Pods_PoliticalNomination.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4B8C8186594087EA338AC419 /* Pods_PoliticalNomination.framework */; };
 		B18059E884C0ABDD17F3DC3D /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAC715A2D49A985799AEE119 /* ExpoModulesProvider.swift */; };
-		BA36783181AC253DAD2865F8 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = F47C39A369BDB863CA072A01 /* PrivacyInfo.xcprivacy */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
-		C342E7E4DB9447C5A51F62E8 /* noop-file.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB149EC614B74900BF66204F /* noop-file.swift */; };
-		F80ECF2233E49F000FE566A1 /* Pods_PoliticalNomination.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8E7B6687AF8A54D077D968D7 /* Pods_PoliticalNomination.framework */; };
+		CF074B0892AF42B38FFDC0DE /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 4B653E4720AE4D259ABD0081 /* GoogleService-Info.plist */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		11F8F9A51414417694896ACD /* noop-file.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = "noop-file.swift"; path = "PoliticalNomination/noop-file.swift"; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* PoliticalNomination.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PoliticalNomination.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FAF1A68108700A75B9A /* AppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AppDelegate.h; path = PoliticalNomination/AppDelegate.h; sourceTree = "<group>"; };
 		13B07FB01A68108700A75B9A /* AppDelegate.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = AppDelegate.mm; path = PoliticalNomination/AppDelegate.mm; sourceTree = "<group>"; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = PoliticalNomination/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = PoliticalNomination/Info.plist; sourceTree = "<group>"; };
 		13B07FB71A68108700A75B9A /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = PoliticalNomination/main.m; sourceTree = "<group>"; };
-		3E8C46F789CD4734AEE9A3E9 /* GoogleService-Info.plist */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = text.plist.xml; name = "GoogleService-Info.plist"; path = "PoliticalNomination/GoogleService-Info.plist"; sourceTree = "<group>"; };
+		48D6ACBC752B48A5A4D48B35 /* PoliticalNomination-Bridging-Header.h */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.c.h; name = "PoliticalNomination-Bridging-Header.h"; path = "PoliticalNomination/PoliticalNomination-Bridging-Header.h"; sourceTree = "<group>"; };
+		4B653E4720AE4D259ABD0081 /* GoogleService-Info.plist */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = text.plist.xml; name = "GoogleService-Info.plist"; path = "PoliticalNomination/GoogleService-Info.plist"; sourceTree = "<group>"; };
+		4B8C8186594087EA338AC419 /* Pods_PoliticalNomination.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_PoliticalNomination.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		6C2E3173556A471DD304B334 /* Pods-PoliticalNomination.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PoliticalNomination.debug.xcconfig"; path = "Target Support Files/Pods-PoliticalNomination/Pods-PoliticalNomination.debug.xcconfig"; sourceTree = "<group>"; };
 		7A4D352CD337FB3A3BF06240 /* Pods-PoliticalNomination.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PoliticalNomination.release.xcconfig"; path = "Target Support Files/Pods-PoliticalNomination/Pods-PoliticalNomination.release.xcconfig"; sourceTree = "<group>"; };
-		8E7B6687AF8A54D077D968D7 /* Pods_PoliticalNomination.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_PoliticalNomination.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		8E730CE44A33AFF429093184 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = PoliticalNomination/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = PoliticalNomination/SplashScreen.storyboard; sourceTree = "<group>"; };
-		B9AD46782F304AD9972AFE31 /* PoliticalNomination-Bridging-Header.h */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.c.h; name = "PoliticalNomination-Bridging-Header.h"; path = "PoliticalNomination/PoliticalNomination-Bridging-Header.h"; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
-		EB149EC614B74900BF66204F /* noop-file.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = "noop-file.swift"; path = "PoliticalNomination/noop-file.swift"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
-		F47C39A369BDB863CA072A01 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = PoliticalNomination/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		FAC715A2D49A985799AEE119 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-PoliticalNomination/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -44,7 +44,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				F80ECF2233E49F000FE566A1 /* Pods_PoliticalNomination.framework in Frameworks */,
+				961F726029107C407D3316C8 /* Pods_PoliticalNomination.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -61,10 +61,10 @@
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				13B07FB71A68108700A75B9A /* main.m */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
-				3E8C46F789CD4734AEE9A3E9 /* GoogleService-Info.plist */,
-				EB149EC614B74900BF66204F /* noop-file.swift */,
-				B9AD46782F304AD9972AFE31 /* PoliticalNomination-Bridging-Header.h */,
-				F47C39A369BDB863CA072A01 /* PrivacyInfo.xcprivacy */,
+				4B653E4720AE4D259ABD0081 /* GoogleService-Info.plist */,
+				11F8F9A51414417694896ACD /* noop-file.swift */,
+				48D6ACBC752B48A5A4D48B35 /* PoliticalNomination-Bridging-Header.h */,
+				8E730CE44A33AFF429093184 /* PrivacyInfo.xcprivacy */,
 			);
 			name = PoliticalNomination;
 			sourceTree = "<group>";
@@ -73,7 +73,7 @@
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				8E7B6687AF8A54D077D968D7 /* Pods_PoliticalNomination.framework */,
+				4B8C8186594087EA338AC419 /* Pods_PoliticalNomination.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -150,14 +150,14 @@
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "PoliticalNomination" */;
 			buildPhases = (
 				08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */,
-				7B79E4C1C956A5614537EF75 /* [Expo] Configure project */,
+				4089495E93E7975EB2B2EEE6 /* [Expo] Configure project */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */,
-				3FEAF15684D99CB720065E4C /* [CP] Embed Pods Frameworks */,
-				CBD0EBF48FD6FD3DA5262A81 /* [CP-User] [RNFB] Core Configuration */,
+				B48D9022AA9DB0DDB3B1F7F0 /* [CP] Embed Pods Frameworks */,
+				DEAA47C30E36ABD4F933DC58 /* [CP-User] [RNFB] Core Configuration */,
 			);
 			buildRules = (
 			);
@@ -207,8 +207,8 @@
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
-				129F2FA3FC734B23B6232340 /* GoogleService-Info.plist in Resources */,
-				BA36783181AC253DAD2865F8 /* PrivacyInfo.xcprivacy in Resources */,
+				CF074B0892AF42B38FFDC0DE /* GoogleService-Info.plist in Resources */,
+				93EC60F5201393B47F74D630 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -252,25 +252,7 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		3FEAF15684D99CB720065E4C /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-PoliticalNomination/Pods-PoliticalNomination-frameworks.sh",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputPaths = (
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-PoliticalNomination/Pods-PoliticalNomination-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		7B79E4C1C956A5614537EF75 /* [Expo] Configure project */ = {
+		4089495E93E7975EB2B2EEE6 /* [Expo] Configure project */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
@@ -309,7 +291,6 @@
 				"${PODS_CONFIGURATION_BUILD_DIR}/FirebaseFirestore/FirebaseFirestore_Privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/FirebaseFirestoreInternal/FirebaseFirestoreInternal_Privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/GTMSessionFetcher/GTMSessionFetcher_Core_Privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/GTMSessionFetcher/GTMSessionFetcher_Full_Privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/GoogleUtilities/GoogleUtilities_Privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/RCT-Folly/RCT-Folly_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/RNCAsyncStorage/RNCAsyncStorage_resources.bundle",
@@ -341,7 +322,6 @@
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/FirebaseFirestore_Privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/FirebaseFirestoreInternal_Privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/GTMSessionFetcher_Core_Privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/GTMSessionFetcher_Full_Privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/GoogleUtilities_Privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/RCT-Folly_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/RNCAsyncStorage_resources.bundle",
@@ -363,7 +343,25 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-PoliticalNomination/Pods-PoliticalNomination-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		CBD0EBF48FD6FD3DA5262A81 /* [CP-User] [RNFB] Core Configuration */ = {
+		B48D9022AA9DB0DDB3B1F7F0 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-PoliticalNomination/Pods-PoliticalNomination-frameworks.sh",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputPaths = (
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-PoliticalNomination/Pods-PoliticalNomination-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		DEAA47C30E36ABD4F933DC58 /* [CP-User] [RNFB] Core Configuration */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -386,7 +384,7 @@
 				13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */,
 				13B07FC11A68108700A75B9A /* main.m in Sources */,
 				B18059E884C0ABDD17F3DC3D /* ExpoModulesProvider.swift in Sources */,
-				C342E7E4DB9447C5A51F62E8 /* noop-file.swift in Sources */,
+				9216F948ACB9487BB4D2D545 /* noop-file.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
