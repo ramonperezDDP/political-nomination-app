@@ -2,14 +2,16 @@
 
 This document covers common issues encountered when developing the Political Nomination app, along with solutions.
 
+> **Important:** Many build and Metro issues previously documented here were traced back to developing on iCloud Drive. If you are experiencing mysterious hangs, corrupted caches, or flaky builds, the first thing to check is whether your project is on iCloud Drive. See [macOS Environment Setup](#macos-environment-setup).
+
 ## Table of Contents
 - [macOS Environment Setup](#macos-environment-setup)
 - [Node.js Version Requirements](#nodejs-version-requirements)
 - [iOS Build Issues](#ios-build-issues)
-- [Metro Bundler Issues](#metro-bundler-issues)
 - [Dev Server Connection Issues](#dev-server-connection-issues)
 - [TypeScript Issues](#typescript-issues)
 - [Quick Recovery Steps](#quick-recovery-steps)
+- [Known Runtime Warnings](#known-runtime-warnings-non-blocking)
 
 ---
 
@@ -17,17 +19,22 @@ This document covers common issues encountered when developing the Political Nom
 
 ### Do NOT Develop on iCloud Drive
 
-If your project is in an iCloud Drive path (e.g. `~/Library/Mobile Documents/com~apple~CloudDocs/...`), clone it to a local directory first:
+**This is the single most important thing in this guide.** If your project is in an iCloud Drive path (e.g. `~/Library/Mobile Documents/com~apple~CloudDocs/...`), clone it to a local directory first:
 
 ```bash
 git clone <repo-url> ~/Developer/political-nomination-app
 cd ~/Developer/political-nomination-app
 ```
 
-iCloud Drive causes:
-- `rm -rf node_modules` takes 10+ minutes (vs seconds on local disk)
-- `npm install` is extremely slow due to iCloud sync overhead
-- Duplicate folders in node_modules (e.g. `@babel 2`) from sync artifacts
+iCloud Drive was the root cause of nearly all Metro and build instability we encountered, including:
+- **Metro hanging or returning 0 bytes** - iCloud syncing files while Metro's file watcher is reading them
+- **Build hanging at "Planning build"** - slow iCloud I/O causing Xcode to stall
+- **Corrupted node_modules** - iCloud creating duplicate folders (e.g. `@babel 2`)
+- **`npm install` taking forever** - iCloud syncing thousands of small files
+- **`rm -rf node_modules` taking 10+ minutes** - iCloud holding file locks
+- **Needing system reboots** to recover from hung processes
+
+Once we moved to a local directory, the build succeeded on the first attempt with zero Metro issues.
 
 ### CocoaPods: Use Homebrew (Not Ruby Gems)
 
@@ -148,109 +155,15 @@ The Swift pod `FirebaseAuth` depends upon `FirebaseAuthInterop`... which do not 
 
 **Solution:** Use the `use_frameworks! :linkage => :static` approach described above.
 
-### Build Hangs at "Planning build"
+### typedRoutes Causing Metro Hang
 
-**Possible Causes:**
-1. Metro bundler not responding
-2. Resource constraints (memory/disk)
-3. Corrupted build cache
+The `experiments.typedRoutes` setting in app.json can cause Metro to hang with the message "Waiting for TypeScript files to be added to the project...". As of Feb 2026, this is disabled in app.json:
 
-**Solutions:**
-```bash
-# Clear Xcode derived data
-rm -rf ~/Library/Developer/Xcode/DerivedData
-
-# Clean pods and rebuild
-cd ios
-rm -rf Pods Podfile.lock build
-pod install
-cd ..
-
-# Clear all caches and rebuild
-npx expo prebuild --clean --platform ios
+```json
+"experiments": {
+  "typedRoutes": false
+}
 ```
-
----
-
-## Metro Bundler Issues
-
-### Metro Hangs / Never Serves Bundles
-
-**Symptom:**
-- `curl http://localhost:8081/status` returns 200
-- `curl http://localhost:8081/index.bundle?platform=ios` times out
-- Debug logs show: "Waiting for TypeScript files to be added to the project..."
-
-**Possible Causes:**
-
-1. **typedRoutes experiment issue**
-   - The `experiments.typedRoutes` in app.json can cause Metro to hang
-   - Try disabling: set `"typedRoutes": false` in app.json
-   - **Note:** As of Feb 2026, typedRoutes is disabled due to Metro hanging issues
-
-2. **Corrupted caches**
-   ```bash
-   # Clear all caches
-   rm -rf .expo/
-   rm -rf node_modules/.cache/
-   watchman watch-del-all
-   npx expo start --clear
-   ```
-
-3. **Corrupted node_modules**
-   ```bash
-   rm -rf node_modules package-lock.json
-   npm install
-   ```
-
-4. **Memory issues**
-   ```bash
-   # Increase Node memory
-   export NODE_OPTIONS="--max-old-space-size=4096"
-   npx expo start
-   ```
-
-### Metro Accepts Connections But Returns 0 Bytes
-
-This is a critical issue where Metro's HTTP server accepts connections but the bundle transformation is stuck.
-
-**Diagnostic steps:**
-```bash
-# Check if Metro is listening
-lsof -i :8081
-
-# Test status endpoint (should work)
-curl http://localhost:8081/status
-
-# Test bundle (will timeout if stuck)
-curl http://localhost:8081/index.bundle?platform=ios --max-time 30
-```
-
-**Recovery:**
-1. Kill all Metro/Expo processes:
-   ```bash
-   pkill -f "expo"
-   pkill -f "metro"
-   ```
-
-2. Reset watchman:
-   ```bash
-   watchman watch-del-all
-   watchman shutdown-server
-   ```
-
-3. Clear caches and restart:
-   ```bash
-   rm -rf .expo/ node_modules/.cache/
-   npx expo start --clear
-   ```
-
-4. If still failing, try a full reinstall:
-   ```bash
-   rm -rf node_modules package-lock.json
-   npm install
-   npx expo start --clear
-   ```
 
 ---
 
@@ -310,7 +223,10 @@ npx tsc --noEmit
 
 ## Quick Recovery Steps
 
-If everything is broken, try these steps in order:
+If something is broken, try these steps in order:
+
+### Step 0: Check Your Working Directory
+Make sure you are NOT on iCloud Drive. If you are, clone to a local path first (see [above](#do-not-develop-on-icloud-drive)). This alone fixes most issues.
 
 ### Level 1: Clear Caches
 ```bash
@@ -355,9 +271,6 @@ cd ios && pod install && cd ..
 # Start fresh
 npx expo start --clear
 ```
-
-### Level 4: System Reboot
-If Metro is completely stuck and nothing helps, a system reboot may be necessary to clear hung processes and release resources.
 
 ---
 
