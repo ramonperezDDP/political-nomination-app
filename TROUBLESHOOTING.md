@@ -12,6 +12,7 @@ This document covers common issues encountered when developing the Political Nom
 - [TypeScript Issues](#typescript-issues)
 - [Quick Recovery Steps](#quick-recovery-steps)
 - [Known Runtime Warnings](#known-runtime-warnings-non-blocking)
+- [Verified Clean Build Procedure](#verified-clean-build-procedure)
 
 ---
 
@@ -155,6 +156,32 @@ The Swift pod `FirebaseAuth` depends upon `FirebaseAuthInterop`... which do not 
 
 **Solution:** Use the `use_frameworks! :linkage => :static` approach described above.
 
+### `expo prebuild --clean` Overwrites Podfile
+
+**Symptom:** After running `npx expo prebuild --clean --platform ios`, `pod install` fails with:
+```
+The Swift pod `FirebaseAuth` depends upon `FirebaseAuthInterop`... which do not define modules
+```
+
+**Cause:** `expo prebuild --clean` regenerates the Podfile from the Expo template, which does NOT include our required `use_frameworks! :linkage => :static` line. It also re-enables conditional `use_frameworks!` lines that conflict with our unconditional one.
+
+**Solution:** After every `expo prebuild --clean`, edit `ios/Podfile`:
+
+1. Add `use_frameworks! :linkage => :static` as the first line inside the target block:
+```ruby
+target 'PoliticalNomination' do
+  use_frameworks! :linkage => :static  # ADD THIS LINE
+  use_expo_modules!
+```
+
+2. Comment out the conditional `use_frameworks!` lines that prebuild generates:
+```ruby
+  # use_frameworks! :linkage => podfile_properties['ios.useFrameworks'].to_sym if podfile_properties['ios.useFrameworks']
+  # use_frameworks! :linkage => ENV['USE_FRAMEWORKS'].to_sym if ENV['USE_FRAMEWORKS']
+```
+
+3. Then run `cd ios && pod install && cd ..`
+
 ### typedRoutes Causing Metro Hang
 
 The `experiments.typedRoutes` setting in app.json can cause Metro to hang with the message "Waiting for TypeScript files to be added to the project...". As of Feb 2026, this is disabled in app.json:
@@ -205,16 +232,20 @@ Could not find a shared URI scheme for the dev client between the local /ios and
 
 ## TypeScript Issues
 
-### Known TypeScript Errors in Codebase
+### Status: Clean (All Errors Fixed)
 
-The following TypeScript errors exist but don't prevent the app from running:
+As of Feb 10, 2026, `npx tsc --noEmit` passes with **zero errors**. The following issues were fixed:
 
-1. **Route typing in login.tsx** - expo-router route type mismatch
-2. **ViewStyle issues** - Array style syntax in some components
-3. **Undefined `searchQuery`** in CandidateHome.tsx
-4. **Missing `averageSpectrum`** property in firestore.ts leaderboard entries
+| Error | File | Fix |
+|-------|------|-----|
+| ViewStyle array type mismatch | `app/candidate/[id].tsx:431` | Cast conditional style array with `as any` |
+| ViewStyle array type mismatch | `src/components/feed/PSACard.tsx:244` | Cast conditional style array with `as any` |
+| `searchQuery` not defined | `src/components/home/CandidateHome.tsx:42` | Added missing `const [searchQuery] = React.useState('')` |
+| `averageSpectrum` missing from leaderboard | `src/services/firebase/firestore.ts:1873,1896` | Computed from `candidate.topIssues` spectrum positions |
 
-To check TypeScript errors:
+**Note:** These errors do not prevent the app from building or running. Metro/Babel strips types at build time and never runs `tsc`. The fixes ensure correctness for CI type-checking.
+
+To verify:
 ```bash
 npx tsc --noEmit
 ```
@@ -301,6 +332,82 @@ This is an iOS 26 simulator issue. Haptic feedback is not available in the simul
 CoreUI: CUIThemeStore: No theme registered with id=0
 ```
 Standard iOS simulator noise. No impact on the app.
+
+---
+
+## Verified Clean Build Procedure
+
+The following steps produced a successful build from a completely clean state on Feb 10, 2026. Use this as a reference if starting fresh.
+
+### Prerequisites
+- macOS with Xcode 26.2+
+- Homebrew with `node@20`, `cocoapods`, `watchman` installed
+- `GoogleService-Info.plist` downloaded from Firebase Console
+
+### Steps
+
+```bash
+# 1. Clone to a LOCAL directory (NOT iCloud Drive)
+git clone https://github.com/ramonperezDDP/political-nomination-app.git ~/Developer/political-nomination-app
+cd ~/Developer/political-nomination-app
+
+# 2. Copy Firebase config into project root
+cp /path/to/GoogleService-Info.plist .
+
+# 3. Use Node 20 for this session
+export PATH="/opt/homebrew/opt/node@20/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
+node --version  # Should show v20.x.x
+
+# 4. Install dependencies (takes ~10 seconds on local disk)
+npm install
+
+# 5. Verify TypeScript (should pass clean)
+npx tsc --noEmit
+
+# 6. Generate iOS native project
+npx expo prebuild --clean --platform ios
+
+# 7. CRITICAL: Patch the Podfile (prebuild overwrites it)
+#    - Add `use_frameworks! :linkage => :static` after `target ... do`
+#    - Comment out the two conditional use_frameworks! lines
+#    (See "expo prebuild --clean Overwrites Podfile" section above)
+
+# 8. Install CocoaPods
+cd ios && pod install && cd ..
+
+# 9. Build the native app
+xcodebuild -workspace ios/PoliticalNomination.xcworkspace \
+  -scheme PoliticalNomination \
+  -configuration Debug \
+  -sdk iphonesimulator \
+  -destination 'platform=iOS Simulator,name=iPhone 16e' \
+  build
+
+# 10. Start Metro bundler
+npx expo start --clear &
+sleep 15
+
+# 11. Boot simulator and install app
+xcrun simctl boot "iPhone 16e"
+open -a Simulator
+xcrun simctl install booted $(find ~/Library/Developer/Xcode/DerivedData -name "PoliticalNomination.app" -path "*/Debug-iphonesimulator/*" -type d | head -1)
+xcrun simctl launch booted com.politicalnomination.app
+```
+
+### Expected Result
+- Home screen renders with "Political Nomination" branding, welcome video placeholder, Browse/Leaderboard buttons, and bottom tab bar
+- For You tab shows candidate PSA feed with alignment scores
+- Metro bundler shows "iOS Bundled" in terminal
+
+### Timing (on Apple Silicon, local disk)
+| Step | Duration |
+|------|----------|
+| `npm install` | ~10s |
+| `npx tsc --noEmit` | ~5s |
+| `expo prebuild` | ~15s |
+| `pod install` | ~25s |
+| `xcodebuild` | ~5-8 min (first build) |
+| Metro first bundle | ~15-20s |
 
 ---
 

@@ -244,7 +244,7 @@ export default function PSACard({ feedItem, isActive = true, selectedIssueId, is
             style={[
               styles.endorseButton,
               hasEndorsed && { backgroundColor: theme.colors.surfaceVariant },
-            ]}
+            ] as any}
             labelStyle={hasEndorsed ? { color: theme.colors.onSurfaceVariant } : undefined}
           >
             {hasEndorsed ? 'Endorsed' : 'Endorse'}

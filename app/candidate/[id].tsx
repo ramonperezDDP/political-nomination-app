@@ -431,7 +431,7 @@ export default function CandidateProfileScreen() {
               style={[
                 styles.endorseButton,
                 hasEndorsed && { backgroundColor: theme.colors.surfaceVariant },
-              ]}
+              ] as any}
               labelStyle={hasEndorsed ? { color: theme.colors.onSurfaceVariant } : undefined}
             >
               {hasEndorsed ? 'Endorsed' : 'Endorse'}

@@ -14,6 +14,7 @@ export default function CandidateHome() {
   const { user } = useAuthStore();
   const { candidate, fetchCandidateByUser, metrics, fetchMetrics } = useCandidateStore();
   const [notifications, setNotifications] = React.useState<Notification[]>([]);
+  const [searchQuery] = React.useState('');
 
   useEffect(() => {
     if (user?.id) {

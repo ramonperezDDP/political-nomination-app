@@ -1872,6 +1872,9 @@ export const getEndorsementLeaderboard = async (
 
   return snapshot.docs.map((doc, index) => {
     const candidate = doc.data() as Candidate;
+    const averageSpectrum = candidate.topIssues?.length
+      ? candidate.topIssues.reduce((sum, i) => sum + (i.spectrumPosition || 0), 0) / candidate.topIssues.length
+      : 0;
     return {
       candidateId: candidate.id,
       candidateName: '', // Will be populated from user data
@@ -1880,6 +1883,7 @@ export const getEndorsementLeaderboard = async (
       profileViews: candidate.profileViews,
       trendingScore: candidate.trendingScore,
       rank: index + 1,
+      averageSpectrum,
     };
   });
 };
@@ -1895,6 +1899,9 @@ export const getTrendingLeaderboard = async (
 
   return snapshot.docs.map((doc, index) => {
     const candidate = doc.data() as Candidate;
+    const averageSpectrum = candidate.topIssues?.length
+      ? candidate.topIssues.reduce((sum, i) => sum + (i.spectrumPosition || 0), 0) / candidate.topIssues.length
+      : 0;
     return {
       candidateId: candidate.id,
       candidateName: '',
@@ -1903,6 +1910,7 @@ export const getTrendingLeaderboard = async (
       profileViews: candidate.profileViews,
       trendingScore: candidate.trendingScore,
       rank: index + 1,
+      averageSpectrum,
     };
   });
 };
