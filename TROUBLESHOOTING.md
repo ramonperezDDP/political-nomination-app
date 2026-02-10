@@ -3,12 +3,75 @@
 This document covers common issues encountered when developing the Political Nomination app, along with solutions.
 
 ## Table of Contents
+- [macOS Environment Setup](#macos-environment-setup)
 - [Node.js Version Requirements](#nodejs-version-requirements)
 - [iOS Build Issues](#ios-build-issues)
 - [Metro Bundler Issues](#metro-bundler-issues)
 - [Dev Server Connection Issues](#dev-server-connection-issues)
 - [TypeScript Issues](#typescript-issues)
 - [Quick Recovery Steps](#quick-recovery-steps)
+
+---
+
+## macOS Environment Setup
+
+### Do NOT Develop on iCloud Drive
+
+If your project is in an iCloud Drive path (e.g. `~/Library/Mobile Documents/com~apple~CloudDocs/...`), clone it to a local directory first:
+
+```bash
+git clone <repo-url> ~/Developer/political-nomination-app
+cd ~/Developer/political-nomination-app
+```
+
+iCloud Drive causes:
+- `rm -rf node_modules` takes 10+ minutes (vs seconds on local disk)
+- `npm install` is extremely slow due to iCloud sync overhead
+- Duplicate folders in node_modules (e.g. `@babel 2`) from sync artifacts
+
+### CocoaPods: Use Homebrew (Not Ruby Gems)
+
+System Ruby 2.6 on macOS is incompatible with modern CocoaPods. Always install via Homebrew:
+
+```bash
+# Fix Homebrew permissions if needed (requires admin)
+sudo chown -R $(whoami) /opt/homebrew
+sudo chmod -R u+w /opt/homebrew
+
+# Install CocoaPods (bundles its own Ruby)
+brew install cocoapods
+
+# Verify
+pod --version  # Should show 1.16.x+
+```
+
+Do NOT use `sudo gem install cocoapods` - it will fail with `activesupport` Logger errors on system Ruby 2.6.
+
+### Recommended Homebrew Packages
+
+```bash
+brew install cocoapods watchman node@20
+```
+
+### Full PATH for Development
+
+```bash
+export PATH="/opt/homebrew/opt/node@20/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
+```
+
+Add this to your `~/.bash_profile` or `~/.zshrc` for persistence.
+
+### GoogleService-Info.plist Placement
+
+The Firebase config file must exist in **two** locations:
+1. Project root: `./GoogleService-Info.plist`
+2. iOS target: `./ios/PoliticalNomination/GoogleService-Info.plist`
+
+If the iOS build fails with `Build input file cannot be found: .../GoogleService-Info.plist`, copy it:
+
+```bash
+cp GoogleService-Info.plist ios/PoliticalNomination/
+```
 
 ---
 
@@ -298,11 +361,45 @@ If Metro is completely stuck and nothing helps, a system reboot may be necessary
 
 ---
 
+## Known Runtime Warnings (Non-Blocking)
+
+These warnings appear in the Metro logs but do not affect app functionality:
+
+### Firebase Namespaced API Deprecation
+```
+WARN  This method is deprecated (as well as all React Native Firebase namespaced API)...
+```
+The codebase uses the legacy Firebase namespaced API. These warnings are informational and will need to be addressed before upgrading to RN Firebase v22. See [migration guide](https://rnfirebase.io/migrating-to-v22).
+
+### Firestore Permission Denied
+```
+WARN  Error checking questions: [Error: [firestore/permission-denied]...]
+```
+This occurs when the user is not authenticated. It is expected behavior from Firestore security rules, not a code bug.
+
+### CoreHaptics (iOS Simulator Only)
+```
+CHHapticPattern: Failed to read pattern library data... hapticpatternlibrary.plist
+```
+This is an iOS 26 simulator issue. Haptic feedback is not available in the simulator; the app falls back gracefully. Does not appear on physical devices.
+
+### CoreUI Theme Warning
+```
+CoreUI: CUIThemeStore: No theme registered with id=0
+```
+Standard iOS simulator noise. No impact on the app.
+
+---
+
 ## Environment Information
 
-This troubleshooting guide was created with:
-- macOS Darwin 24.6.0
-- Node.js 20.20.0 (recommended)
+This troubleshooting guide was tested with:
+- macOS 26 (Darwin 25.2.0)
+- Xcode 26.2
+- Node.js 20.20.0 (via Homebrew node@20)
+- npm 10.8.2
+- CocoaPods 1.16.2 (via Homebrew)
+- watchman 2026.01.12.00
 - Expo SDK 52
 - React Native 0.76.5
 - Firebase 11.11.0
