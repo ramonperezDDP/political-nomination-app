@@ -13,6 +13,7 @@ import {
   inferGenderFromName,
 } from '@/services/firebase/firestore';
 import { useAuthStore, useConfigStore, useUserStore } from '@/stores';
+import { calculateAlignmentScore } from '@/utils/alignment';
 import {
   Card,
   CandidateAvatar,
@@ -48,30 +49,27 @@ export default function CandidateProfileScreen() {
   // Check endorsement status from global store
   const hasEndorsed = id ? hasEndorsedCandidate(id) : false;
 
-  // Calculate alignment score and matching details
+  // Calculate alignment score and matching details (same algorithm as For You feed)
   const alignmentDetails = useMemo(() => {
     if (!candidate || !currentUser) {
-      return { score: 0, matchedIssues: [], hasDealbreaker: false, matchedIssueNames: [] };
+      return { score: 0, matchedIssues: [], hasDealbreaker: false, matchedIssueNames: [], userIssueCount: 0 };
     }
 
-    const candidateIssueIds = candidate.topIssues?.map((ti) => ti.issueId) || [];
     const userIssues = currentUser.selectedIssues || [];
     const userDealbreakers = currentUser.dealbreakers || [];
 
-    const matchedIssues = candidateIssueIds.filter((id) => userIssues.includes(id));
-    const matchRatio = userIssues.length > 0 ? matchedIssues.length / userIssues.length : 0;
+    // Use only priority issues (≤ 5), same as the For You feed
+    const candidatePriorityIssues = (candidate.topIssues || [])
+      .filter((ti) => ti.priority <= 5)
+      .sort((a, b) => a.priority - b.priority);
+    const candidateIssueIds = candidatePriorityIssues.map((ti) => ti.issueId);
 
-    // Check for dealbreakers
-    const hasDealbreaker = userDealbreakers.some((dealbreaker) => {
-      const position = candidate.topIssues?.find((p) => p.issueId === dealbreaker);
-      return position && Math.abs(position.spectrumPosition) > 80;
+    const { score, matchedIssues, hasDealbreaker } = calculateAlignmentScore({
+      candidateIssues: candidateIssueIds,
+      userIssues,
+      candidatePositions: candidatePriorityIssues,
+      userDealbreakers,
     });
-
-    // Calculate score
-    const matchBonus = matchedIssues.length * 12;
-    const ratioBonus = matchRatio * 25;
-    const baseScore = Math.round(40 + matchBonus + ratioBonus);
-    const score = Math.min(100, Math.max(0, baseScore));
 
     // Get matched issue names for display
     const matchedIssueNames = matchedIssues.map(
