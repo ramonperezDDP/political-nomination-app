@@ -18,21 +18,14 @@ export default function HomeScreen() {
       edges={['top']}
     >
       <View style={styles.header}>
-        <View style={styles.logoContainer}>
-          <Image
-            source={require('../../assets/amsp-logo.png')}
-            style={styles.logo}
-            resizeMode="contain"
-          />
-          <View style={styles.titleContainer}>
-            <Text variant="titleLarge" style={styles.appTitle}>
-              {partyConfig?.partyName || "America's Main Street Party"}
-            </Text>
-            <Text variant="bodySmall" style={{ color: theme.colors.outline }}>
-              {partyConfig?.tagline || 'Your voice matters'}
-            </Text>
-          </View>
-        </View>
+        <Image
+          source={require('../../assets/amsp-logo.png')}
+          style={styles.logo}
+          resizeMode="contain"
+        />
+        <Text variant="bodySmall" style={{ color: theme.colors.outline }}>
+          {partyConfig?.tagline || 'Your voice matters'}
+        </Text>
       </View>
 
       <ScrollView
@@ -55,23 +48,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    padding: 16,
-    paddingBottom: 8,
-  },
-  logoContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 4,
   },
   logo: {
-    width: 120,
-    height: 48,
-    borderRadius: 8,
-  },
-  titleContainer: {
-    marginLeft: 12,
-  },
-  appTitle: {
-    fontWeight: 'bold',
+    width: 160,
+    height: 44,
   },
   content: {
     flex: 1,
