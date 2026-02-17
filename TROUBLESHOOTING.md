@@ -1,6 +1,6 @@
 # Troubleshooting Guide
 
-This document covers common issues encountered when developing the Political Nomination app, along with solutions.
+This document covers common issues encountered when developing the America's Main Street Party app, along with solutions.
 
 > **Important:** Many build and Metro issues previously documented here were traced back to developing on iCloud Drive. If you are experiencing mysterious hangs, corrupted caches, or flaky builds, the first thing to check is whether your project is on iCloud Drive. See [macOS Environment Setup](#macos-environment-setup).
 
@@ -395,7 +395,7 @@ xcrun simctl launch booted com.politicalnomination.app
 ```
 
 ### Expected Result
-- Home screen renders with "Political Nomination" branding, welcome video placeholder, Browse/Leaderboard buttons, and bottom tab bar
+- Home screen renders with AMSP branding (logo, light theme), welcome video placeholder, Browse/Leaderboard buttons, and bottom tab bar
 - For You tab shows candidate PSA feed with alignment scores
 - Metro bundler shows "iOS Bundled" in terminal
 

@@ -1,6 +1,6 @@
-# Political Nomination App
+# America's Main Street Party App
 
-A cross-platform mobile application for democratic nominations, built with React Native, Expo, and Firebase.
+A cross-platform mobile application for democratic nominations, built with React Native, Expo, and Firebase. Branded for **America's Main Street Party (AMSP)** with a custom light theme, Nunito Sans typeface, and the AMSP color palette (Purple, Blue, Red).
 
 ## Table of Contents
 
@@ -21,7 +21,7 @@ A cross-platform mobile application for democratic nominations, built with React
 
 ## Overview
 
-The Political Nomination App is a participatory democracy platform that enables:
+The America's Main Street Party App is a participatory democracy platform that enables:
 
 - **Voters** to discover candidates aligned with their policy preferences, complete questionnaires, and provide endorsements
 - **Candidates** to apply for nomination, build profiles, and track campaign metrics
@@ -33,7 +33,9 @@ The Political Nomination App is a participatory democracy platform that enables:
 |-------|------------|
 | Frontend | React Native 0.76.5, Expo 52 |
 | State Management | Zustand, TanStack Query |
-| UI Framework | React Native Paper (Material Design 3) |
+| UI Framework | React Native Paper (Material Design 3, AMSP light theme) |
+| Typeface | Nunito Sans (Regular, Bold, Black) |
+| Brand Colors | Purple `#5a3977`, Blue `#067eba`, Red `#de482e` |
 | Backend | Firebase (Auth, Firestore, Storage, Functions) |
 | Language | TypeScript 5.6 |
 
@@ -177,7 +179,7 @@ This section provides step-by-step instructions for deploying the application on
 # Create security group
 aws ec2 create-security-group \
   --group-name political-nomination-sg \
-  --description "Security group for Political Nomination App"
+  --description "Security group for AMSP App"
 
 # Add inbound rules
 aws ec2 authorize-security-group-ingress \

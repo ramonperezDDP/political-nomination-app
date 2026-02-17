@@ -1,6 +1,6 @@
 # System Requirements
 
-This document outlines the system requirements for deploying the Political Nomination App on AWS EC2.
+This document outlines the system requirements for deploying the America's Main Street Party App on AWS EC2.
 
 ## Minimum Hardware Requirements
 

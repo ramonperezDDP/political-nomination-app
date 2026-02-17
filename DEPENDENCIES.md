@@ -1,6 +1,6 @@
 # Dependencies Documentation
 
-This document provides a comprehensive overview of all dependencies used in the Political Nomination App.
+This document provides a comprehensive overview of all dependencies used in the America's Main Street Party App.
 
 ## Table of Contents
 
@@ -56,6 +56,8 @@ This document provides a comprehensive overview of all dependencies used in the 
 | Package | Version | Purpose | License |
 |---------|---------|---------|---------|
 | react-native-paper | ^5.12.5 | Material Design 3 UI | MIT |
+| @expo-google-fonts/nunito-sans | latest | AMSP brand typeface | MIT |
+| expo-font | latest | Font loading | MIT |
 | @expo/vector-icons | ^14.0.4 | Icon library | MIT |
 | react-native-svg | 15.8.0 | SVG rendering | MIT |
 | react-native-gesture-handler | ~2.20.2 | Gesture handling | MIT |
@@ -158,6 +160,8 @@ political-nomination-app
 │
 ├── UI Layer
 │   ├── react-native-paper (^5.12.5)
+│   ├── @expo-google-fonts/nunito-sans (AMSP typeface)
+│   ├── expo-font (font loading)
 │   ├── react-native-gesture-handler (~2.20.2)
 │   ├── react-native-reanimated (~3.16.5)
 │   └── react-native-svg (15.8.0)
