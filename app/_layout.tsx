@@ -2,13 +2,20 @@ import { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { PaperProvider, MD3DarkTheme, MD3LightTheme } from 'react-native-paper';
+import { PaperProvider } from 'react-native-paper';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useColorScheme, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
+import {
+  useFonts,
+  NunitoSans_400Regular,
+  NunitoSans_700Bold,
+  NunitoSans_900Black,
+} from '@expo-google-fonts/nunito-sans';
 
 import { useAuthStore, useConfigStore, useUserStore } from '@/stores';
+import { amspLightTheme } from '@/constants/theme';
 
 // Prevent splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
@@ -23,45 +30,18 @@ const queryClient = new QueryClient({
   },
 });
 
-// Custom theme colors
-const customColors = {
-  primary: '#1a1a2e',
-  secondary: '#4a4a6e',
-  tertiary: '#e94560',
-  surface: '#16213e',
-  background: '#0f0f23',
-  error: '#cf6679',
-  onPrimary: '#ffffff',
-  onSecondary: '#ffffff',
-  onSurface: '#ffffff',
-  onBackground: '#ffffff',
-};
-
-const darkTheme = {
-  ...MD3DarkTheme,
-  colors: {
-    ...MD3DarkTheme.colors,
-    ...customColors,
-  },
-};
-
-const lightTheme = {
-  ...MD3LightTheme,
-  colors: {
-    ...MD3LightTheme.colors,
-    primary: customColors.primary,
-    secondary: customColors.secondary,
-    tertiary: customColors.tertiary,
-  },
-};
-
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
   const initializeAuth = useAuthStore((state) => state.initialize);
   const isAuthInitialized = useAuthStore((state) => state.isInitialized);
   const user = useAuthStore((state) => state.user);
   const initializeConfig = useConfigStore((state) => state.initialize);
   const fetchEndorsements = useUserStore((state) => state.fetchEndorsements);
+
+  const [fontsLoaded] = useFonts({
+    NunitoSans_400Regular,
+    NunitoSans_700Bold,
+    NunitoSans_900Black,
+  });
 
   useEffect(() => {
     // Initialize auth listener
@@ -84,19 +64,19 @@ export default function RootLayout() {
   }, [user?.id, fetchEndorsements]);
 
   useEffect(() => {
-    if (isAuthInitialized) {
+    if (isAuthInitialized && fontsLoaded) {
       SplashScreen.hideAsync();
     }
-  }, [isAuthInitialized]);
+  }, [isAuthInitialized, fontsLoaded]);
 
-  const theme = colorScheme === 'dark' ? darkTheme : lightTheme;
+  const theme = amspLightTheme;
 
   return (
     <GestureHandlerRootView style={styles.container}>
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
           <PaperProvider theme={theme}>
-            <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+            <StatusBar style="dark" />
             <Stack screenOptions={{ headerShown: false }}>
               <Stack.Screen name="(tabs)" />
               <Stack.Screen name="(auth)" />

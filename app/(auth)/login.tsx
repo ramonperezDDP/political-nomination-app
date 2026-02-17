@@ -69,11 +69,11 @@ export default function LoginScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.header}>
-            <View style={[styles.logoPlaceholder, { backgroundColor: theme.colors.primary }]}>
-              <Text variant="headlineLarge" style={styles.logoText}>
-                PN
-              </Text>
-            </View>
+            <Image
+              source={require('../../assets/amsp-logo.png')}
+              style={styles.logoPlaceholder}
+              resizeMode="contain"
+            />
             <Text variant="headlineMedium" style={styles.title}>
               Welcome Back
             </Text>
@@ -175,16 +175,9 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   logoPlaceholder: {
-    width: 80,
+    width: 200,
     height: 80,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
     marginBottom: 24,
-  },
-  logoText: {
-    color: '#ffffff',
-    fontWeight: 'bold',
   },
   title: {
     fontWeight: 'bold',

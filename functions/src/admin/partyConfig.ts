@@ -47,9 +47,9 @@ export const updatePartyConfig = functions.https.onCall(
         const configRef = db.collection('partyConfig').doc();
         await configRef.set({
           id: configRef.id,
-          partyName: data.partyName || 'Political Party',
-          primaryColor: data.primaryColor || '#1a1a2e',
-          secondaryColor: data.secondaryColor || '#4a4a6e',
+          partyName: data.partyName || "America's Main Street Party",
+          primaryColor: data.primaryColor || '#5a3977',
+          secondaryColor: data.secondaryColor || '#067eba',
           logoUrl: data.logoUrl || '',
           tagline: data.tagline || 'Your voice matters',
           contestStage: data.contestStage || 'pre_nomination',

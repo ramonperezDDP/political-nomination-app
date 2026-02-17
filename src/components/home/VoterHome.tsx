@@ -85,7 +85,7 @@ export default function VoterHome() {
         </View>
         <View style={styles.videoInfo}>
           <Text variant="titleMedium" style={styles.videoTitle}>
-            Welcome to {partyConfig?.partyName || 'Political Nomination'}
+            Welcome to {partyConfig?.partyName || "America's Main Street Party"}
           </Text>
           <Text variant="bodyMedium" style={{ color: theme.colors.outline }}>
             Learn how our democratic nomination process works

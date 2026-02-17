@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View, ScrollView } from 'react-native';
+import { StyleSheet, View, ScrollView, Image } from 'react-native';
 import { Text, useTheme } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -19,14 +19,14 @@ export default function HomeScreen() {
     >
       <View style={styles.header}>
         <View style={styles.logoContainer}>
-          <View style={[styles.logo, { backgroundColor: theme.colors.primary }]}>
-            <Text variant="titleLarge" style={styles.logoText}>
-              PN
-            </Text>
-          </View>
+          <Image
+            source={require('../../assets/amsp-logo.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
           <View style={styles.titleContainer}>
             <Text variant="titleLarge" style={styles.appTitle}>
-              {partyConfig?.partyName || 'Political Nomination'}
+              {partyConfig?.partyName || "America's Main Street Party"}
             </Text>
             <Text variant="bodySmall" style={{ color: theme.colors.outline }}>
               {partyConfig?.tagline || 'Your voice matters'}
@@ -63,15 +63,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logo: {
-    width: 48,
+    width: 120,
     height: 48,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  logoText: {
-    color: '#ffffff',
-    fontWeight: 'bold',
+    borderRadius: 8,
   },
   titleContainer: {
     marginLeft: 12,

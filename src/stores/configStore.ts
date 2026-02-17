@@ -87,13 +87,13 @@ export const selectContestStage = (state: ConfigState): ContestStage =>
   state.partyConfig?.contestStage || 'pre_nomination';
 
 export const selectPrimaryColor = (state: ConfigState): string =>
-  state.partyConfig?.primaryColor || '#1a1a2e';
+  state.partyConfig?.primaryColor || '#5a3977';
 
 export const selectSecondaryColor = (state: ConfigState): string =>
-  state.partyConfig?.secondaryColor || '#4a4a6e';
+  state.partyConfig?.secondaryColor || '#067eba';
 
 export const selectPartyName = (state: ConfigState): string =>
-  state.partyConfig?.partyName || 'Political Party';
+  state.partyConfig?.partyName || "America's Main Street Party";
 
 export const selectIssuesByCategory = (state: ConfigState) => {
   const categories = new Map<string, Issue[]>();
@@ -115,9 +115,9 @@ export const selectEndorsementCutoffs = (state: ConfigState) =>
 // Default config for fallback
 export const defaultPartyConfig: PartyConfig = {
   id: 'default',
-  partyName: 'Political Party',
-  primaryColor: '#1a1a2e',
-  secondaryColor: '#4a4a6e',
+  partyName: "America's Main Street Party",
+  primaryColor: '#5a3977',
+  secondaryColor: '#067eba',
   logoUrl: '',
   tagline: 'Your voice matters',
   contestStage: 'pre_nomination',
