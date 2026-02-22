@@ -9,6 +9,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useAuthStore } from '@/stores';
 import { PrimaryButton, SecondaryButton, UserAvatar, LoadingOverlay, Card } from '@/components/ui';
 import { updateUser } from '@/services/firebase/firestore';
+import { uploadProfilePhoto } from '@/services/firebase/storage';
 
 export default function PersonalInfoScreen() {
   const theme = useTheme();
@@ -57,9 +58,22 @@ export default function PersonalInfoScreen() {
 
     setIsSaving(true);
     try {
+      let finalPhotoUrl = photoUrl;
+
+      // If the photo is a local file URI (newly picked), upload to Storage first
+      if (photoUrl && (photoUrl.startsWith('file://') || photoUrl.startsWith('ph://'))) {
+        const uploadResult = await uploadProfilePhoto(user.id, photoUrl);
+        if (!uploadResult.success) {
+          Alert.alert('Upload Failed', uploadResult.error || 'Failed to upload profile photo.');
+          setIsSaving(false);
+          return;
+        }
+        finalPhotoUrl = uploadResult.url;
+      }
+
       await updateUser(user.id, {
         displayName: displayName.trim(),
-        photoUrl: photoUrl,
+        photoUrl: finalPhotoUrl,
       });
 
       // User data will be updated automatically via the real-time subscription

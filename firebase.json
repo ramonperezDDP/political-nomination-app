@@ -1,4 +1,11 @@
 {
+  "storage": {
+    "rules": "firebase/storage.rules"
+  },
+  "firestore": {
+    "rules": "firebase/firestore.rules",
+    "indexes": "firebase/firestore.indexes.json"
+  },
   "react-native": {
     "crashlytics_debug_enabled": false,
     "crashlytics_auto_collection_enabled": false,

@@ -1,13 +1,7 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
-    // DEVELOPMENT MODE: Allow all authenticated users to read/write
-    // TODO: Re-enable strict rules before production deployment
-    match /{allPaths=**} {
-      allow read, write: if request.auth != null;
-    }
-
-    // Helper functions (for reference when re-enabling strict rules)
+    // Helper functions
     function isAuthenticated() {
       return request.auth != null;
     }

@@ -402,7 +402,7 @@ sudo certbot --nginx -d your-domain.com
 sudo certbot renew --dry-run
 ```
 
-### Step 10: Deploy Firebase Functions
+### Step 10: Deploy Firebase Rules and Functions
 
 ```bash
 # Login to Firebase
@@ -410,6 +410,9 @@ firebase login --no-localhost
 
 # Select your project
 firebase use your-project-id
+
+# Deploy security rules (Firestore and Storage)
+firebase deploy --only firestore:rules,storage:rules
 
 # Deploy functions
 cd functions
@@ -495,50 +498,38 @@ Enable the following services in Firebase Console:
 
 ### 5. Set Up Firestore Security Rules
 
-In Firebase Console > Firestore > Rules:
+Firestore rules are defined in `firebase/firestore.rules` and can be deployed via CLI:
 
-```javascript
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    // Users collection
-    match /users/{userId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null && request.auth.uid == userId;
-    }
-
-    // Candidates collection
-    match /candidates/{candidateId} {
-      allow read: if true;
-      allow write: if request.auth != null;
-    }
-
-    // Endorsements collection
-    match /endorsements/{endorsementId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null;
-    }
-
-    // Other collections...
-  }
-}
+```bash
+firebase deploy --only firestore:rules --project party-nomination-app
 ```
+
+Or paste the contents of `firebase/firestore.rules` into Firebase Console > Firestore > Rules.
 
 ### 6. Set Up Storage Security Rules
 
-In Firebase Console > Storage > Rules:
+Storage rules are defined in `firebase/storage.rules` and can be deployed via CLI:
 
-```javascript
-rules_version = '2';
-service firebase.storage {
-  match /b/{bucket}/o {
-    match /{allPaths=**} {
-      allow read: if true;
-      allow write: if request.auth != null;
-    }
-  }
-}
+```bash
+firebase deploy --only storage:rules --project party-nomination-app
 ```
+
+Or paste the contents of `firebase/storage.rules` into Firebase Console > Storage > Rules.
+
+The rules enforce per-path access control:
+
+| Path | Read | Write | Size Limit |
+|------|------|-------|------------|
+| `profilePhotos/{userId}/` | Authenticated users | Owner only, images | 5 MB |
+| `psaVideos/{candidateId}/` | Authenticated users | Authenticated, video | 500 MB |
+| `psaThumbnails/{candidateId}/` | Authenticated users | Authenticated, images | 2 MB |
+| `signatureDocs/{userId}/` | Owner or admin | Owner, PDF/image | 50 MB |
+| `idDocs/{userId}/` | Owner or admin | Owner, PDF/image | 10 MB |
+| `resumes/{userId}/` | Owner or admin | Owner, PDF/image | 10 MB |
+| `taxReturns/{userId}/` | Admin only | Owner, PDF/image | 50 MB |
+| `messageAttachments/` | Authenticated users | Authenticated, image/PDF | 10 MB |
+
+All other paths are denied by default. Unauthenticated users have no access.
 
 ---
 
