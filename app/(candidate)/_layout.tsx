@@ -1,4 +1,5 @@
-import { Stack, Redirect } from 'expo-router';
+import { Stack, Slot, Redirect } from 'expo-router';
+import { Platform } from 'react-native';
 import { useTheme } from 'react-native-paper';
 
 import { useAuthStore, selectIsAuthenticated, selectIsCandidate } from '@/stores';
@@ -22,6 +23,11 @@ export default function CandidateLayout() {
 
   // Allow access to apply screen for all verified users
   // Other screens only for approved candidates
+
+  // On web, use Slot to avoid react-native-screens animated style issues
+  if (Platform.OS === 'web') {
+    return <Slot />;
+  }
 
   return (
     <Stack

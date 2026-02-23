@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { StyleSheet, View, ScrollView } from 'react-native';
+import { StyleSheet, View, ScrollView, Platform } from 'react-native';
 import { Text, useTheme, RadioButton, ProgressBar } from 'react-native-paper';
 import Slider from '@react-native-community/slider';
 import { router } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView as NativeSafeAreaView } from 'react-native-safe-area-context';
+
+const SafeAreaView = Platform.OS === 'web' ? View : NativeSafeAreaView;
 
 import { useAuthStore, useUserStore } from '@/stores';
 import { getQuestions, ensureQuestionsExist } from '@/services/firebase/firestore';

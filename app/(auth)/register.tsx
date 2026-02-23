@@ -2,13 +2,17 @@ import React from 'react';
 import {
   StyleSheet,
   View,
-  KeyboardAvoidingView,
+  KeyboardAvoidingView as RNKeyboardAvoidingView,
   Platform,
   ScrollView,
 } from 'react-native';
+
+const KeyboardAvoidingView = Platform.OS === 'web' ? View : RNKeyboardAvoidingView;
 import { Text, useTheme, Checkbox } from 'react-native-paper';
 import { Link, router } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView as NativeSafeAreaView } from 'react-native-safe-area-context';
+
+const SafeAreaView = Platform.OS === 'web' ? View : NativeSafeAreaView;
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -74,6 +78,172 @@ export default function RegisterScreen() {
       router.replace('/(auth)/verify-identity');
     }
   };
+
+  // Web registration — uses Paper components directly to avoid style array issues
+  if (Platform.OS === 'web') {
+    const { TextInput, Button, HelperText, ActivityIndicator } = require('react-native-paper');
+    return (
+      <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+        {isLoading && (
+          <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', zIndex: 10 }}>
+            <ActivityIndicator size="large" color="#fff" />
+            <Text style={{ color: '#fff', marginTop: 12 }}>Creating account...</Text>
+          </View>
+        )}
+        <ScrollView contentContainerStyle={{ flexGrow: 1, padding: 24, maxWidth: 480, alignSelf: 'center', width: '100%' }}>
+          <View style={{ marginBottom: 32 }}>
+            <Text variant="headlineMedium" style={{ fontWeight: 'bold', marginBottom: 8 }}>
+              Create Account
+            </Text>
+            <Text variant="bodyLarge" style={{ color: theme.colors.outline }}>
+              Join the democratic process
+            </Text>
+          </View>
+
+          <View style={{ marginBottom: 24 }}>
+            <Controller
+              control={control}
+              name="displayName"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <View style={{ marginBottom: 8 }}>
+                  <TextInput
+                    label="Full Name"
+                    value={value}
+                    onChangeText={onChange}
+                    onBlur={onBlur}
+                    mode="outlined"
+                    autoCapitalize="words"
+                    error={!!errors.displayName}
+                  />
+                  {errors.displayName && (
+                    <HelperText type="error">{errors.displayName.message}</HelperText>
+                  )}
+                </View>
+              )}
+            />
+
+            <Controller
+              control={control}
+              name="email"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <View style={{ marginBottom: 8 }}>
+                  <TextInput
+                    label="Email"
+                    value={value}
+                    onChangeText={onChange}
+                    onBlur={onBlur}
+                    mode="outlined"
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    error={!!errors.email}
+                  />
+                  {errors.email && (
+                    <HelperText type="error">{errors.email.message}</HelperText>
+                  )}
+                </View>
+              )}
+            />
+
+            <Controller
+              control={control}
+              name="password"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <View style={{ marginBottom: 8 }}>
+                  <TextInput
+                    label="Password"
+                    value={value}
+                    onChangeText={onChange}
+                    onBlur={onBlur}
+                    mode="outlined"
+                    secureTextEntry
+                    error={!!errors.password}
+                  />
+                  {errors.password && (
+                    <HelperText type="error">{errors.password.message}</HelperText>
+                  )}
+                </View>
+              )}
+            />
+
+            <Controller
+              control={control}
+              name="confirmPassword"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <View style={{ marginBottom: 8 }}>
+                  <TextInput
+                    label="Confirm Password"
+                    value={value}
+                    onChangeText={onChange}
+                    onBlur={onBlur}
+                    mode="outlined"
+                    secureTextEntry
+                    error={!!errors.confirmPassword}
+                  />
+                  {errors.confirmPassword && (
+                    <HelperText type="error">{errors.confirmPassword.message}</HelperText>
+                  )}
+                </View>
+              )}
+            />
+
+            <Controller
+              control={control}
+              name="acceptTerms"
+              render={({ field: { onChange, value } }) => (
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 8 }}>
+                  <Checkbox
+                    status={value ? 'checked' : 'unchecked'}
+                    onPress={() => onChange(!value)}
+                  />
+                  <Text
+                    variant="bodyMedium"
+                    style={{ flex: 1, marginLeft: 8 }}
+                    onPress={() => onChange(!value)}
+                  >
+                    I agree to the Terms of Service and Privacy Policy
+                  </Text>
+                </View>
+              )}
+            />
+            {errors.acceptTerms && (
+              <Text style={{ color: theme.colors.error, marginBottom: 16 }}>
+                {errors.acceptTerms.message}
+              </Text>
+            )}
+
+            {error && (
+              <Text style={{ textAlign: 'center', marginBottom: 16, color: theme.colors.error }}>
+                {error}
+              </Text>
+            )}
+
+            <Button
+              mode="contained"
+              onPress={handleSubmit(onSubmit)}
+              loading={isLoading}
+              style={{ marginTop: 16 }}
+            >
+              Create Account
+            </Button>
+          </View>
+
+          <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingVertical: 16 }}>
+            <Text variant="bodyMedium" style={{ color: theme.colors.outline }}>
+              Already have an account?{' '}
+            </Text>
+            <Link href="/(auth)/login" asChild>
+              <Text
+                variant="bodyMedium"
+                style={{ fontWeight: '600', color: theme.colors.primary }}
+              >
+                Sign In
+              </Text>
+            </Link>
+          </View>
+        </ScrollView>
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView

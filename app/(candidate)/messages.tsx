@@ -8,7 +8,7 @@ import {
   Pressable,
 } from 'react-native';
 import { Text, useTheme, Searchbar, TextInput, IconButton } from 'react-native-paper';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView as NativeSafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { useAuthStore } from '@/stores';
@@ -19,6 +19,8 @@ import {
 } from '@/services/firebase/firestore';
 import { Card, UserAvatar, EmptyState, LoadingScreen } from '@/components/ui';
 import type { Conversation, Message } from '@/types';
+
+const SafeAreaView = Platform.OS === 'web' ? View : NativeSafeAreaView;
 
 export default function MessagesScreen() {
   const theme = useTheme();

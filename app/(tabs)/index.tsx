@@ -1,11 +1,13 @@
 import React from 'react';
-import { StyleSheet, View, ScrollView, Image } from 'react-native';
+import { StyleSheet, View, ScrollView, Image, Platform } from 'react-native';
 import { Text, useTheme } from 'react-native-paper';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView as NativeSafeAreaView } from 'react-native-safe-area-context';
 
 import { useAuthStore, selectIsCandidate, useConfigStore } from '@/stores';
 import VoterHome from '@/components/home/VoterHome';
 import CandidateHome from '@/components/home/CandidateHome';
+
+const SafeAreaView = Platform.OS === 'web' ? View : NativeSafeAreaView;
 
 export default function HomeScreen() {
   const theme = useTheme();

@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, ViewStyle, Pressable, StyleProp } from 'react-native';
+import { StyleSheet, ViewStyle, Pressable, StyleProp, Platform } from 'react-native';
 import { Card as PaperCard, useTheme } from 'react-native-paper';
 
 interface CardProps {
@@ -23,11 +23,11 @@ export function Card({
 
   const cardContent = (
     <PaperCard
-      style={[
+      style={StyleSheet.flatten([
         styles.card,
         { backgroundColor: theme.colors.surface },
         style as ViewStyle,
-      ]}
+      ])}
       contentStyle={contentStyle as ViewStyle}
       elevation={elevation}
       testID={testID}
@@ -40,7 +40,7 @@ export function Card({
 
   if (onPress) {
     return (
-      <Pressable onPress={onPress} style={({ pressed }) => [{ opacity: pressed ? 0.8 : 1 }]}>
+      <Pressable onPress={onPress} style={({ pressed }) => ({ opacity: pressed ? 0.8 : 1 })}>
         {cardContent}
       </Pressable>
     );
@@ -69,7 +69,7 @@ export function CardWithHeader({
 }: CardWithHeaderProps) {
   return (
     <PaperCard
-      style={[styles.card, style as ViewStyle]}
+      style={StyleSheet.flatten([styles.card, style as ViewStyle])}
       contentStyle={contentStyle as ViewStyle}
       elevation={elevation}
       testID={testID}
@@ -103,7 +103,7 @@ export function CardWithImage({
 }: CardWithImageProps) {
   return (
     <PaperCard
-      style={[styles.card, style as ViewStyle]}
+      style={StyleSheet.flatten([styles.card, style as ViewStyle])}
       contentStyle={contentStyle as ViewStyle}
       elevation={elevation}
       testID={testID}

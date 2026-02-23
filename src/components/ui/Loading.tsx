@@ -31,8 +31,8 @@ export function LoadingOverlay({ visible, message }: LoadingOverlayProps) {
   if (!visible) return null;
 
   return (
-    <View style={[styles.overlay, { backgroundColor: 'rgba(0, 0, 0, 0.7)' }]}>
-      <View style={[styles.loadingBox, { backgroundColor: theme.colors.surface }]}>
+    <View style={StyleSheet.flatten([styles.overlay, { backgroundColor: 'rgba(0, 0, 0, 0.7)' }])}>
+      <View style={StyleSheet.flatten([styles.loadingBox, { backgroundColor: theme.colors.surface }])}>
         <LoadingSpinner />
         {message && (
           <Text style={styles.loadingText} variant="bodyMedium">
@@ -52,7 +52,7 @@ export function LoadingScreen({ message = 'Loading...' }: LoadingScreenProps) {
   const theme = useTheme();
 
   return (
-    <View style={[styles.screen, { backgroundColor: theme.colors.background }]}>
+    <View style={StyleSheet.flatten([styles.screen, { backgroundColor: theme.colors.background }])}>
       <LoadingSpinner />
       <Text style={styles.screenText} variant="bodyLarge">
         {message}
@@ -78,7 +78,7 @@ export function Skeleton({
 
   return (
     <View
-      style={[
+      style={StyleSheet.flatten([
         styles.skeleton,
         {
           width,
@@ -87,7 +87,7 @@ export function Skeleton({
           backgroundColor: theme.colors.surfaceVariant,
         },
         style,
-      ]}
+      ])}
     />
   );
 }

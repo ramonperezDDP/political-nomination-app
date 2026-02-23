@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, ScrollView, Pressable, Alert } from 'react-native';
+import { StyleSheet, View, ScrollView, Pressable, Alert, Platform } from 'react-native';
 import { Text, useTheme, TextInput } from 'react-native-paper';
 import { router } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView as NativeSafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 
@@ -10,6 +10,8 @@ import { useAuthStore } from '@/stores';
 import { PrimaryButton, SecondaryButton, UserAvatar, LoadingOverlay, Card } from '@/components/ui';
 import { updateUser } from '@/services/firebase/firestore';
 import { uploadProfilePhoto } from '@/services/firebase/storage';
+
+const SafeAreaView = Platform.OS === 'web' ? View : NativeSafeAreaView;
 
 export default function PersonalInfoScreen() {
   const theme = useTheme();

@@ -1,7 +1,7 @@
 import React from 'react';
-import { StyleSheet, View, ScrollView, Pressable, Linking, Alert } from 'react-native';
+import { StyleSheet, View, ScrollView, Pressable, Linking, Alert, Platform } from 'react-native';
 import { Text, useTheme, Divider, List } from 'react-native-paper';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView as NativeSafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
@@ -13,6 +13,8 @@ import {
   useCandidateStore,
 } from '@/stores';
 import { Card, UserAvatar, Chip, ConfirmModal } from '@/components/ui';
+
+const SafeAreaView = Platform.OS === 'web' ? View : NativeSafeAreaView;
 
 export default function ProfileScreen() {
   const theme = useTheme();

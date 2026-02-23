@@ -38,8 +38,8 @@ export function Button({
       loading={loading}
       disabled={disabled || loading}
       icon={icon}
-      style={[styles.button, style]}
-      labelStyle={[styles.label, labelStyle]}
+      style={StyleSheet.flatten([styles.button, style])}
+      labelStyle={StyleSheet.flatten([styles.label, labelStyle])}
       compact={compact}
       uppercase={uppercase}
       testID={testID}

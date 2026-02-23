@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, ScrollView, Pressable, Alert } from 'react-native';
+import { StyleSheet, View, ScrollView, Pressable, Alert, Platform } from 'react-native';
 import { Text, useTheme, SegmentedButtons, IconButton, Divider, TextInput, Modal, Portal } from 'react-native-paper';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView as NativeSafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import Slider from '@react-native-community/slider';
@@ -17,6 +17,8 @@ import {
   LoadingOverlay,
 } from '@/components/ui';
 import type { TopIssue } from '@/types';
+
+const SafeAreaView = Platform.OS === 'web' ? View : NativeSafeAreaView;
 
 type EditorTab = 'profile' | 'issues' | 'psas';
 

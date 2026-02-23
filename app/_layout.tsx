@@ -1,10 +1,10 @@
-import { useEffect } from 'react';
-import { Stack } from 'expo-router';
+import React, { useEffect } from 'react';
+import { Stack, Slot } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { PaperProvider } from 'react-native-paper';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Platform, View, Text as RNText } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
 import {
@@ -14,11 +14,56 @@ import {
   NunitoSans_900Black,
 } from '@expo-google-fonts/nunito-sans';
 
+import { enableScreens } from 'react-native-screens';
 import { useAuthStore, useConfigStore, useUserStore } from '@/stores';
 import { amspLightTheme } from '@/constants/theme';
 
+// Disable native screens on web to avoid CSSStyleDeclaration errors
+// from react-native-screens' Animated wrapper
+if (Platform.OS === 'web') {
+  enableScreens(false);
+}
+
 // Prevent splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
+
+// Error boundary to catch and display runtime errors on web
+class ErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean; error: Error | null }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('App Error Boundary caught:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20, backgroundColor: '#fff' }}>
+          <RNText style={{ fontSize: 18, fontWeight: 'bold', color: '#c00', marginBottom: 10 }}>
+            Something went wrong
+          </RNText>
+          <RNText style={{ fontSize: 14, color: '#333', textAlign: 'center' }}>
+            {this.state.error?.message || 'Unknown error'}
+          </RNText>
+          <RNText style={{ fontSize: 12, color: '#666', marginTop: 10, textAlign: 'center' }}>
+            {this.state.error?.stack?.slice(0, 500) || ''}
+          </RNText>
+        </View>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 // Create query client
 const queryClient = new QueryClient({
@@ -71,25 +116,48 @@ export default function RootLayout() {
 
   const theme = amspLightTheme;
 
+  const content = (
+    <Stack screenOptions={{
+      headerShown: false,
+      ...(Platform.OS === 'web' ? { animation: 'none' } : {}),
+    }}>
+      <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="(auth)" />
+      <Stack.Screen name="(candidate)" />
+      <Stack.Screen
+        name="candidate/[id]"
+        options={{
+          headerShown: true,
+          headerTitle: 'Candidate Profile',
+          headerBackTitle: 'Back',
+          ...(Platform.OS === 'web' ? { animation: 'none' } : {}),
+        }}
+      />
+    </Stack>
+  );
+
+  // On web, use a simplified wrapper
+  if (Platform.OS === 'web') {
+    return (
+      <ErrorBoundary>
+        <View style={styles.container}>
+          <QueryClientProvider client={queryClient}>
+            <PaperProvider theme={theme}>
+              <Slot />
+            </PaperProvider>
+          </QueryClientProvider>
+        </View>
+      </ErrorBoundary>
+    );
+  }
+
   return (
     <GestureHandlerRootView style={styles.container}>
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
           <PaperProvider theme={theme}>
             <StatusBar style="dark" />
-            <Stack screenOptions={{ headerShown: false }}>
-              <Stack.Screen name="(tabs)" />
-              <Stack.Screen name="(auth)" />
-              <Stack.Screen name="(candidate)" />
-              <Stack.Screen
-                name="candidate/[id]"
-                options={{
-                  headerShown: true,
-                  headerTitle: 'Candidate Profile',
-                  headerBackTitle: 'Back',
-                }}
-              />
-            </Stack>
+            {content}
           </PaperProvider>
         </QueryClientProvider>
       </SafeAreaProvider>

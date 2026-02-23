@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, ScrollView, Dimensions } from 'react-native';
+import { StyleSheet, View, ScrollView, Dimensions, Platform } from 'react-native';
 import { Text, useTheme, SegmentedButtons } from 'react-native-paper';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView as NativeSafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { useAuthStore, useCandidateStore } from '@/stores';
 import { Card, LoadingScreen } from '@/components/ui';
+
+const SafeAreaView = Platform.OS === 'web' ? View : NativeSafeAreaView;
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 

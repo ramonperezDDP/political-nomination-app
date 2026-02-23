@@ -185,14 +185,14 @@ export function CandidateAvatar({
   // Render initials as fallback
   const renderFallback = () => (
     <View
-      style={[
+      style={StyleSheet.flatten([
         styles.container,
         styles.fallback,
         { width: size, height: size, borderRadius: size / 2, backgroundColor },
         style,
-      ]}
+      ])}
     >
-      <Text style={[styles.initials, { fontSize: size * 0.4 }]}>
+      <Text style={StyleSheet.flatten([styles.initials, { fontSize: size * 0.4 }])}>
         {initials}
       </Text>
     </View>
@@ -204,18 +204,18 @@ export function CandidateAvatar({
   }
 
   return (
-    <View style={[styles.container, { width: size, height: size, borderRadius: size / 2, backgroundColor }, style]}>
+    <View style={StyleSheet.flatten([styles.container, { width: size, height: size, borderRadius: size / 2, backgroundColor }, style])}>
       {/* Show initials as placeholder while loading */}
       {isLoading && (
-        <View style={[styles.placeholder, { width: size, height: size }]}>
-          <Text style={[styles.initials, { fontSize: size * 0.4 }]}>
+        <View style={StyleSheet.flatten([styles.placeholder, { width: size, height: size }])}>
+          <Text style={StyleSheet.flatten([styles.initials, { fontSize: size * 0.4 }])}>
             {initials}
           </Text>
         </View>
       )}
       <Image
         source={{ uri: avatarUrl }}
-        style={[styles.avatar, { width: size, height: size, borderRadius: size / 2 }]}
+        style={StyleSheet.flatten([styles.avatar, { width: size, height: size, borderRadius: size / 2 }])}
         onLoad={() => setIsLoading(false)}
         onError={() => {
           setHasError(true);

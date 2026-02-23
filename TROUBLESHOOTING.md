@@ -368,6 +368,135 @@ These files use the `firebase` JS SDK instead of `@react-native-firebase/*`.
 
 ---
 
+## Web Runtime Issues (CSSStyleDeclaration & White Screen)
+
+These issues were encountered after the initial Firebase Hosting deploy. The web build succeeded but the app crashed at runtime in the browser.
+
+### Issue A: White Screen — Empty Firebase `appId`
+
+**Symptom:** https://party-nomination-app.web.app showed a completely white screen with no visible errors.
+
+**Root Cause:** `EXPO_PUBLIC_FIREBASE_APP_ID_WEB` was empty in `.env`. This caused `firebase/app`'s `initializeApp()` to crash at module scope before React could mount.
+
+**Fix:**
+1. Retrieved the web app ID via `firebase apps:list` → `1:160906949175:web:898574d90dadd37a4d85b2`
+2. Set `EXPO_PUBLIC_FIREBASE_APP_ID_WEB=1:160906949175:web:898574d90dadd37a4d85b2` in `.env`
+3. Cleared Metro cache: `rm -rf dist .expo node_modules/.cache`
+
+**Key Lesson:** Expo inlines `EXPO_PUBLIC_*` vars at build time. After changing `.env`, you must clear `dist`, `.expo`, and `node_modules/.cache` before rebuilding — otherwise the old (empty) value stays baked into the bundle.
+
+### Issue B: "Module implementation must be a class" — `expo-font` version mismatch
+
+**Symptom:** `Uncaught Error: Module implementation must be a class that extends the NativeModule`
+
+**Root Cause:** `expo-font` 14.0.11 was installed but Expo SDK 52 requires ~13.0.4. The newer version called `registerWebModule(createExpoFontLoader, 'ExpoFontLoader')`, but the production minifier stripped the function's `.name` property. `registerWebModule` checks `moduleImplementation.name` and throws when it's empty.
+
+**Fix:**
+```bash
+npx expo install --fix
+```
+This downgraded `expo-font` 14.0.11 → ~13.0.4 (correct for SDK 52) and fixed other version mismatches.
+
+**Key Lesson:** Always run `npx expo install --fix` after adding new dependencies to ensure SDK version compatibility.
+
+### Issue C: "Failed to set an indexed property [0] on 'CSSStyleDeclaration'" — Style arrays reaching DOM
+
+**Symptom:** `Failed to set an indexed property [0] on 'CSSStyleDeclaration': Indexed property setter is not supported.`
+
+This was the most persistent issue, caused by multiple independent sources. The error occurs when a style *array* (e.g., `[{borderRadius: 12}, {marginTop: 8}]`) reaches React DOM's `setValueForStyles` without being flattened into a single object. React DOM tries `element.style[0] = ...` which fails.
+
+**Note:** Standard react-native components (`View`, `Text`, `ScrollView`, `Pressable`) handle style arrays correctly on web — react-native-web flattens them internally. The issue is only with third-party native components and some React Native Paper components.
+
+#### Source C1: `SafeAreaView` from `react-native-safe-area-context`
+
+`SafeAreaView` is a native component that doesn't go through react-native-web's style processing. When it receives `style={[styles.container, { backgroundColor }]}`, the raw array reaches the DOM.
+
+**Fix:** In every screen file (18 total), alias `SafeAreaView` to `View` on web:
+```tsx
+import { SafeAreaView as NativeSafeAreaView } from 'react-native-safe-area-context';
+const SafeAreaView = Platform.OS === 'web' ? View : NativeSafeAreaView;
+```
+The rest of the component code stays unchanged — `SafeAreaView` now resolves to `View` on web.
+
+**Files modified:** All files in `app/(auth)/`, `app/(tabs)/`, `app/(candidate)/`, `app/settings/`, and `app/candidate/` that import from `react-native-safe-area-context`.
+
+#### Source C2: Custom UI components passing style arrays to Paper components
+
+All components in `src/components/ui/` used the React Native pattern of merging styles via arrays:
+```tsx
+// Before — works on native, can break on web via Paper components
+style={[styles.button, style]}
+```
+
+**Fix:** Wrap all style arrays with `StyleSheet.flatten()`:
+```tsx
+// After — works on both native and web
+style={StyleSheet.flatten([styles.button, style])}
+```
+
+**Components modified:** Button, Card, Input, Loading, Avatar, Badge, EmptyState, Modal, CandidateAvatar.
+
+#### Source C3: `react-native-screens` animated wrapper
+
+`react-native-screens` wraps screens with `Animated.createAnimatedComponent` for navigation transitions. The animated wrapper passes unflattened style arrays to DOM elements.
+
+**Fix (in `app/_layout.tsx` and all layout files):**
+1. Disabled native screens on web:
+   ```tsx
+   import { enableScreens } from 'react-native-screens';
+   if (Platform.OS === 'web') { enableScreens(false); }
+   ```
+2. Used `Slot` instead of `Stack`/`Tabs` in layout files on web:
+   ```tsx
+   if (Platform.OS === 'web') { return <Slot />; }
+   ```
+3. Disabled animations as extra precaution:
+   ```tsx
+   ...(Platform.OS === 'web' ? { animation: 'none' } : {})
+   ```
+
+#### Source C4: `KeyboardAvoidingView` on web
+
+`KeyboardAvoidingView` is unnecessary on web and can cause layout issues.
+
+**Fix (in `app/(auth)/register.tsx`):**
+```tsx
+import { KeyboardAvoidingView as RNKeyboardAvoidingView } from 'react-native';
+const KeyboardAvoidingView = Platform.OS === 'web' ? View : RNKeyboardAvoidingView;
+```
+
+#### Source C5: Login screen — web-specific rendering
+
+Even after fixing components, the login screen's combination of native-oriented components caused issues on web.
+
+**Fix:** Added a `Platform.OS === 'web'` early-return branch in `app/(auth)/login.tsx` that renders a form using Paper components directly (`TextInput`, `Button`, `HelperText`, `ActivityIndicator`) instead of the custom `EmailInput`, `PasswordInput`, `PrimaryButton`, `TextButton`, `LoadingOverlay` wrappers.
+
+### Debugging aids added
+
+- **`ErrorBoundary`** in `app/_layout.tsx` — React class component that catches render errors and displays them visibly instead of a white screen.
+- **`app/+html.tsx`** — Custom HTML wrapper with `window.onerror` and `unhandledrejection` handlers that create visible DOM error overlays. Catches errors before React mounts.
+
+### Isolation methodology
+
+When the CSSStyleDeclaration error persisted through multiple fixes, binary search isolated the source:
+1. Text-only (no router, no providers) → **WORKS** — build/deploy pipeline is fine
+2. PaperProvider + Slot + minimal login (just `View` + `Text`) → **WORKS** — routing and theming work
+3. PaperProvider + Slot + full login screen → **FAILS** — narrows to login screen components
+4. PaperProvider + Slot + login with Paper `TextInput`/`Button` directly → **WORKS** — confirms custom components + SafeAreaView are the issue
+
+### Summary of all web-compatibility changes
+
+| Category | Files | Change |
+|----------|-------|--------|
+| SafeAreaView → View on web | 18 screen files | Aliased import with `Platform.OS === 'web'` conditional |
+| Style array flattening | 9 UI components | `StyleSheet.flatten()` on all style arrays |
+| Navigation on web | 3 layout files | `Slot` on web, `enableScreens(false)`, `animation: 'none'` |
+| KAV removal on web | `register.tsx` | Aliased to `View` on web |
+| Web login form | `login.tsx` | Paper components directly instead of custom wrappers |
+| Error visibility | `_layout.tsx`, `+html.tsx` | ErrorBoundary + global error handlers |
+
+---
+
 ## Known Runtime Warnings (Non-Blocking)
 
 These warnings appear in the Metro logs but do not affect app functionality:

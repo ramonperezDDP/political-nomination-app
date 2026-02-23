@@ -31,7 +31,7 @@ The America's Main Street Party App is a participatory democracy platform that e
 
 | Layer | Technology |
 |-------|------------|
-| Frontend | React Native 0.76.5, Expo 52, React Native Web |
+| Frontend | React Native 0.76.9, Expo 52, React Native Web |
 | State Management | Zustand, TanStack Query |
 | UI Framework | React Native Paper (Material Design 3, AMSP light theme) |
 | Typeface | Nunito Sans (Regular, Bold, Black) |

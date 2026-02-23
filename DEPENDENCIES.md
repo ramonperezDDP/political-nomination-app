@@ -21,7 +21,7 @@ This document provides a comprehensive overview of all dependencies used in the 
 |---------|---------|---------|---------|
 | react | 18.3.1 | UI library | MIT |
 | react-dom | 18.3.1 | React DOM renderer | MIT |
-| react-native | 0.76.5 | Mobile framework | MIT |
+| react-native | 0.76.9 | Mobile framework | MIT |
 | react-native-web | ~0.19.13 | React Native for Web | MIT |
 | expo | ~52.0.23 | React Native tooling | MIT |
 
@@ -142,7 +142,7 @@ Located in `functions/package.json`:
 political-nomination-app
 ├── Core
 │   ├── react (18.3.1)
-│   ├── react-native (0.76.5)
+│   ├── react-native (0.76.9)
 │   ├── react-native-web (~0.19.13)
 │   └── expo (~52.0.23)
 │

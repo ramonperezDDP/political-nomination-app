@@ -29,7 +29,7 @@ export function EmptyState({
   const theme = useTheme();
 
   return (
-    <View style={[styles.container, style]}>
+    <View style={StyleSheet.flatten([styles.container, style])}>
       <MaterialCommunityIcons
         name={icon as any}
         size={80}
@@ -42,7 +42,7 @@ export function EmptyState({
       {message && (
         <Text
           variant="bodyMedium"
-          style={[styles.message, { color: theme.colors.outline }]}
+          style={StyleSheet.flatten([styles.message, { color: theme.colors.outline }])}
         >
           {message}
         </Text>

@@ -1,8 +1,10 @@
 import React, { useState, useMemo } from 'react';
-import { StyleSheet, View, ScrollView, Pressable, Alert } from 'react-native';
+import { StyleSheet, View, ScrollView, Pressable, Alert, Platform } from 'react-native';
 import { Text, useTheme, Chip, Searchbar, Button } from 'react-native-paper';
 import { router } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView as NativeSafeAreaView } from 'react-native-safe-area-context';
+
+const SafeAreaView = Platform.OS === 'web' ? View : NativeSafeAreaView;
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { useAuthStore, useUserStore, useConfigStore } from '@/stores';

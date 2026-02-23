@@ -1,4 +1,5 @@
-import { Stack, Redirect } from 'expo-router';
+import { Stack, Slot, Redirect } from 'expo-router';
+import { Platform } from 'react-native';
 import { useTheme } from 'react-native-paper';
 
 import { useAuthStore, selectIsAuthenticated } from '@/stores';
@@ -26,6 +27,11 @@ export default function AuthLayout() {
 
   // If authenticated but hasn't completed onboarding, let them continue in auth flow
   // (they'll be directed to onboarding screens)
+
+  // On web, use Slot to avoid react-native-screens animated style issues
+  if (Platform.OS === 'web') {
+    return <Slot />;
+  }
 
   return (
     <Stack

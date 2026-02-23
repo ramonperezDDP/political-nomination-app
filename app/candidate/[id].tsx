@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { StyleSheet, View, ScrollView, Dimensions, FlatList, Pressable, Modal } from 'react-native';
+import { StyleSheet, View, ScrollView, Dimensions, FlatList, Pressable, Modal, Platform } from 'react-native';
 import { Text, useTheme, SegmentedButtons, Chip, Divider, IconButton, Portal } from 'react-native-paper';
 import { useLocalSearchParams, router } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView as NativeSafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import {
@@ -25,6 +25,8 @@ import {
   EmptyState,
 } from '@/components/ui';
 import type { Candidate, PSA, User, TopIssue } from '@/types';
+
+const SafeAreaView = Platform.OS === 'web' ? View : NativeSafeAreaView;
 
 type ProfileTab = 'issues' | 'bio' | 'psas';
 

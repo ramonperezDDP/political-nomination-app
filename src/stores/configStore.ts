@@ -28,7 +28,7 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
     set({ isLoading: true });
 
     // Fetch issues once
-    get().fetchIssues();
+    get().fetchIssues().catch((err) => console.warn('Error fetching issues:', err));
 
     // Ensure questions are seeded (runs in background)
     ensureQuestionsExist().catch((err) => console.warn('Error ensuring questions:', err));

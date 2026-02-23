@@ -71,7 +71,7 @@ export function Input({
   ) : null;
 
   return (
-    <View style={[styles.container, style]}>
+    <View style={StyleSheet.flatten([styles.container, style])}>
       <TextInput
         label={label}
         value={value}

@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, ScrollView, Pressable } from 'react-native';
+import { StyleSheet, View, ScrollView, Pressable, Platform } from 'react-native';
 import { Text, useTheme, Chip } from 'react-native-paper';
 import { router } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView as NativeSafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { useAuthStore, useUserStore } from '@/stores';
 import { PrimaryButton, SecondaryButton, Card, LoadingOverlay } from '@/components/ui';
+
+const SafeAreaView = Platform.OS === 'web' ? View : NativeSafeAreaView;
 
 // Common dealbreaker positions that users might want to filter on
 const DEALBREAKER_OPTIONS = [

@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, FlatList, Pressable } from 'react-native';
+import { StyleSheet, View, FlatList, Pressable, Platform } from 'react-native';
 import { Text, useTheme, IconButton } from 'react-native-paper';
 import { router } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView as NativeSafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { useAuthStore, useUserStore } from '@/stores';
 import { Card, UserAvatar, EmptyState, LoadingScreen, Chip } from '@/components/ui';
 import { getCandidate, getUser } from '@/services/firebase/firestore';
 import type { Candidate, User, Endorsement } from '@/types';
+
+const SafeAreaView = Platform.OS === 'web' ? View : NativeSafeAreaView;
 
 interface EndorsedCandidateInfo {
   endorsement: Endorsement;

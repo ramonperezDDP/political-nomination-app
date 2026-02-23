@@ -1,5 +1,6 @@
 import { Tabs, Redirect } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Platform } from 'react-native';
 import { useTheme } from 'react-native-paper';
 
 import { useAuthStore, selectIsAuthenticated } from '@/stores';

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { StyleSheet, View, FlatList, Pressable, Alert } from 'react-native';
+import { StyleSheet, View, FlatList, Pressable, Alert, Platform } from 'react-native';
 import { Text, useTheme, SegmentedButtons, IconButton, Tooltip, Button } from 'react-native-paper';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView as NativeSafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
@@ -14,6 +14,8 @@ import {
 import { useConfigStore } from '@/stores';
 import { Card, CandidateAvatar, RankBadge, LoadingScreen, EmptyState } from '@/components/ui';
 import type { LeaderboardEntry } from '@/types';
+
+const SafeAreaView = Platform.OS === 'web' ? View : NativeSafeAreaView;
 
 type LeaderboardType = 'endorsements' | 'trending';
 

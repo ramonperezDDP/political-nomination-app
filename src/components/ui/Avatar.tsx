@@ -45,7 +45,7 @@ export function AvatarText({
     <PaperAvatar.Text
       label={label}
       size={size}
-      style={[{ backgroundColor: color || theme.colors.primary }, style]}
+      style={StyleSheet.flatten([{ backgroundColor: color || theme.colors.primary }, style])}
       labelStyle={{ color: labelColor || theme.colors.onPrimary }}
     />
   );
@@ -58,7 +58,7 @@ export function AvatarIcon({ icon, size = 48, color, style }: AvatarIconProps) {
     <PaperAvatar.Icon
       icon={icon}
       size={size}
-      style={[{ backgroundColor: color || theme.colors.primary }, style]}
+      style={StyleSheet.flatten([{ backgroundColor: color || theme.colors.primary }, style])}
     />
   );
 }
@@ -103,14 +103,14 @@ export function AvatarGroup({
   const remaining = avatars.length - maxDisplay;
 
   return (
-    <View style={[styles.avatarGroup, style]}>
+    <View style={StyleSheet.flatten([styles.avatarGroup, style])}>
       {displayAvatars.map((avatar, index) => (
         <View
           key={index}
-          style={[
+          style={StyleSheet.flatten([
             styles.avatarGroupItem,
             { marginLeft: index > 0 ? -size / 3 : 0, zIndex: maxDisplay - index },
-          ]}
+          ])}
         >
           <UserAvatar
             photoUrl={avatar.photoUrl}
@@ -121,10 +121,10 @@ export function AvatarGroup({
       ))}
       {remaining > 0 && (
         <View
-          style={[
+          style={StyleSheet.flatten([
             styles.avatarGroupItem,
             { marginLeft: -size / 3, zIndex: 0 },
-          ]}
+          ])}
         >
           <AvatarText label={`+${remaining}`} size={size} />
         </View>

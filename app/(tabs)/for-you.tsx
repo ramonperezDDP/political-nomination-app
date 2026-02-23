@@ -7,9 +7,10 @@ import {
   Pressable,
   PixelRatio,
   Keyboard,
+  Platform,
 } from 'react-native';
 import { Text, useTheme, Menu, Divider, IconButton, TouchableRipple } from 'react-native-paper';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView as NativeSafeAreaView } from 'react-native-safe-area-context';
 
 import { useAuthStore, useConfigStore } from '@/stores';
 import { getCandidatesForFeed, reseedAllData, inferGenderFromName } from '@/services/firebase/firestore';
@@ -18,6 +19,7 @@ import PSACard from '@/components/feed/PSACard';
 import { EmptyState, LoadingScreen, SearchInput } from '@/components/ui';
 import type { FeedItem, Candidate, User } from '@/types';
 
+const SafeAreaView = Platform.OS === 'web' ? View : NativeSafeAreaView;
 
 type FilterType = 'all' | 'high-alignment' | 'community' | 'no-dealbreakers';
 

@@ -33,7 +33,7 @@ export function BadgeWithIcon({
   const displayCount = count && count > maxCount ? `${maxCount}+` : count;
 
   return (
-    <View style={[styles.badgeContainer, style]}>
+    <View style={StyleSheet.flatten([styles.badgeContainer, style])}>
       {icon}
       {count !== undefined && count > 0 && (
         <Badge style={styles.iconBadge}>{displayCount}</Badge>
@@ -79,8 +79,8 @@ export function Chip({
   const colors = getVariantColors();
 
   return (
-    <View style={[styles.chip, { backgroundColor: colors.bg }, style]}>
-      <Text style={[styles.chipText, { color: colors.text }]}>{label}</Text>
+    <View style={StyleSheet.flatten([styles.chip, { backgroundColor: colors.bg }, style])}>
+      <Text style={StyleSheet.flatten([styles.chipText, { color: colors.text }])}>{label}</Text>
     </View>
   );
 }
@@ -115,7 +115,7 @@ export function AlignmentBadge({ score, size = 'medium', style }: AlignmentBadge
 
   return (
     <View
-      style={[
+      style={StyleSheet.flatten([
         styles.alignmentBadge,
         {
           backgroundColor: getColor(),
@@ -123,9 +123,9 @@ export function AlignmentBadge({ score, size = 'medium', style }: AlignmentBadge
           height: sizeStyles.height,
         },
         style,
-      ]}
+      ])}
     >
-      <Text style={[styles.alignmentText, { fontSize: sizeStyles.fontSize }]}>
+      <Text style={StyleSheet.flatten([styles.alignmentText, { fontSize: sizeStyles.fontSize }])}>
         {Math.round(score)}%
       </Text>
     </View>
@@ -155,11 +155,11 @@ export function RankBadge({ rank, style }: RankBadgeProps) {
 
   return (
     <View
-      style={[
+      style={StyleSheet.flatten([
         styles.rankBadge,
         { backgroundColor: getMedalColor() },
         style,
-      ]}
+      ])}
     >
       <Text style={styles.rankText}>#{rank}</Text>
     </View>

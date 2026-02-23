@@ -55,6 +55,110 @@ export default function LoginScreen() {
     }
   };
 
+  // Web login — uses Paper components directly to avoid SafeAreaView/KeyboardAvoidingView style issues
+  if (Platform.OS === 'web') {
+    const { TextInput, Button, HelperText, ActivityIndicator } = require('react-native-paper');
+    return (
+      <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+        {isLoading && (
+          <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', zIndex: 10 }}>
+            <ActivityIndicator size="large" color="#fff" />
+            <Text style={{ color: '#fff', marginTop: 12 }}>Signing in...</Text>
+          </View>
+        )}
+        <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: 24, maxWidth: 400, alignSelf: 'center', width: '100%' }}>
+          <View style={{ alignItems: 'center', marginBottom: 40 }}>
+            <Image
+              source={require('../../assets/amsp-logo.png')}
+              style={{ width: 200, height: 80, marginBottom: 24 }}
+              resizeMode="contain"
+            />
+            <Text variant="headlineMedium" style={{ fontWeight: 'bold', marginBottom: 8 }}>
+              Welcome Back
+            </Text>
+            <Text variant="bodyLarge" style={{ color: theme.colors.outline }}>
+              Sign in to continue
+            </Text>
+          </View>
+
+          <View style={{ marginBottom: 24 }}>
+            <Controller
+              control={control}
+              name="email"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <View style={{ marginBottom: 8 }}>
+                  <TextInput
+                    label="Email"
+                    value={value}
+                    onChangeText={onChange}
+                    onBlur={onBlur}
+                    mode="outlined"
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    error={!!errors.email}
+                  />
+                  {errors.email && (
+                    <HelperText type="error">{errors.email.message}</HelperText>
+                  )}
+                </View>
+              )}
+            />
+
+            <Controller
+              control={control}
+              name="password"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <View style={{ marginBottom: 8 }}>
+                  <TextInput
+                    label="Password"
+                    value={value}
+                    onChangeText={onChange}
+                    onBlur={onBlur}
+                    mode="outlined"
+                    secureTextEntry
+                    error={!!errors.password}
+                  />
+                  {errors.password && (
+                    <HelperText type="error">{errors.password.message}</HelperText>
+                  )}
+                </View>
+              )}
+            />
+
+            {error && (
+              <Text style={{ textAlign: 'center', marginBottom: 16, color: theme.colors.error }}>
+                {error}
+              </Text>
+            )}
+
+            <Button
+              mode="contained"
+              onPress={handleSubmit(onSubmit)}
+              loading={isLoading}
+              style={{ marginTop: 16 }}
+            >
+              Sign In
+            </Button>
+          </View>
+
+          <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
+            <Text variant="bodyMedium" style={{ color: theme.colors.outline }}>
+              Don't have an account?{' '}
+            </Text>
+            <Link href="/(auth)/register" asChild>
+              <Text
+                variant="bodyMedium"
+                style={{ fontWeight: '600', color: theme.colors.primary }}
+              >
+                Create Account
+              </Text>
+            </Link>
+          </View>
+        </ScrollView>
+      </View>
+    );
+  }
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <LoadingOverlay visible={isLoading} message="Signing in..." />

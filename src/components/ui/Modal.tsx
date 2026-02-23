@@ -28,11 +28,11 @@ export function Modal({
       <PaperModal
         visible={visible}
         onDismiss={dismissable ? onDismiss : undefined}
-        contentContainerStyle={[
+        contentContainerStyle={StyleSheet.flatten([
           styles.modal,
           { backgroundColor: theme.colors.surface },
           contentStyle,
-        ]}
+        ])}
       >
         {(title || showCloseButton) && (
           <View style={styles.header}>
@@ -88,10 +88,10 @@ export function ConfirmModal({
       <PaperModal
         visible={visible}
         onDismiss={onDismiss}
-        contentContainerStyle={[
+        contentContainerStyle={StyleSheet.flatten([
           styles.confirmModal,
           { backgroundColor: theme.colors.surface },
-        ]}
+        ])}
       >
         <Text variant="titleLarge" style={styles.confirmTitle}>
           {title}
@@ -103,7 +103,7 @@ export function ConfirmModal({
           <View style={styles.confirmButton}>
             <Text
               onPress={onDismiss}
-              style={[styles.cancelText, { color: theme.colors.primary }]}
+              style={StyleSheet.flatten([styles.cancelText, { color: theme.colors.primary }])}
             >
               {cancelLabel}
             </Text>
@@ -111,11 +111,11 @@ export function ConfirmModal({
           <View style={styles.confirmButton}>
             <Text
               onPress={loading ? undefined : onConfirm}
-              style={[
+              style={StyleSheet.flatten([
                 styles.confirmText,
                 { color: confirmDestructive ? theme.colors.error : theme.colors.primary },
                 loading && styles.disabledText,
-              ]}
+              ])}
             >
               {loading ? 'Loading...' : confirmLabel}
             </Text>
@@ -146,10 +146,10 @@ export function BottomSheet({
       <PaperModal
         visible={visible}
         onDismiss={onDismiss}
-        contentContainerStyle={[
+        contentContainerStyle={StyleSheet.flatten([
           styles.bottomSheet,
           { backgroundColor: theme.colors.surface },
-        ]}
+        ])}
       >
         <View style={styles.bottomSheetHandle} />
         {title && (

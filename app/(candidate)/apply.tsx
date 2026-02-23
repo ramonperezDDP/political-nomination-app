@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef, memo } from 'react';
-import { StyleSheet, View, ScrollView, Alert, Pressable } from 'react-native';
+import { StyleSheet, View, ScrollView, Alert, Pressable, Platform } from 'react-native';
 import { Text, useTheme, ProgressBar, Checkbox, TextInput, IconButton, Modal, Portal } from 'react-native-paper';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView as NativeSafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
@@ -21,6 +21,8 @@ import {
   LoadingOverlay,
 } from '@/components/ui';
 import type { TopIssue, Issue } from '@/types';
+
+const SafeAreaView = Platform.OS === 'web' ? View : NativeSafeAreaView;
 
 // Separate modal component to manage its own state and prevent re-render issues
 interface IssueEditModalProps {
