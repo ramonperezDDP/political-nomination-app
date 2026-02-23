@@ -11,6 +11,7 @@ This document covers common issues encountered when developing the America's Mai
 - [Dev Server Connection Issues](#dev-server-connection-issues)
 - [TypeScript Issues](#typescript-issues)
 - [Quick Recovery Steps](#quick-recovery-steps)
+- [Web Build & Deployment Issues](#web-build--deployment-issues)
 - [Known Runtime Warnings](#known-runtime-warnings-non-blocking)
 - [Verified Clean Build Procedure](#verified-clean-build-procedure)
 
@@ -302,6 +303,68 @@ cd ios && pod install && cd ..
 # Start fresh
 npx expo start --clear
 ```
+
+---
+
+## Web Build & Deployment Issues
+
+### "react-native-web not found" Error
+
+**Symptom:**
+```
+CommandError: It looks like you're trying to use web support but don't have the required dependencies installed.
+```
+
+**Solution:**
+```bash
+npx expo install react-native-web
+```
+
+### Web Build Fails with Firebase Import Errors
+
+**Symptom:** Errors referencing `@react-native-firebase/*` packages during web build.
+
+**Cause:** The native Firebase packages (`@react-native-firebase/*`) don't support web. Metro should be resolving `.web.ts` files instead.
+
+**Solution:** Ensure all `.web.ts` platform files exist:
+- `src/services/firebase/config.web.ts`
+- `src/services/firebase/auth.web.ts`
+- `src/services/firebase/firestore.web.ts`
+- `src/services/firebase/storage.web.ts`
+- `src/types/index.web.ts`
+- `src/stores/authStore.web.ts`
+
+These files use the `firebase` JS SDK instead of `@react-native-firebase/*`.
+
+### Firebase Hosting Deploy Fails
+
+**Symptom:** `firebase deploy --only hosting` fails.
+
+**Solutions:**
+1. Ensure `firebase-tools` is installed: `npm install -g firebase-tools`
+2. Ensure you're logged in: `firebase login`
+3. Ensure `.firebaserc` points to the correct project
+4. Ensure `dist/` directory exists (run `npm run build:web` first)
+5. Check `firebase.json` has a `hosting` section with `"public": "dist"`
+
+### Web App Shows Blank Screen After Deploy
+
+**Cause:** Missing `EXPO_PUBLIC_FIREBASE_APP_ID_WEB` environment variable.
+
+**Solution:**
+1. Go to Firebase Console > Project Settings > Your apps > Add web app
+2. Copy the `appId` value
+3. Set `EXPO_PUBLIC_FIREBASE_APP_ID_WEB` in your `.env` file
+4. Rebuild: `npm run build:web`
+
+### Web Auth Not Working
+
+**Symptom:** Login/signup fails on web but works on native.
+
+**Solutions:**
+1. Ensure `EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN` is set in `.env`
+2. In Firebase Console > Authentication > Settings > Authorized domains, add your hosting domain
+3. Check browser console for specific error messages
 
 ---
 

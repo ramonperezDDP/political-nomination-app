@@ -31,12 +31,12 @@ The America's Main Street Party App is a participatory democracy platform that e
 
 | Layer | Technology |
 |-------|------------|
-| Frontend | React Native 0.76.5, Expo 52 |
+| Frontend | React Native 0.76.5, Expo 52, React Native Web |
 | State Management | Zustand, TanStack Query |
 | UI Framework | React Native Paper (Material Design 3, AMSP light theme) |
 | Typeface | Nunito Sans (Regular, Bold, Black) |
 | Brand Colors | Purple `#5a3977`, Blue `#067eba`, Red `#de482e` |
-| Backend | Firebase (Auth, Firestore, Storage, Functions) |
+| Backend | Firebase (Auth, Firestore, Storage, Hosting, Functions) |
 | Language | TypeScript 5.6 |
 
 ---
@@ -48,7 +48,7 @@ The America's Main Street Party App is a participatory democracy platform that e
 │                    Client Applications                       │
 ├─────────────────┬─────────────────┬─────────────────────────┤
 │   iOS App       │   Android App   │      Web App            │
-│  (App Store)    │  (Play Store)   │   (EC2/CloudFront)      │
+│  (App Store)    │  (Play Store)   │ (Firebase/EC2/CF)       │
 └────────┬────────┴────────┬────────┴───────────┬─────────────┘
          │                 │                    │
          └─────────────────┼────────────────────┘
@@ -483,6 +483,7 @@ Enable the following services in Firebase Console:
 | Authentication | Build > Authentication | Enable Email/Password provider |
 | Firestore | Build > Firestore Database | Create database in production mode |
 | Storage | Build > Storage | Set up Cloud Storage |
+| Hosting | Build > Hosting | Set up for SPA deployment |
 | Functions | Build > Functions | Enable Cloud Functions |
 
 ### 3. Configure Firebase Apps
@@ -591,10 +592,12 @@ npm run web      # Web browser
 
 ```bash
 # Build for web
-npx expo export --platform web
+npm run build:web
 
-# Serve with Nginx (see EC2 deployment section)
-# Or test locally with:
+# Deploy to Firebase Hosting
+npm run deploy
+
+# Or serve locally for testing:
 npx serve dist
 ```
 
@@ -777,16 +780,54 @@ npx expo start
 
 ---
 
+## Web Platform Architecture
+
+The app supports iOS, Android, and Web from a single codebase using Expo/Metro platform-specific file extensions (`.web.ts`). When building for web, Metro automatically resolves `.web.ts` files instead of the default `.ts` files.
+
+### How It Works
+
+- **Native (iOS/Android)**: Uses `@react-native-firebase/*` packages (native SDKs)
+- **Web**: Uses `firebase` JS SDK via `.web.ts` platform files
+
+| Native File | Web File | Difference |
+|-------------|----------|------------|
+| `config.ts` | `config.web.ts` | Web initializes `firebase/app`, native uses `@react-native-firebase/app` |
+| `auth.ts` | `auth.web.ts` | Web uses `firebase/auth` modular SDK |
+| `firestore.ts` | `firestore.web.ts` | Web uses `firebase/firestore`, `exists()` method instead of property |
+| `storage.ts` | `storage.web.ts` | Web uses `fetch(uri).blob()` + `uploadBytesResumable()` |
+| `types/index.ts` | `types/index.web.ts` | Web imports `Timestamp` from `firebase/firestore` |
+| `stores/authStore.ts` | `stores/authStore.web.ts` | Web uses `User` type from `firebase/auth` |
+
+Consumer code (components, other stores) imports from `@/services/firebase/auth` and Metro picks the right file automatically. No `Platform.OS` conditionals needed.
+
+---
+
 ## Deployment Options
 
-### Option 1: Web Only (EC2)
+### Option 1: Firebase Hosting (Recommended for Web)
+
+Deploy the web build to Firebase Hosting. Configured in `firebase.json` with SPA rewrites and caching headers.
+
+```bash
+# Install Firebase CLI (one-time)
+npm install -g firebase-tools
+firebase login
+
+# Build and deploy
+npm run deploy
+# This runs: npx expo export --platform web && firebase deploy --only hosting
+```
+
+The hosted URL will be: `https://party-nomination-app.web.app`
+
+### Option 2: Web Only (EC2)
 
 Deploy the web version to EC2 with Nginx. Suitable for:
 - Web-only access
 - Cost-effective hosting
 - Full control over infrastructure
 
-### Option 2: Expo Hosting
+### Option 3: Expo Hosting
 
 Use Expo's hosting services for web deployment:
 
@@ -801,7 +842,7 @@ eas login
 eas update --platform web
 ```
 
-### Option 3: Mobile App Stores
+### Option 4: Mobile App Stores
 
 Build and deploy to app stores:
 
@@ -817,7 +858,7 @@ eas submit --platform ios
 eas submit --platform android
 ```
 
-### Option 4: Hybrid Approach
+### Option 5: Hybrid Approach
 
 - Web version on EC2/CloudFront
 - Mobile apps on App Store/Play Store
@@ -976,6 +1017,8 @@ sudo journalctl -u nginx -f
 | iOS | `npm run ios` | Run on iOS Simulator |
 | Android | `npm run android` | Run on Android Emulator |
 | Web | `npm run web` | Run in web browser |
+| Build Web | `npm run build:web` | Export static web build to `dist/` |
+| Deploy | `npm run deploy` | Build web + deploy to Firebase Hosting |
 | Lint | `npm run lint` | Run ESLint |
 | Type Check | `npm run type-check` | Run TypeScript type checking |
 

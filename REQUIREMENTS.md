@@ -107,6 +107,7 @@ The application requires a Firebase project with the following services enabled:
 | Firebase Authentication | User authentication (email/password) |
 | Cloud Firestore | NoSQL database |
 | Firebase Storage | File uploads (documents, images) |
+| Firebase Hosting | Web app deployment (SPA) |
 | Cloud Functions | Backend logic |
 | Cloud Messaging | Push notifications |
 

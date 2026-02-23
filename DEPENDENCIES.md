@@ -22,6 +22,7 @@ This document provides a comprehensive overview of all dependencies used in the 
 | react | 18.3.1 | UI library | MIT |
 | react-dom | 18.3.1 | React DOM renderer | MIT |
 | react-native | 0.76.5 | Mobile framework | MIT |
+| react-native-web | ~0.19.13 | React Native for Web | MIT |
 | expo | ~52.0.23 | React Native tooling | MIT |
 
 ### Navigation & Routing
@@ -46,10 +47,11 @@ This document provides a comprehensive overview of all dependencies used in the 
 
 | Package | Version | Purpose | License |
 |---------|---------|---------|---------|
-| @react-native-firebase/app | ^21.6.1 | Firebase core | Apache-2.0 |
-| @react-native-firebase/auth | ^21.6.1 | Authentication | Apache-2.0 |
-| @react-native-firebase/firestore | ^21.6.1 | NoSQL database | Apache-2.0 |
-| @react-native-firebase/storage | ^21.6.1 | File storage | Apache-2.0 |
+| @react-native-firebase/app | ^21.6.1 | Firebase core (native) | Apache-2.0 |
+| @react-native-firebase/auth | ^21.6.1 | Authentication (native) | Apache-2.0 |
+| @react-native-firebase/firestore | ^21.6.1 | NoSQL database (native) | Apache-2.0 |
+| @react-native-firebase/storage | ^21.6.1 | File storage (native) | Apache-2.0 |
+| firebase | ^12.9.0 | Firebase JS SDK (web) | Apache-2.0 |
 
 ### UI Components & Styling
 
@@ -141,6 +143,7 @@ political-nomination-app
 ├── Core
 │   ├── react (18.3.1)
 │   ├── react-native (0.76.5)
+│   ├── react-native-web (~0.19.13)
 │   └── expo (~52.0.23)
 │
 ├── Navigation
@@ -153,10 +156,11 @@ political-nomination-app
 │   └── @tanstack/react-query (^5.62.0)
 │
 ├── Firebase
-│   ├── @react-native-firebase/app (^21.6.1)
-│   ├── @react-native-firebase/auth (^21.6.1)
-│   ├── @react-native-firebase/firestore (^21.6.1)
-│   └── @react-native-firebase/storage (^21.6.1)
+│   ├── @react-native-firebase/app (^21.6.1)  [native]
+│   ├── @react-native-firebase/auth (^21.6.1)  [native]
+│   ├── @react-native-firebase/firestore (^21.6.1)  [native]
+│   ├── @react-native-firebase/storage (^21.6.1)  [native]
+│   └── firebase (^12.9.0)  [web - via .web.ts files]
 │
 ├── UI Layer
 │   ├── react-native-paper (^5.12.5)
@@ -190,9 +194,9 @@ political-nomination-app
 
 ### Firebase SDK Compatibility
 
-| @react-native-firebase | firebase-admin | firebase-functions |
-|------------------------|----------------|-------------------|
-| 21.x | 11.x - 13.x | 4.x |
+| @react-native-firebase | firebase (JS SDK) | firebase-admin | firebase-functions |
+|------------------------|-------------------|----------------|-------------------|
+| 21.x | 12.x | 11.x - 13.x | 4.x |
 
 ### TypeScript Compatibility
 
@@ -314,8 +318,8 @@ npx expo install --fix
 
 | License | Count | Packages |
 |---------|-------|----------|
-| MIT | 35+ | Most packages |
-| Apache-2.0 | 6 | Firebase, TypeScript |
+| MIT | 36+ | Most packages |
+| Apache-2.0 | 7 | Firebase (native + JS SDK), TypeScript |
 | BSD-2-Clause | 2 | @typescript-eslint/parser |
 
 All dependencies are compatible with commercial use.
