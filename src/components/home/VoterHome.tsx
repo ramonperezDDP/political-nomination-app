@@ -236,13 +236,10 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   quickActions: {
-    flexDirection: 'row',
     gap: 12,
     marginBottom: 24,
   },
-  actionButton: {
-    flex: 1,
-  },
+  actionButton: {},
   sectionTitle: {
     fontWeight: 'bold',
     marginBottom: 12,

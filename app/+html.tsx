@@ -15,6 +15,18 @@ export default function Root({ children }: PropsWithChildren) {
         <style
           dangerouslySetInnerHTML={{
             __html: `
+              /* Icon font preload — path hash is deterministic per @expo/vector-icons version */
+              @font-face {
+                font-family: 'material-community';
+                src: url('/assets/node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/MaterialCommunityIcons.b62641afc9ab487008e996a5c5865e56.ttf') format('truetype');
+                font-display: swap;
+              }
+              @font-face {
+                font-family: 'MaterialCommunityIcons';
+                src: url('/assets/node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/MaterialCommunityIcons.b62641afc9ab487008e996a5c5865e56.ttf') format('truetype');
+                font-display: swap;
+              }
+
               /* Phone Demo Frame Styles */
               #phone-demo-page {
                 position: fixed;
@@ -139,6 +151,8 @@ export default function Root({ children }: PropsWithChildren) {
                 overflow: hidden;
                 background: #ffffff;
                 position: relative;
+                padding-top: 44px;
+                box-sizing: border-box;
               }
 
               #phone-screen > #root {
@@ -220,6 +234,7 @@ export default function Root({ children }: PropsWithChildren) {
                   border-radius: 0;
                   width: 100vw;
                   height: 100vh;
+                  padding-top: 0;
                 }
               }
             `,

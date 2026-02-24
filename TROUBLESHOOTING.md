@@ -497,6 +497,56 @@ When the CSSStyleDeclaration error persisted through multiple fixes, binary sear
 
 ---
 
+## Web Demo Frame & Icon Font Issues
+
+### Icon Fonts Show as Empty Squares on Web
+
+**Symptom:** MaterialCommunityIcons render as empty square boxes on the deployed web app, even though the font files exist in `dist/assets/`.
+
+**Root Cause:** The `firebase.json` hosting `ignore` pattern `**/node_modules/**` was preventing font files from being deployed. Expo/Metro bundles icon fonts at paths like `dist/assets/node_modules/@expo/vector-icons/.../MaterialCommunityIcons.ttf`, which matched the ignore glob.
+
+**Fix (in `firebase.json`):**
+```json
+"ignore": ["firebase.json", "**/.*", "node_modules/**"]
+```
+Changed `**/node_modules/**` → `node_modules/**` so only a top-level `node_modules/` in `dist/` is ignored, not nested asset paths.
+
+**Verification:**
+```bash
+# Before fix: returns text/html (SPA fallback — font not deployed)
+curl -sI "https://party-nomination-app.web.app/assets/node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/MaterialCommunityIcons.b62641afc9ab487008e996a5c5865e56.ttf"
+
+# After fix: returns font/ttf (correct)
+```
+
+**Additional hardening:** Icon fonts are also preloaded two ways:
+1. `@font-face` rules in `app/+html.tsx` for `material-community` and `MaterialCommunityIcons` font families
+2. `...MaterialCommunityIcons.font` spread into the `useFonts()` call in `app/_layout.tsx`
+
+### No Back Button on Candidate Profile (Web)
+
+**Symptom:** On web, navigating to a candidate profile (`/candidate/[id]`) shows no header or tab bar, so there's no way to go back.
+
+**Cause:** The web layout uses `<Slot />` instead of `<Stack>` (to avoid CSSStyleDeclaration errors from react-native-screens). `<Slot />` doesn't render navigation chrome.
+
+**Fix:** Added a web-only back button in `app/candidate/[id].tsx`:
+```tsx
+{Platform.OS === 'web' && (
+  <Pressable onPress={() => router.back()} style={styles.webBackButton}>
+    <MaterialCommunityIcons name="arrow-left" size={20} color="#5a3977" />
+    <Text variant="bodyMedium" style={styles.webBackText}>Back</Text>
+  </Pressable>
+)}
+```
+
+### Phone Frame Notch Overlaps Header Content
+
+**Symptom:** On the web demo, the CSS phone notch covers the app's header/logo area.
+
+**Fix:** Added `padding-top: 44px; box-sizing: border-box;` to `#phone-screen` in `app/+html.tsx` to simulate the iPhone status bar safe area. This padding is reset to `0` in the mobile media query where the frame is hidden.
+
+---
+
 ## Known Runtime Warnings (Non-Blocking)
 
 These warnings appear in the Metro logs but do not affect app functionality:

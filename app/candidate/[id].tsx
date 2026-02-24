@@ -359,6 +359,17 @@ export default function CandidateProfileScreen() {
       edges={['bottom']}
     >
       <ScrollView showsVerticalScrollIndicator={false}>
+        {/* Back button for web (no Stack header) */}
+        {Platform.OS === 'web' && (
+          <Pressable
+            onPress={() => router.back()}
+            style={styles.webBackButton}
+          >
+            <MaterialCommunityIcons name="arrow-left" size={20} color="#5a3977" />
+            <Text variant="bodyMedium" style={styles.webBackText}>Back</Text>
+          </Pressable>
+        )}
+
         {/* Profile Header */}
         <View style={styles.header}>
           <CandidateAvatar
@@ -563,6 +574,17 @@ export default function CandidateProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  webBackButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    paddingHorizontal: 16,
+  },
+  webBackText: {
+    marginLeft: 4,
+    color: '#5a3977',
+    fontWeight: '600',
   },
   header: {
     alignItems: 'center',

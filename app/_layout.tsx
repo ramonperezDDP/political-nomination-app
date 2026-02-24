@@ -13,6 +13,7 @@ import {
   NunitoSans_700Bold,
   NunitoSans_900Black,
 } from '@expo-google-fonts/nunito-sans';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { enableScreens } from 'react-native-screens';
 import { useAuthStore, useConfigStore, useUserStore } from '@/stores';
@@ -86,6 +87,7 @@ export default function RootLayout() {
     NunitoSans_400Regular,
     NunitoSans_700Bold,
     NunitoSans_900Black,
+    ...MaterialCommunityIcons.font,
   });
 
   useEffect(() => {

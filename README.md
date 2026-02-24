@@ -820,6 +820,22 @@ npm run deploy
 
 The hosted URL will be: `https://party-nomination-app.web.app`
 
+#### Web Demo Phone Frame
+
+On desktop browsers, the web app renders inside a realistic iPhone mockup with the AMSP brand purple gradient background, notch, side buttons, and home indicator. This is a CSS-only wrapper defined in `app/+html.tsx` — no extra dependencies or React components.
+
+| Viewport | Behavior |
+|----------|----------|
+| Desktop (>500px wide, >950px tall) | Full phone frame at 375x812 |
+| Medium height (800-950px tall) | Phone frame scaled to 85% |
+| Short screens (700-800px tall) | Phone frame scaled to 75% |
+| Mobile (≤500px wide or ≤700px tall) | Frame hidden, app fills viewport normally |
+
+#### Web-Specific Notes
+
+- **Icon fonts**: MaterialCommunityIcons are preloaded via `@font-face` in `app/+html.tsx` and via `useFonts()` in `app/_layout.tsx`. The `firebase.json` ignore pattern must use `node_modules/**` (not `**/node_modules/**`) to avoid excluding bundled font assets from deployment.
+- **Navigation**: The candidate profile page (`app/candidate/[id].tsx`) includes a web-only back button since the web layout uses `<Slot />` instead of `<Stack>` (see TROUBLESHOOTING.md for context).
+
 ### Option 2: Web Only (EC2)
 
 Deploy the web version to EC2 with Nginx. Suitable for:
