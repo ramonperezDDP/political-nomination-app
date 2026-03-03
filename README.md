@@ -834,7 +834,7 @@ On desktop browsers, the web app renders inside a realistic iPhone mockup with t
 #### Web-Specific Notes
 
 - **Icon fonts**: MaterialCommunityIcons are preloaded via `@font-face` in `app/+html.tsx` and via `useFonts()` in `app/_layout.tsx`. The `firebase.json` ignore pattern must use `node_modules/**` (not `**/node_modules/**`) to avoid excluding bundled font assets from deployment.
-- **Navigation**: The candidate profile page (`app/candidate/[id].tsx`) includes a web-only back button since the web layout uses `<Slot />` instead of `<Stack>` (see TROUBLESHOOTING.md for context).
+- **Navigation**: The candidate profile page (`app/candidate/[id].tsx`) includes a web-only back button since the web layout uses `<Slot />` instead of `<Stack>` (see docs/TROUBLESHOOTING.md for context).
 
 ### Option 2: Web Only (EC2)
 
@@ -884,7 +884,7 @@ eas submit --platform android
 
 ## Troubleshooting
 
-> **For comprehensive troubleshooting, see [TROUBLESHOOTING.md](./TROUBLESHOOTING.md)** which covers:
+> **For comprehensive troubleshooting, see [TROUBLESHOOTING.md](./docs/TROUBLESHOOTING.md)** which covers:
 > - Node.js version requirements (use Node 20 LTS)
 > - iOS build issues (gRPC/Firebase conflicts)
 > - Metro bundler hanging issues
@@ -1012,9 +1012,8 @@ sudo journalctl -u nginx -f
 
 ## Additional Documentation
 
-- [REQUIREMENTS.md](./REQUIREMENTS.md) - System requirements and AWS specifications
-- [DEPENDENCIES.md](./DEPENDENCIES.md) - Complete dependency documentation
-- [IOS_SIMULATOR_GUIDE.md](./IOS_SIMULATOR_GUIDE.md) - iOS development setup
+- [REQUIREMENTS.md](./docs/REQUIREMENTS.md) - System requirements and AWS specifications
+- [DEPENDENCIES.md](./docs/DEPENDENCIES.md) - Complete dependency documentation
 
 ### External Resources
 
