@@ -47,6 +47,7 @@ export interface User {
   questionnaireResponses: QuestionnaireResponse[];
   dealbreakers: string[];
   zipCode?: string;
+  lastBrowsingDistrict?: string;
   // Abandonment tracking metadata
   lastActiveAt: Timestamp;
   sessionCount: number;
@@ -248,6 +249,7 @@ export interface FeedItem {
   alignmentScore: number | null;
   matchedIssues: string[];
   hasDealbreaker: boolean;
+  matchedDealbreakers: string[];
   candidatePositions: TopIssue[];
 }
 
@@ -289,6 +291,7 @@ export interface PartyConfig {
   secondaryColor: string;
   logoUrl: string;
   tagline: string;
+  introVideoUrl?: string;
   contestStage: ContestStage;
   endorsementCutoffs: EndorsementCutoff[];
 }

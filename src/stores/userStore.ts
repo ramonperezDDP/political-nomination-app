@@ -15,6 +15,7 @@ interface UserState {
   endorsements: Endorsement[];
   isLoading: boolean;
   error: string | null;
+  selectedBrowsingDistrict: string; // 'PA-01' | 'PA-02' — for browsing only
 
   // Actions
   subscribeToProfile: (userId: string) => () => void;
@@ -36,6 +37,7 @@ interface UserState {
   endorseCandidate: (odid: string, candidateId: string) => Promise<boolean>;
   revokeEndorsement: (odid: string, candidateId: string) => Promise<boolean>;
   hasEndorsedCandidate: (candidateId: string) => boolean;
+  setSelectedBrowsingDistrict: (district: string) => void;
   setError: (error: string | null) => void;
   reset: () => void;
 }
@@ -46,6 +48,7 @@ export const useUserStore = create<UserState>((set, get) => ({
   endorsements: [],
   isLoading: false,
   error: null,
+  selectedBrowsingDistrict: 'PA-01',
 
   // Subscribe to real-time profile updates
   subscribeToProfile: (userId: string) => {
@@ -192,6 +195,16 @@ export const useUserStore = create<UserState>((set, get) => ({
     );
   },
 
+  // Set browsing district (available to all users including anonymous)
+  setSelectedBrowsingDistrict: (district: string) => {
+    set({ selectedBrowsingDistrict: district });
+    // Persist for authenticated users only
+    const userId = get().userProfile?.id;
+    if (userId && !get().userProfile?.isAnonymous) {
+      updateUser(userId, { lastBrowsingDistrict: district });
+    }
+  },
+
   // Set error
   setError: (error: string | null) => {
     set({ error });
@@ -204,6 +217,7 @@ export const useUserStore = create<UserState>((set, get) => ({
       endorsements: [],
       isLoading: false,
       error: null,
+      selectedBrowsingDistrict: 'PA-01',
     });
   },
 }));
@@ -323,6 +337,11 @@ export const selectCompletionPercent = (state: UserState): number => {
   if (o?.dealbreakers === 'complete') completed++;
   return Math.round((completed / total) * 100);
 };
+
+// ─── Browsing District Selector ───
+
+export const selectBrowsingDistrict = (state: UserState) =>
+  state.selectedBrowsingDistrict;
 
 // ─── Legacy Selectors (kept for backward compatibility) ───
 

@@ -1,44 +1,24 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Linking, Pressable } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Text, useTheme, List } from 'react-native-paper';
 import { router } from 'expo-router';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Video, ResizeMode } from 'expo-av';
 
-import { Card, PrimaryButton, SecondaryButton } from '@/components/ui';
-import { useConfigStore } from '@/stores';
+import { Card } from '@/components/ui';
+import { useConfigStore, useUserStore, selectHasAccount } from '@/stores';
+import VideoCard from './VideoCard';
+import QuizCard from './QuizCard';
+import ContentCard from './ContentCard';
+import AboutContestCard from './AboutContestCard';
 
 export default function VoterHome() {
   const theme = useTheme();
-  const partyConfig = useConfigStore((state) => state.partyConfig);
+  const { partyConfig } = useConfigStore();
+  const user = useUserStore((s) => s.userProfile);
+  const hasAccount = useUserStore(selectHasAccount);
   const [expandedFaq, setExpandedFaq] = useState<string | null>(null);
 
-  const externalLinks = [
-    {
-      id: 'register',
-      title: 'Register to Vote',
-      description: 'Check your registration status',
-      icon: 'vote',
-      url: 'https://vote.gov',
-      isExternal: true,
-    },
-    {
-      id: 'issues',
-      title: 'Policy Preferences',
-      description: 'Set your policy priorities',
-      icon: 'tune',
-      route: '/settings/issues',
-      isExternal: false,
-    },
-    {
-      id: 'calendar',
-      title: 'Election Calendar',
-      description: 'Important dates and deadlines',
-      icon: 'calendar',
-      url: 'https://www.usa.gov/election-day',
-      isExternal: true,
-    },
-  ];
+  const completedIssueCount = user?.questionnaireResponses?.length || 0;
+  const totalIssues = 7;
 
   const faqs = [
     {
@@ -69,87 +49,53 @@ export default function VoterHome() {
 
   return (
     <View style={styles.container}>
-      {/* Welcome Video Section */}
-      <Card style={styles.videoCard}>
-        <View style={styles.videoContainer}>
-          <View style={[styles.videoPlaceholder, { backgroundColor: theme.colors.surfaceVariant }]}>
-            <MaterialCommunityIcons
-              name="play-circle-outline"
-              size={64}
-              color={theme.colors.primary}
-            />
-            <Text variant="bodyMedium" style={{ color: theme.colors.outline, marginTop: 8 }}>
-              Welcome Video
-            </Text>
-          </View>
-        </View>
-        <View style={styles.videoInfo}>
-          <Text variant="titleMedium" style={styles.videoTitle}>
-            Welcome to {partyConfig?.partyName || "America's Main Street Party"}
-          </Text>
-          <Text variant="bodyMedium" style={{ color: theme.colors.outline }}>
-            Learn how our democratic nomination process works
-          </Text>
-        </View>
-      </Card>
+      {/* 1. Video — "A Brand New Way" */}
+      <VideoCard videoUrl={partyConfig?.introVideoUrl} />
 
-      {/* Quick Actions */}
-      <View style={styles.quickActions}>
-        <PrimaryButton
-          onPress={() => router.push('/(tabs)/for-you')}
-          icon="cards"
-          style={styles.actionButton}
-        >
-          Browse Candidates
-        </PrimaryButton>
-        <SecondaryButton
-          onPress={() => router.push('/(tabs)/leaderboard')}
-          icon="trophy"
-          style={styles.actionButton}
-        >
-          View Leaderboard
-        </SecondaryButton>
-      </View>
+      {/* 2. Quiz — 7 Issues Graphic */}
+      <QuizCard
+        completedCount={completedIssueCount}
+        totalCount={totalIssues}
+        onPress={() => router.push('/quiz' as any)}
+      />
 
-      {/* External Links */}
-      <Text variant="titleMedium" style={styles.sectionTitle}>
-        Resources
-      </Text>
-      <View style={styles.linksGrid}>
-        {externalLinks.map((link) => (
-          <Pressable
-            key={link.id}
-            onPress={() => {
-              if (link.isExternal && link.url) {
-                Linking.openURL(link.url);
-              } else if (link.route) {
-                router.push(link.route as any);
-              }
-            }}
-            style={({ pressed }) => [
-              styles.linkCard,
-              { backgroundColor: theme.colors.surface, opacity: pressed ? 0.8 : 1 },
-            ]}
-          >
-            <MaterialCommunityIcons
-              name={link.icon as any}
-              size={32}
-              color={theme.colors.primary}
-            />
-            <Text variant="titleSmall" style={styles.linkTitle}>
-              {link.title}
-            </Text>
-            <Text
-              variant="bodySmall"
-              style={{ color: theme.colors.outline, textAlign: 'center' }}
-            >
-              {link.description}
-            </Text>
-          </Pressable>
-        ))}
-      </View>
+      {/* 3. Character Search */}
+      <ContentCard
+        icon="account-search"
+        title="Character Search"
+        subtitle="Find candidates by name or policy position"
+        onPress={() => router.push('/(tabs)/for-you')}
+      />
 
-      {/* FAQ Section */}
+      {/* 4. Verify ID */}
+      <ContentCard
+        icon="shield-check"
+        title="Verify Your Identity"
+        subtitle={
+          hasAccount
+            ? 'Verify to unlock endorsement features'
+            : 'Create an account and verify to endorse candidates'
+        }
+        onPress={() =>
+          hasAccount
+            ? router.push('/(auth)/verify-identity' as any)
+            : router.push('/(auth)/register')
+        }
+        completed={user?.verification?.photoId === 'verified'}
+      />
+
+      {/* 5. Submit / Endorse */}
+      <ContentCard
+        icon="thumb-up"
+        title="Submit / Endorse"
+        subtitle="Apply filters and endorse matching candidates"
+        onPress={() => router.push('/(tabs)/for-you')}
+      />
+
+      {/* 6. About The Contest (includes nomination calendar) */}
+      <AboutContestCard />
+
+      {/* 7. FAQs */}
       <Text variant="titleMedium" style={styles.sectionTitle}>
         Frequently Asked Questions
       </Text>
@@ -178,87 +124,16 @@ export default function VoterHome() {
           </List.Accordion>
         ))}
       </Card>
-
-      {/* Run for Office CTA */}
-      <Card style={[styles.ctaCard, { backgroundColor: theme.colors.primaryContainer }]}>
-        <View style={styles.ctaContent}>
-          <MaterialCommunityIcons
-            name="account-tie"
-            size={48}
-            color={theme.colors.primary}
-          />
-          <View style={styles.ctaText}>
-            <Text variant="titleMedium" style={{ color: theme.colors.onPrimaryContainer }}>
-              Want to Run for Office?
-            </Text>
-            <Text
-              variant="bodyMedium"
-              style={{ color: theme.colors.onPrimaryContainer, opacity: 0.8 }}
-            >
-              Learn how you can become a candidate
-            </Text>
-          </View>
-        </View>
-        <PrimaryButton
-          onPress={() => router.push('/(tabs)/profile')}
-          style={styles.ctaButton}
-        >
-          Learn More
-        </PrimaryButton>
-      </Card>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {},
-  videoCard: {
-    marginBottom: 16,
-    overflow: 'hidden',
-  },
-  videoContainer: {
-    aspectRatio: 16 / 9,
-    width: '100%',
-  },
-  videoPlaceholder: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 8,
-    margin: 12,
-  },
-  videoInfo: {
-    padding: 16,
-    paddingTop: 8,
-  },
-  videoTitle: {
-    fontWeight: 'bold',
-    marginBottom: 4,
-  },
-  quickActions: {
-    gap: 12,
-    marginBottom: 24,
-  },
-  actionButton: {},
   sectionTitle: {
     fontWeight: 'bold',
     marginBottom: 12,
-  },
-  linksGrid: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 24,
-  },
-  linkCard: {
-    flex: 1,
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  linkTitle: {
-    marginTop: 8,
-    marginBottom: 4,
-    textAlign: 'center',
+    marginTop: 4,
   },
   faqCard: {
     marginBottom: 24,
@@ -274,18 +149,4 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 16,
   },
-  ctaCard: {
-    marginBottom: 24,
-    padding: 20,
-  },
-  ctaContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  ctaText: {
-    marginLeft: 16,
-    flex: 1,
-  },
-  ctaButton: {},
 });

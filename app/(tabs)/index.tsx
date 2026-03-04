@@ -1,18 +1,20 @@
 import React from 'react';
 import { StyleSheet, View, ScrollView, Image, Platform } from 'react-native';
-import { Text, useTheme } from 'react-native-paper';
+import { useTheme } from 'react-native-paper';
 import { SafeAreaView as NativeSafeAreaView } from 'react-native-safe-area-context';
 
-import { useAuthStore, selectIsCandidate, useConfigStore } from '@/stores';
+import { useAuthStore, selectIsCandidate, useUserStore } from '@/stores';
 import VoterHome from '@/components/home/VoterHome';
 import CandidateHome from '@/components/home/CandidateHome';
+import DistrictToggle from '@/components/home/DistrictToggle';
 
 const SafeAreaView = Platform.OS === 'web' ? View : NativeSafeAreaView;
 
 export default function HomeScreen() {
   const theme = useTheme();
   const isCandidate = useAuthStore(selectIsCandidate);
-  const partyConfig = useConfigStore((state) => state.partyConfig);
+  const selectedDistrict = useUserStore((s) => s.selectedBrowsingDistrict);
+  const setDistrict = useUserStore((s) => s.setSelectedBrowsingDistrict);
 
   return (
     <SafeAreaView
@@ -20,14 +22,19 @@ export default function HomeScreen() {
       edges={['top']}
     >
       <View style={styles.header}>
-        <Image
-          source={require('../../assets/amsp-logo.png')}
-          style={styles.logo}
-          resizeMode="contain"
-        />
-        <Text variant="bodySmall" style={{ color: theme.colors.outline }}>
-          {partyConfig?.tagline || 'Your voice matters'}
-        </Text>
+        <View style={styles.headerLeft}>
+          <Image
+            source={require('../../assets/amsp-logo.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
+        </View>
+        <View style={styles.headerRight}>
+          <DistrictToggle
+            selectedDistrict={selectedDistrict}
+            onDistrictChange={setDistrict}
+          />
+        </View>
       </View>
 
       <ScrollView
@@ -50,10 +57,20 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingTop: 8,
-    paddingBottom: 4,
+    paddingBottom: 8,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   logo: {
     width: 160,

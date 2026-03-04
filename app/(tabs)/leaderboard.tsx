@@ -144,9 +144,9 @@ export default function LeaderboardScreen() {
                 </Text>
                 <Text
                   variant="titleSmall"
-                  style={{ color: item.alignmentScore !== null ? theme.colors.primary : theme.colors.outline, fontWeight: 'bold' }}
+                  style={{ color: item.alignmentScore != null ? theme.colors.primary : theme.colors.outline, fontWeight: 'bold' }}
                 >
-                  {item.alignmentScore !== null ? `${item.alignmentScore}%` : 'N/A'}
+                  {item.alignmentScore != null ? `${item.alignmentScore}%` : 'N/A'}
                 </Text>
               </View>
               <MaterialCommunityIcons

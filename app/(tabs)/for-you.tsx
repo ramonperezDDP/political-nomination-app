@@ -36,11 +36,14 @@ const generateFeedItem = (
     .filter((ti) => ti.priority <= 5)
     .sort((a, b) => a.priority - b.priority);
   const candidateIssueIds = candidatePriorityIssues.map((ti) => ti.issueId);
-  const { score, matchedIssues, hasDealbreaker } = calculateAlignmentScore({
+  // Pass ALL positions for dealbreaker checking, but only priority issues for scoring
+  const allPositions = candidate.topIssues || [];
+  const { score, matchedIssues, hasDealbreaker, matchedDealbreakers } = calculateAlignmentScore({
     candidateIssues: candidateIssueIds,
     userIssues,
     candidatePositions: candidatePriorityIssues,
     userDealbreakers,
+    allCandidatePositions: allPositions,
   });
 
   return {
@@ -78,6 +81,7 @@ const generateFeedItem = (
     alignmentScore: score,
     matchedIssues,
     hasDealbreaker,
+    matchedDealbreakers,
     candidatePositions: candidate.topIssues || [],
   };
 };
@@ -86,6 +90,7 @@ export default function ForYouScreen() {
   const theme = useTheme();
   const { issues } = useConfigStore();
   const { user } = useAuthStore();
+
 
   // Get font scale for accessibility - scales with user's text size preferences
   const fontScale = PixelRatio.getFontScale();
@@ -199,6 +204,13 @@ export default function ForYouScreen() {
 
   const filteredFeed = getFilteredFeed();
 
+  // Filter counts for menu labels
+  const filterCounts = {
+    all: feedItems.length,
+    highAlignment: feedItems.filter((item) => item.alignmentScore !== null && item.alignmentScore >= 80).length,
+    noDealbreakers: feedItems.filter((item) => !item.hasDealbreaker).length,
+  };
+
   // Get autocomplete suggestions based on search query
   const getSuggestions = () => {
     if (!searchQuery.trim() || searchQuery.length < 1) return [];
@@ -261,7 +273,7 @@ export default function ForYouScreen() {
                 setSelectedFilter('all');
                 setFilterMenuVisible(false);
               }}
-              title="All Candidates"
+              title={`All Candidates (${filterCounts.all})`}
               leadingIcon={selectedFilter === 'all' ? 'check' : undefined}
             />
             <Menu.Item
@@ -269,7 +281,7 @@ export default function ForYouScreen() {
                 setSelectedFilter('high-alignment');
                 setFilterMenuVisible(false);
               }}
-              title="High Alignment (80%+)"
+              title={`High Alignment 80%+ (${filterCounts.highAlignment})`}
               leadingIcon={selectedFilter === 'high-alignment' ? 'check' : undefined}
             />
             <Menu.Item
@@ -277,7 +289,7 @@ export default function ForYouScreen() {
                 setSelectedFilter('no-dealbreakers');
                 setFilterMenuVisible(false);
               }}
-              title="No Dealbreakers"
+              title={`No Dealbreakers (${filterCounts.noDealbreakers})`}
               leadingIcon={selectedFilter === 'no-dealbreakers' ? 'check' : undefined}
             />
             <Divider />

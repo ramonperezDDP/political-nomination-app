@@ -19,6 +19,12 @@
 - Alignment badge (top-right of video): 48×48px circle
 - Colors: green (80-100%), light-green (60-79%), orange (40-59%), deep-orange (20-39%), red (0-19%)
 - Shows candidate name, stats, matched issues, endorse/share/profile buttons
+- Tappable dealbreaker badge (top-left of video): red pill with alert icon; on tap opens a centered modal listing each triggered dealbreaker with its name, description, and the candidate's actual position
+
+### `app/candidate/[id].tsx`
+
+- Candidate profile page
+- Tappable dealbreaker badge (top-left of header): same as PSACard — on tap opens a centered modal listing triggered dealbreakers with candidate's positions
 
 ---
 
@@ -666,7 +672,7 @@ The alignment calculation logic stays the same. Only the visual representation (
 
 | File | Status |
 | :---- | :---- |
-| `src/components/feed/PSACard.tsx` | Keep for candidate profile page (`app/candidate/[id].tsx`), but no longer used in For You feed |
+| `src/components/feed/PSACard.tsx` | Keep for candidate profile page (`app/candidate/[id].tsx`), but no longer used in For You feed. Has tappable dealbreaker badge + modal showing matched dealbreakers with candidate positions. |
 
 ---
 

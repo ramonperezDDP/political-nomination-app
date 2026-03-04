@@ -28,6 +28,8 @@ export {
   selectMissingVerifications,
   selectMissingOnboarding,
   selectCompletionPercent,
+  // Plan 02: Browsing district
+  selectBrowsingDistrict,
 } from './userStore';
 export { useConfigStore, selectContestStage, selectPrimaryColor, selectSecondaryColor, selectPartyName, selectIssuesByCategory, selectIssueById, selectEndorsementCutoffs, defaultPartyConfig } from './configStore';
 export { useCandidateStore, selectIsApprovedCandidate, selectHasPendingApplication, selectPublishedPSAs, selectDraftPSAs } from './candidateStore';
