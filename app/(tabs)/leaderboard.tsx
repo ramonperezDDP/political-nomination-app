@@ -138,19 +138,17 @@ export default function LeaderboardScreen() {
                   )}
                 </View>
               </View>
-              {item.alignmentScore && (
-                <View style={styles.alignmentContainer}>
-                  <Text variant="labelSmall" style={{ color: theme.colors.outline }}>
-                    Match
-                  </Text>
-                  <Text
-                    variant="titleSmall"
-                    style={{ color: theme.colors.primary, fontWeight: 'bold' }}
-                  >
-                    {item.alignmentScore}%
-                  </Text>
-                </View>
-              )}
+              <View style={styles.alignmentContainer}>
+                <Text variant="labelSmall" style={{ color: theme.colors.outline }}>
+                  Match
+                </Text>
+                <Text
+                  variant="titleSmall"
+                  style={{ color: item.alignmentScore !== null ? theme.colors.primary : theme.colors.outline, fontWeight: 'bold' }}
+                >
+                  {item.alignmentScore !== null ? `${item.alignmentScore}%` : 'N/A'}
+                </Text>
+              </View>
               <MaterialCommunityIcons
                 name="chevron-right"
                 size={24}

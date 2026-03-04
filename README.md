@@ -810,8 +810,9 @@ The app uses a **progressive access model** built on Firebase Anonymous Authenti
 2. **Anonymous users** can browse candidates, take the policy quiz, set dealbreakers, and toggle between districts
 3. **Account upgrade**: When users register, `linkWithCredential()` upgrades the anonymous account in place — the UID stays the same and all Firestore data (quiz responses, dealbreakers, etc.) is preserved
 4. **Progressive verification**: Five independent dimensions (email, voter registration, photo ID, questionnaire, dealbreakers) unlock capabilities incrementally
-5. **District-gated endorsements**: Users can browse any district but can only endorse candidates in their verified districts
-6. **Cleanup**: A scheduled Cloud Function (`cleanupAbandonedAnonymous`) runs daily to delete anonymous accounts inactive for 90+ days
+5. **Alignment scores gated on quiz**: Users who haven't completed the policy quiz see "N/A" instead of a match percentage on candidate cards, the leaderboard, and candidate profiles
+6. **District-gated endorsements**: Users can browse any district but can only endorse candidates in their verified districts
+7. **Cleanup**: A scheduled Cloud Function (`cleanupAbandonedAnonymous`) runs daily to delete anonymous accounts inactive for 90+ days
 
 ---
 

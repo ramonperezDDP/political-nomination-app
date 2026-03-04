@@ -134,8 +134,8 @@ export default function ForYouScreen() {
           generateFeedItem(candidate, candidateUser, userIssues, userDealbreakers, issues)
         );
 
-        // Sort by alignment score (highest first)
-        items.sort((a, b) => b.alignmentScore - a.alignmentScore);
+        // Sort by alignment score (highest first, null scores last)
+        items.sort((a, b) => (b.alignmentScore ?? -1) - (a.alignmentScore ?? -1));
         console.log('Generated feed items:', items.length);
         setFeedItems(items);
       } catch (error) {
@@ -177,7 +177,7 @@ export default function ForYouScreen() {
     // Filter menu options
     switch (selectedFilter) {
       case 'high-alignment':
-        filtered = filtered.filter((item) => item.alignmentScore >= 80);
+        filtered = filtered.filter((item) => item.alignmentScore !== null && item.alignmentScore >= 80);
         break;
       case 'no-dealbreakers':
         filtered = filtered.filter((item) => !item.hasDealbreaker);
@@ -330,7 +330,7 @@ export default function ForYouScreen() {
                     variant="labelSmall"
                     style={{ color: theme.colors.primary }}
                   >
-                    {item.alignmentScore}% match
+                    {item.alignmentScore !== null ? `${item.alignmentScore}% match` : 'N/A'}
                   </Text>
                 </View>
               </TouchableRipple>

@@ -245,7 +245,7 @@ export interface FeedItem {
   id: string;
   psa: PSA;
   candidate: CandidatePreview;
-  alignmentScore: number;
+  alignmentScore: number | null;
   matchedIssues: string[];
   hasDealbreaker: boolean;
   candidatePositions: TopIssue[];

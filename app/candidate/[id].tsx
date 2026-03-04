@@ -54,7 +54,7 @@ export default function CandidateProfileScreen() {
   // Calculate alignment score and matching details (same algorithm as For You feed)
   const alignmentDetails = useMemo(() => {
     if (!candidate || !currentUser) {
-      return { score: 0, matchedIssues: [], hasDealbreaker: false, matchedIssueNames: [], userIssueCount: 0 };
+      return { score: null, matchedIssues: [], hasDealbreaker: false, matchedIssueNames: [], userIssueCount: 0 };
     }
 
     const userIssues = currentUser.selectedIssues || [];
@@ -407,7 +407,7 @@ export default function CandidateProfileScreen() {
               style={styles.stat}
               onPress={() => setShowAlignmentTooltip(true)}
               accessibilityRole="button"
-              accessibilityLabel={`${alignmentDetails.score}% match. Tap for details.`}
+              accessibilityLabel={`${alignmentDetails.score !== null ? `${alignmentDetails.score}% match` : 'N/A'}. Tap for details.`}
             >
               <View style={styles.alignmentRow}>
                 <AlignmentBadge score={alignmentDetails.score} size="small" />
@@ -504,10 +504,10 @@ export default function CandidateProfileScreen() {
 
             <View style={[styles.scoreHighlight, { backgroundColor: theme.colors.primaryContainer }]}>
               <Text variant="displaySmall" style={{ fontWeight: 'bold', color: theme.colors.primary }}>
-                {alignmentDetails.score}%
+                {alignmentDetails.score !== null ? `${alignmentDetails.score}%` : 'N/A'}
               </Text>
               <Text variant="bodyMedium" style={{ color: theme.colors.onPrimaryContainer }}>
-                Overall Match
+                {alignmentDetails.score !== null ? 'Overall Match' : 'Complete the quiz to see your match'}
               </Text>
             </View>
 

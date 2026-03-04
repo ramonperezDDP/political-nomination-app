@@ -14,7 +14,7 @@ export interface AlignmentInput {
 }
 
 export interface AlignmentResult {
-  score: number;
+  score: number | null;
   matchedIssues: string[];
   hasDealbreaker: boolean;
 }
@@ -34,9 +34,9 @@ export function calculateAlignmentScore({
     return position && Math.abs(position.spectrumPosition) > 80;
   });
 
-  // If user has no selected issues, return neutral score
+  // If user has no selected issues, score is unknown
   if (userIssues.length === 0) {
-    return { score: 50, matchedIssues: [], hasDealbreaker };
+    return { score: null, matchedIssues: [], hasDealbreaker };
   }
 
   // If candidate has no priority issues, return low score

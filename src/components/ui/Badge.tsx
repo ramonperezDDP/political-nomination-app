@@ -86,13 +86,14 @@ export function Chip({
 }
 
 interface AlignmentBadgeProps {
-  score: number;
+  score: number | null;
   size?: 'small' | 'medium' | 'large';
   style?: ViewStyle;
 }
 
 export function AlignmentBadge({ score, size = 'medium', style }: AlignmentBadgeProps) {
   const getColor = () => {
+    if (score === null) return '#9e9e9e';
     if (score >= 80) return '#4caf50';
     if (score >= 60) return '#8bc34a';
     if (score >= 40) return '#ff9800';
@@ -125,8 +126,8 @@ export function AlignmentBadge({ score, size = 'medium', style }: AlignmentBadge
         style,
       ])}
     >
-      <Text style={StyleSheet.flatten([styles.alignmentText, { fontSize: sizeStyles.fontSize }])}>
-        {Math.round(score)}%
+      <Text style={StyleSheet.flatten([styles.alignmentText, { fontSize: score === null && size !== 'large' ? sizeStyles.fontSize - 2 : sizeStyles.fontSize }])}>
+        {score === null ? 'N/A' : `${Math.round(score)}%`}
       </Text>
     </View>
   );
