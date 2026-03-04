@@ -1,23 +1,36 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Text, useTheme, List } from 'react-native-paper';
 import { router } from 'expo-router';
 
 import { Card } from '@/components/ui';
-import { useConfigStore, useUserStore, selectHasAccount } from '@/stores';
+import { useAuthStore, useConfigStore, useUserStore, selectHasAccount } from '@/stores';
 import VideoCard from './VideoCard';
 import QuizCard from './QuizCard';
 import ContentCard from './ContentCard';
 import AboutContestCard from './AboutContestCard';
 
+// District issue IDs (must match quiz.tsx DISTRICT_ISSUES)
+const DISTRICT_ISSUE_IDS = [
+  'climate-change', 'economy', 'healthcare', 'education',
+  'gun-policy', 'infrastructure', 'housing',
+  'immigration', 'criminal-justice',
+];
+
 export default function VoterHome() {
   const theme = useTheme();
   const { partyConfig } = useConfigStore();
-  const user = useUserStore((s) => s.userProfile);
+  const user = useAuthStore((s) => s.user);
   const hasAccount = useUserStore(selectHasAccount);
   const [expandedFaq, setExpandedFaq] = useState<string | null>(null);
 
-  const completedIssueCount = user?.questionnaireResponses?.length || 0;
+  // Count only responses for district issues (not legacy questionnaire responses)
+  const completedIssueCount = useMemo(() => {
+    if (!user?.questionnaireResponses?.length) return 0;
+    return user.questionnaireResponses.filter((r) =>
+      DISTRICT_ISSUE_IDS.includes(r.issueId)
+    ).length;
+  }, [user?.questionnaireResponses]);
   const totalIssues = 7;
 
   const faqs = [

@@ -1,6 +1,6 @@
 # Plan 03: Quiz Page Redesign
 
-**Status:** Implemented (2026-03-03)
+**Status:** Implemented (2026-03-04)
 
 **Feedback:** Remove Description and Search Issues. Break into 3 sections (2 global, 3 national, 2 local). Fit all 7 questions on one screen with no answers showing. Show contestant filter count in top bar. Graphically reflect completed questions. Minimum of 1 question to "complete" the quiz.
 
@@ -13,6 +13,18 @@
 - `src/services/firebase/firestore.ts` — Added `updateSingleQuizResponse()` and `QuestionnaireResponse` import
 - `src/services/firebase/firestore.web.ts` — Added `updateSingleQuizResponse()` (web SDK) and `QuestionnaireResponse` import
 - `app/_layout.tsx` — Registered `quiz` route in root Stack with header
+- `src/utils/alignment.ts` — Enhanced `calculateAlignmentScore` to factor in user quiz answers (spectrum position comparison), not just issue overlap
+- `app/(tabs)/for-you.tsx` — Pass `userResponses` to alignment calculation so scores reflect quiz answers
+- `app/candidate/[id].tsx` — Pass `userResponses` to alignment calculation for consistent scoring
+- `src/components/home/VoterHome.tsx` — Fixed to read user from `useAuthStore` (real-time Firestore subscription) instead of `useUserStore`; count only district-issue responses for QuizCard progress
+- `app/quiz.tsx` — Sets `selectedIssues` to district issue IDs on answer so alignment scores activate
+
+### Alignment Score Formula (updated)
+The alignment score now combines three factors:
+- **Issue overlap** (30 pts): What percentage of the user's 7 district issues does the candidate also prioritize?
+- **Spectrum alignment** (40 pts): How close are the user's quiz answer positions to the candidate's positions on the same issues? Compares numeric spectrum values (-100 to 100).
+- **Priority bonus** (20 pts): Are matched issues high priority for the candidate?
+- **Base** (10 pts): Minimum score for any candidate with issues.
 
 ### Deferred to Future
 - Contestant filter count in top bar (requires candidate matching computation — Plan 04/05)

@@ -89,6 +89,7 @@ export default function CandidateProfileScreen() {
       candidatePositions: candidatePriorityIssues,
       userDealbreakers,
       allCandidatePositions: candidate.topIssues || [],
+      userResponses: currentUser.questionnaireResponses || [],
     });
 
     // Get matched issue names for display

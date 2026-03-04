@@ -6,8 +6,8 @@ import { SafeAreaView as NativeSafeAreaView } from 'react-native-safe-area-conte
 
 const SafeAreaView = Platform.OS === 'web' ? View : NativeSafeAreaView;
 
-import { useAuthStore, useConfigStore } from '@/stores';
-import { getQuestions, updateSingleQuizResponse } from '@/services/firebase/firestore';
+import { useAuthStore, useConfigStore, useUserStore } from '@/stores';
+import { getQuestions, updateSingleQuizResponse, updateUser } from '@/services/firebase/firestore';
 import { BottomSheet, LoadingScreen } from '@/components/ui';
 import type { Issue, Question, QuestionnaireResponse } from '@/types';
 
@@ -169,8 +169,12 @@ export default function QuizScreen() {
           return m;
         });
 
-        // On first answer, set selectedIssues to the 7 district issue IDs
-        // (the realtime subscription in userStore will auto-sync)
+        // Set selectedIssues to the 7 district issue IDs if not already matching
+        const currentIssues = user.selectedIssues || [];
+        const needsUpdate = allIssueIds.some((id) => !currentIssues.includes(id));
+        if (needsUpdate) {
+          await updateUser(user.id, { selectedIssues: allIssueIds });
+        }
       } catch (error) {
         console.warn('Error saving quiz response:', error);
       } finally {
@@ -182,7 +186,7 @@ export default function QuizScreen() {
         }, 400);
       }
     },
-    [user?.id, selectedIssueId, activeQuestion, saving]
+    [user?.id, user?.selectedIssues, selectedIssueId, activeQuestion, saving, allIssueIds]
   );
 
   if (loading) {

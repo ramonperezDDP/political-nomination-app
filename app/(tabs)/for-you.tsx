@@ -29,7 +29,8 @@ const generateFeedItem = (
   user: User | null,
   userIssues: string[],
   userDealbreakers: string[],
-  issues: Array<{ id: string; name: string }>
+  issues: Array<{ id: string; name: string }>,
+  userResponses: Array<{ issueId: string; answer: string | number | string[] }> = []
 ): FeedItem => {
   // Only use candidate's actual priority issues (priority <= 5), not all positions
   const candidatePriorityIssues = (candidate.topIssues || [])
@@ -44,6 +45,7 @@ const generateFeedItem = (
     candidatePositions: candidatePriorityIssues,
     userDealbreakers,
     allCandidatePositions: allPositions,
+    userResponses,
   });
 
   return {
@@ -134,9 +136,10 @@ export default function ForYouScreen() {
 
         const userIssues = user?.selectedIssues || [];
         const userDealbreakers = user?.dealbreakers || [];
+        const userResponses = user?.questionnaireResponses || [];
 
         const items = candidatesData.map(({ candidate, user: candidateUser }) =>
-          generateFeedItem(candidate, candidateUser, userIssues, userDealbreakers, issues)
+          generateFeedItem(candidate, candidateUser, userIssues, userDealbreakers, issues, userResponses)
         );
 
         // Sort by alignment score (highest first, null scores last)
