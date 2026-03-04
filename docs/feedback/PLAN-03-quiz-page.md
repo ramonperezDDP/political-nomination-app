@@ -1,6 +1,23 @@
 # Plan 03: Quiz Page Redesign
 
+**Status:** Implemented (2026-03-03)
+
 **Feedback:** Remove Description and Search Issues. Break into 3 sections (2 global, 3 national, 2 local). Fit all 7 questions on one screen with no answers showing. Show contestant filter count in top bar. Graphically reflect completed questions. Minimum of 1 question to "complete" the quiz.
+
+## Implementation Summary
+
+### Files Created
+- `app/quiz.tsx` — Single-screen quiz with 7 predefined district issues in 3 sections (Global/National/Local), BottomSheet for answering, auto-save via `updateSingleQuizResponse`
+
+### Files Modified
+- `src/services/firebase/firestore.ts` — Added `updateSingleQuizResponse()` and `QuestionnaireResponse` import
+- `src/services/firebase/firestore.web.ts` — Added `updateSingleQuizResponse()` (web SDK) and `QuestionnaireResponse` import
+- `app/_layout.tsx` — Registered `quiz` route in root Stack with header
+
+### Deferred to Future
+- Contestant filter count in top bar (requires candidate matching computation — Plan 04/05)
+- Scale bounce animation on completion
+- Separate `IssueSection`, `QuestionModal`, `ContestantCounter` components (inlined in quiz.tsx for simplicity)
 
 ---
 
@@ -570,7 +587,7 @@ const ensureSelectedIssues = async () => {
 
 #### Dealbreaker changes
 
-Users can change their dealbreaker list via the existing Settings > Dealbreakers screen (`app/settings/dealbreakers.tsx`). Dealbreakers are available to all users including anonymous (saved to Firestore under their UID, per Plan 01). When dealbreakers change, candidate matching scores are recalculated the next time the For You feed loads (Plan 04/05). No additional work needed in the quiz screen itself — the dealbreaker state lives independently on the user document.
+Users can change their dealbreaker list via the existing Settings > Dealbreakers screen (`app/settings/dealbreakers.tsx`). Dealbreakers are available to all users including anonymous (saved to Firestore under their UID, per Plan 01). When dealbreakers change, candidate matching scores are recalculated the next time the For You feed loads (Plan 04/05). No additional work needed in the quiz screen itself — the dealbreaker state lives independently on the user document. Users can see which specific dealbreakers a candidate triggers (and the candidate's position on each) by tapping the dealbreaker badge on PSACard or the candidate profile page.
 
 ---
 
@@ -589,7 +606,7 @@ Users can change their dealbreaker list via the existing Settings > Dealbreakers
 | :---- | :---- |
 | `src/stores/configStore.ts` | Add `questions` to state, fetch on init |
 | `src/services/firebase/firestore.ts` | Add `updateSingleQuizResponse()` for auto-save |
-| `src/components/home/VoterHome.tsx` | Quiz card links to `app/quiz.tsx` |
+| `src/components/home/QuizCard.tsx` | Already extracted as standalone component; update `onPress` to navigate to `app/quiz.tsx` |
 | `app/_layout.tsx` | Add `quiz` route to root stack |
 
 ---

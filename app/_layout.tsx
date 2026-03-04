@@ -135,6 +135,15 @@ export default function RootLayout() {
           ...(Platform.OS === 'web' ? { animation: 'none' } : {}),
         }}
       />
+      <Stack.Screen
+        name="quiz"
+        options={{
+          headerShown: true,
+          headerTitle: 'Policy Quiz',
+          headerBackTitle: 'Back',
+          ...(Platform.OS === 'web' ? { animation: 'none' } : {}),
+        }}
+      />
     </Stack>
   );
 

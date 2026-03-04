@@ -28,6 +28,7 @@ import type {
   Message,
   Notification,
   Question,
+  QuestionnaireResponse,
   PartyConfig,
   ProfileMetrics,
   LeaderboardEntry,
@@ -1393,6 +1394,42 @@ export const getQuestions = async (issueIds: string[]): Promise<Question[]> => {
     console.warn('Error fetching questions:', error);
     return [];
   }
+};
+
+// Update a single quiz response by issueId (auto-save from quiz screen)
+export const updateSingleQuizResponse = async (
+  userId: string,
+  response: QuestionnaireResponse
+): Promise<QuestionnaireResponse[]> => {
+  const userRef = doc(db, Collections.USERS, userId);
+  const userSnap = await getDoc(userRef);
+  if (!userSnap.exists()) throw new Error('User not found');
+
+  const userData = userSnap.data() as User;
+  const existing = userData.questionnaireResponses || [];
+
+  // Replace existing response for this issueId, or append
+  const idx = existing.findIndex((r) => r.issueId === response.issueId);
+  const updated = [...existing];
+  if (idx >= 0) {
+    updated[idx] = response;
+  } else {
+    updated.push(response);
+  }
+
+  const updates: Record<string, any> = {
+    questionnaireResponses: updated,
+    lastQuizActivityAt: Timestamp.now(),
+    updatedAt: Timestamp.now(),
+  };
+
+  // Mark questionnaire complete if at least 1 response
+  if (updated.length >= 1) {
+    updates['onboarding.questionnaire'] = 'complete';
+  }
+
+  await updateDoc(userRef, updates);
+  return updated;
 };
 
 // Check if questions exist and seed them if not
