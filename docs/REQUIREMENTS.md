@@ -104,11 +104,12 @@ The application requires a Firebase project with the following services enabled:
 
 | Service | Purpose |
 |---------|---------|
-| Firebase Authentication | User authentication (email/password) |
+| Firebase Authentication | User authentication (Anonymous + Email/Password) |
 | Cloud Firestore | NoSQL database |
 | Firebase Storage | File uploads (documents, images) |
 | Firebase Hosting | Web app deployment (SPA) |
-| Cloud Functions | Backend logic |
+| Cloud Functions | Backend logic and scheduled tasks (e.g., anonymous account cleanup) |
+| Cloud Scheduler | Triggers scheduled Cloud Functions (via Pub/Sub) |
 | Cloud Messaging | Push notifications |
 
 ### Firebase Configuration Files

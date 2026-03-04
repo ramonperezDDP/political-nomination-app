@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 
 const KeyboardAvoidingView = Platform.OS === 'web' ? View : RNKeyboardAvoidingView;
-import { Text, useTheme, Checkbox } from 'react-native-paper';
+import { Text, useTheme } from 'react-native-paper';
 import { Link, router } from 'expo-router';
 import { SafeAreaView as NativeSafeAreaView } from 'react-native-safe-area-context';
 
@@ -28,22 +28,22 @@ import {
 
 const registerSchema = z
   .object({
-    displayName: z
+    firstName: z
       .string()
-      .min(2, 'Name must be at least 2 characters')
-      .max(50, 'Name must be less than 50 characters'),
+      .min(1, 'First name is required')
+      .max(50),
+    lastName: z
+      .string()
+      .min(1, 'Last name is required')
+      .max(50),
     email: z.string().email('Please enter a valid email address'),
     password: z
       .string()
       .min(8, 'Password must be at least 8 characters')
-      .regex(
-        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-        'Password must contain uppercase, lowercase, and a number'
-      ),
+      .regex(/[A-Z]/, 'Must contain uppercase')
+      .regex(/[a-z]/, 'Must contain lowercase')
+      .regex(/[0-9]/, 'Must contain a number'),
     confirmPassword: z.string(),
-    acceptTerms: z.boolean().refine((val) => val === true, {
-      message: 'You must accept the terms and conditions',
-    }),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: 'Passwords do not match',
@@ -54,7 +54,7 @@ type RegisterFormData = z.infer<typeof registerSchema>;
 
 export default function RegisterScreen() {
   const theme = useTheme();
-  const { signUp, isLoading, error, clearError } = useAuthStore();
+  const { upgradeAnonymousAccount, isLoading, error, clearError } = useAuthStore();
 
   const {
     control,
@@ -63,19 +63,25 @@ export default function RegisterScreen() {
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
-      displayName: '',
+      firstName: '',
+      lastName: '',
       email: '',
       password: '',
       confirmPassword: '',
-      acceptTerms: false,
     },
   });
 
   const onSubmit = async (data: RegisterFormData) => {
     clearError();
-    const success = await signUp(data.email, data.password, data.displayName);
+    const success = await upgradeAnonymousAccount(
+      data.email,
+      data.password,
+      data.firstName,
+      data.lastName
+    );
     if (success) {
-      router.replace('/(auth)/verify-identity');
+      // Stay on tabs — UID unchanged, all data preserved
+      router.replace('/(tabs)');
     }
   };
 
@@ -103,20 +109,41 @@ export default function RegisterScreen() {
           <View style={{ marginBottom: 24 }}>
             <Controller
               control={control}
-              name="displayName"
+              name="firstName"
               render={({ field: { onChange, onBlur, value } }) => (
                 <View style={{ marginBottom: 8 }}>
                   <TextInput
-                    label="Full Name"
+                    label="First Name"
                     value={value}
                     onChangeText={onChange}
                     onBlur={onBlur}
                     mode="outlined"
                     autoCapitalize="words"
-                    error={!!errors.displayName}
+                    error={!!errors.firstName}
                   />
-                  {errors.displayName && (
-                    <HelperText type="error">{errors.displayName.message}</HelperText>
+                  {errors.firstName && (
+                    <HelperText type="error">{errors.firstName.message}</HelperText>
+                  )}
+                </View>
+              )}
+            />
+
+            <Controller
+              control={control}
+              name="lastName"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <View style={{ marginBottom: 8 }}>
+                  <TextInput
+                    label="Last Name"
+                    value={value}
+                    onChangeText={onChange}
+                    onBlur={onBlur}
+                    mode="outlined"
+                    autoCapitalize="words"
+                    error={!!errors.lastName}
+                  />
+                  {errors.lastName && (
+                    <HelperText type="error">{errors.lastName.message}</HelperText>
                   )}
                 </View>
               )}
@@ -186,31 +213,6 @@ export default function RegisterScreen() {
               )}
             />
 
-            <Controller
-              control={control}
-              name="acceptTerms"
-              render={({ field: { onChange, value } }) => (
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 8 }}>
-                  <Checkbox
-                    status={value ? 'checked' : 'unchecked'}
-                    onPress={() => onChange(!value)}
-                  />
-                  <Text
-                    variant="bodyMedium"
-                    style={{ flex: 1, marginLeft: 8 }}
-                    onPress={() => onChange(!value)}
-                  >
-                    I agree to the Terms of Service and Privacy Policy
-                  </Text>
-                </View>
-              )}
-            />
-            {errors.acceptTerms && (
-              <Text style={{ color: theme.colors.error, marginBottom: 16 }}>
-                {errors.acceptTerms.message}
-              </Text>
-            )}
-
             {error && (
               <Text style={{ textAlign: 'center', marginBottom: 16, color: theme.colors.error }}>
                 {error}
@@ -276,17 +278,34 @@ export default function RegisterScreen() {
           <View style={styles.form}>
             <Controller
               control={control}
-              name="displayName"
+              name="firstName"
               render={({ field: { onChange, onBlur, value } }) => (
                 <Input
-                  label="Full Name"
+                  label="First Name"
                   value={value}
                   onChangeText={onChange}
                   onBlur={onBlur}
-                  error={errors.displayName?.message}
+                  error={errors.firstName?.message}
                   autoCapitalize="words"
-                  autoComplete="name"
-                  testID="name-input"
+                  autoComplete="given-name"
+                  testID="first-name-input"
+                />
+              )}
+            />
+
+            <Controller
+              control={control}
+              name="lastName"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <Input
+                  label="Last Name"
+                  value={value}
+                  onChangeText={onChange}
+                  onBlur={onBlur}
+                  error={errors.lastName?.message}
+                  autoCapitalize="words"
+                  autoComplete="family-name"
+                  testID="last-name-input"
                 />
               )}
             />
@@ -335,38 +354,6 @@ export default function RegisterScreen() {
                 />
               )}
             />
-
-            <Controller
-              control={control}
-              name="acceptTerms"
-              render={({ field: { onChange, value } }) => (
-                <View style={styles.checkboxContainer}>
-                  <Checkbox
-                    status={value ? 'checked' : 'unchecked'}
-                    onPress={() => onChange(!value)}
-                  />
-                  <Text
-                    variant="bodyMedium"
-                    style={styles.checkboxLabel}
-                    onPress={() => onChange(!value)}
-                  >
-                    I agree to the{' '}
-                    <Text style={{ color: theme.colors.primary }}>
-                      Terms of Service
-                    </Text>{' '}
-                    and{' '}
-                    <Text style={{ color: theme.colors.primary }}>
-                      Privacy Policy
-                    </Text>
-                  </Text>
-                </View>
-              )}
-            />
-            {errors.acceptTerms && (
-              <Text style={[styles.errorText, { color: theme.colors.error }]}>
-                {errors.acceptTerms.message}
-              </Text>
-            )}
 
             {error && (
               <Text style={[styles.errorText, { color: theme.colors.error }]}>
@@ -424,15 +411,6 @@ const styles = StyleSheet.create({
   subtitle: {},
   form: {
     marginBottom: 24,
-  },
-  checkboxContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 8,
-  },
-  checkboxLabel: {
-    flex: 1,
-    marginLeft: 8,
   },
   errorText: {
     marginBottom: 16,

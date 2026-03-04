@@ -23,3 +23,4 @@ export { calculateRankings, updateTrendingScores } from './leaderboard/calculate
 
 // Export admin functions
 export { updatePartyConfig, manageContestStage } from './admin/partyConfig';
+export { cleanupAbandonedAnonymous } from './admin/cleanupAnonymousUsers';

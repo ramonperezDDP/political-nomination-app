@@ -86,30 +86,35 @@ export const useUserStore = create<UserState>((set, get) => ({
 
   // Update selected issues
   updateSelectedIssues: async (userId: string, issues: string[]) => {
-    if (issues.length < 4 || issues.length > 7) {
-      set({ error: 'Please select between 4 and 7 issues' });
-      return false;
-    }
-
     return get().updateProfile(userId, { selectedIssues: issues });
   },
 
-  // Update questionnaire responses
+  // Update questionnaire responses with completion check
   updateQuestionnaireResponses: async (
     userId: string,
     responses: QuestionnaireResponse[]
   ) => {
-    return get().updateProfile(userId, { questionnaireResponses: responses });
+    const updates: Partial<User> = { questionnaireResponses: responses };
+
+    // Mark questionnaire as complete when minimum 1 question answered
+    if (responses.length >= 1) {
+      (updates as any)['onboarding.questionnaire'] = 'complete';
+    }
+
+    return get().updateProfile(userId, updates);
   },
 
-  // Update dealbreakers
+  // Update dealbreakers with completion marking
   updateDealbreakers: async (userId: string, dealbreakers: string[]) => {
     if (dealbreakers.length > 3) {
       set({ error: 'You can select a maximum of 3 dealbreakers' });
       return false;
     }
 
-    return get().updateProfile(userId, { dealbreakers });
+    const updates: Partial<User> = { dealbreakers };
+    (updates as any)['onboarding.dealbreakers'] = 'complete';
+
+    return get().updateProfile(userId, updates);
   },
 
   // Fetch user endorsements
@@ -203,13 +208,129 @@ export const useUserStore = create<UserState>((set, get) => ({
   },
 }));
 
-// Selectors
+// ─── Authentication Selectors ───
+
+/** Whether the user has upgraded from anonymous to a full account */
+export const selectHasAccount = (state: UserState) =>
+  state.userProfile !== null && state.userProfile.isAnonymous === false;
+
+/** Whether the user is anonymous (auto-signed-in, no email/password) */
+export const selectIsAnonymous = (state: UserState) =>
+  state.userProfile?.isAnonymous === true;
+
+// ─── Verification Selectors ───
+
+export const selectEmailVerified = (state: UserState) =>
+  state.userProfile?.verification?.email === 'verified';
+
+export const selectVoterRegVerified = (state: UserState) =>
+  state.userProfile?.verification?.voterRegistration === 'verified';
+
+export const selectPhotoIdVerified = (state: UserState) =>
+  state.userProfile?.verification?.photoId === 'verified';
+
+export const selectFullyVerified = (state: UserState) =>
+  selectEmailVerified(state) &&
+  selectVoterRegVerified(state) &&
+  selectPhotoIdVerified(state);
+
+// ─── District Selectors ───
+
+/** All district IDs the user is verified for */
+export const selectUserDistrictIds = (state: UserState): string[] =>
+  state.userProfile?.districts?.map((d) => d.id) || [];
+
+/** Check if user shares a district with a specific candidate */
+export const selectCanEndorseCandidate = (candidateDistrict: string) =>
+  (state: UserState): boolean => {
+    if (!selectHasAccount(state)) return false;
+    if (!selectFullyVerified(state)) return false;
+    const userDistrictIds = selectUserDistrictIds(state);
+    return userDistrictIds.includes(candidateDistrict);
+  };
+
+/** Get the reason endorsement is locked for a candidate */
+export const selectEndorseLockReason = (candidateDistrict: string) =>
+  (state: UserState): string | null => {
+    if (selectIsAnonymous(state)) return 'Create an account to endorse';
+    if (!selectEmailVerified(state)) return 'Verify your email to endorse';
+    if (!selectVoterRegVerified(state)) return 'Complete voter registration to endorse';
+    if (!selectPhotoIdVerified(state)) return 'Upload photo ID to endorse';
+    const userDistrictIds = selectUserDistrictIds(state);
+    if (!userDistrictIds.includes(candidateDistrict)) {
+      return 'You are not verified in this candidate\'s district. Complete voter registration to endorse.';
+    }
+    return null; // Unlocked
+  };
+
+// ─── Onboarding Selectors ───
+
+/** Questionnaire is complete (1+ question answered) */
+export const selectQuestionnaireComplete = (state: UserState) =>
+  state.userProfile?.onboarding?.questionnaire === 'complete';
+
+export const selectDealbreakersComplete = (state: UserState) =>
+  state.userProfile?.onboarding?.dealbreakers === 'complete';
+
+// ─── Capability Selectors ───
+
+/** User can see alignment scores and use Issues/Most Important filters */
+export const selectCanSeeAlignment = (state: UserState) =>
+  selectQuestionnaireComplete(state);
+
+/** User can use the dealbreakers filter */
+export const selectCanSeeDealbreakers = (state: UserState) =>
+  selectDealbreakersComplete(state);
+
+/** User can apply to be a candidate */
+export const selectCanApply = (state: UserState) =>
+  selectFullyVerified(state);
+
+// ─── Progress Selectors ───
+
+/** Returns list of verification steps not yet completed */
+export const selectMissingVerifications = (state: UserState): string[] => {
+  const missing: string[] = [];
+  if (selectIsAnonymous(state)) {
+    missing.push('account');
+  }
+  const v = state.userProfile?.verification;
+  if (!v || v.email !== 'verified') missing.push('email');
+  if (!v || v.voterRegistration !== 'verified') missing.push('voterRegistration');
+  if (!v || v.photoId !== 'verified') missing.push('photoId');
+  return missing;
+};
+
+/** Returns list of onboarding steps not yet completed */
+export const selectMissingOnboarding = (state: UserState): string[] => {
+  const missing: string[] = [];
+  const o = state.userProfile?.onboarding;
+  if (!o || o.questionnaire !== 'complete') missing.push('questionnaire');
+  if (!o || o.dealbreakers !== 'complete') missing.push('dealbreakers');
+  return missing;
+};
+
+/** Overall completion percentage for progress indicators */
+export const selectCompletionPercent = (state: UserState): number => {
+  let completed = 0;
+  const total = 5;
+  const v = state.userProfile?.verification;
+  const o = state.userProfile?.onboarding;
+  if (v?.email === 'verified') completed++;
+  if (v?.voterRegistration === 'verified') completed++;
+  if (v?.photoId === 'verified') completed++;
+  if (o?.questionnaire === 'complete') completed++;
+  if (o?.dealbreakers === 'complete') completed++;
+  return Math.round((completed / total) * 100);
+};
+
+// ─── Legacy Selectors (kept for backward compatibility) ───
+
 export const selectUserIssues = (state: UserState) =>
   state.userProfile?.selectedIssues || [];
 export const selectUserDealbreakers = (state: UserState) =>
   state.userProfile?.dealbreakers || [];
 export const selectHasCompletedOnboarding = (state: UserState) =>
-  (state.userProfile?.selectedIssues?.length || 0) >= 4 &&
-  (state.userProfile?.questionnaireResponses?.length || 0) > 0;
+  selectQuestionnaireComplete(state);
 export const selectEndorsedCandidateIds = (state: UserState) =>
   state.endorsements.filter((e) => e.isActive).map((e) => e.candidateId);

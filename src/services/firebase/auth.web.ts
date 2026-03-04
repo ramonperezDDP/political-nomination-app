@@ -2,6 +2,8 @@ import {
   getAuth,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
+  signInAnonymously as firebaseSignInAnonymously,
+  linkWithCredential as firebaseLinkWithCredential,
   signOut as firebaseSignOut,
   sendPasswordResetEmail as firebaseSendPasswordResetEmail,
   sendEmailVerification as firebaseSendEmailVerification,
@@ -21,6 +23,34 @@ export interface AuthResult {
   user?: User;
   error?: string;
 }
+
+// Sign in anonymously (silent, automatic on first launch)
+export const signInAnonymously = async (): Promise<AuthResult> => {
+  try {
+    const result = await firebaseSignInAnonymously(auth);
+    return { success: true, user: result.user };
+  } catch (error: any) {
+    return { success: false, error: getAuthErrorMessage(error.code) };
+  }
+};
+
+// Link anonymous account with email/password credentials
+export const linkWithCredential = async (
+  email: string,
+  password: string
+): Promise<AuthResult> => {
+  try {
+    const user = auth.currentUser;
+    if (!user || !user.isAnonymous) {
+      return { success: false, error: 'No anonymous account to upgrade' };
+    }
+    const credential = EmailAuthProvider.credential(email, password);
+    const result = await firebaseLinkWithCredential(user, credential);
+    return { success: true, user: result.user };
+  } catch (error: any) {
+    return { success: false, error: getAuthErrorMessage(error.code) };
+  }
+};
 
 // Sign in with email and password
 export const signInWithEmail = async (

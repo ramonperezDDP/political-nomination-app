@@ -1,12 +1,13 @@
 # Plan 05: Experience Filters & Location Maps
 
-**Feedback:** Experience dropdown menu with 4 filters: Issues, Location (with PA-01/PA-02 maps), Random, Most Important Issues. Replace "High Alignment" with "Random".
+**Feedback:** Experience dropdown menu with 4 filters: Random, Location (with PA-01/PA-02 maps), Issues, Most Important Issues. Anonymous mode — no email or account required to enter the app. Users can apply filters and then mass endorse all candidates remaining after filtering. Simplified SVG maps for the beta. PNs provide their address for zone assignment. Users can view candidates in other districts but cannot endorse outside their own.
 
 ---
 
 ## Current State
 
 ### Filter Menu (`app/(tabs)/for-you.tsx` lines 249-292)
+
 - "All Candidates" — no filter
 - "High Alignment (80%+)" — `alignmentScore >= 80`
 - "No Dealbreakers" — `!hasDealbreaker`
@@ -22,13 +23,13 @@
 
 A dropdown button in the **top-right corner** of the For You page. Selecting a filter changes which PSAs appear in the feed.
 
-**Filter gating uses Plan 01's capability selectors** — each filter option has independent requirements based on the user's verification/onboarding state:
+**Filter gating uses Plan 01's capability selectors.** Anonymous users (no account) and authenticated users without quiz completion see some filters locked. Random and Location are always available — no account needed.
 
 | Filter | Required State | Plan 01 Selector |
-|--------|---------------|-----------------|
-| Random | Email verified | `selectCanBrowse` |
-| Location | Email verified | `selectCanBrowse` |
-| Issues | Questionnaire complete (3+ questions) | `selectCanSeeAlignment` |
+| :---- | :---- | :---- |
+| Random | None (anonymous OK) | Always available |
+| Location | None (anonymous OK) | Always available |
+| Issues | Questionnaire complete (1+ question) | `selectCanSeeAlignment` |
 | Most Important | Questionnaire complete AND Dealbreakers complete | `selectCanSeeAlignment` AND `selectCanSeeDealbreakers` |
 
 ```
@@ -37,10 +38,10 @@ A dropdown button in the **top-right corner** of the For You page. Selecting a f
 │                                          │
 │   (Dropdown opens:)                      │
 │   ┌────────────────────────┐             │
-│   │ ● Issues               │             │
-│   │ ○ Most Important       │             │
-│   │ ○ Location             │             │
 │   │ ○ Random               │             │
+│   │ ○ Location             │             │
+│   │ ● Issues               │             │
+│   │ 🔒 Most Important      │             │
 │   └────────────────────────┘             │
 │                                          │
 │        [ FULL SCREEN PSA ]               │
@@ -52,14 +53,14 @@ A dropdown button in the **top-right corner** of the For You page. Selecting a f
 
 ## New Component: `src/components/feed/ExperienceMenu.tsx`
 
-```tsx
+```
 import React, { useState } from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
 import { Menu, Button, Text, useTheme } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useUserStore, selectCanSeeAlignment, selectCanSeeDealbreakers } from '@/stores';
 
-export type ExperienceFilter = 'issues' | 'most_important' | 'location' | 'random';
+export type ExperienceFilter = 'random' | 'location' | 'issues' | 'most_important';
 
 interface ExperienceMenuProps {
   selectedFilter: ExperienceFilter;
@@ -78,6 +79,20 @@ interface FilterOption {
 
 const FILTER_OPTIONS: FilterOption[] = [
   {
+    id: 'random',
+    label: 'Random',
+    icon: 'shuffle-variant',
+    description: 'All PSAs in random order',
+    disabledDescription: '', // Never disabled
+  },
+  {
+    id: 'location',
+    label: 'Location',
+    icon: 'map-marker',
+    description: 'PNs from a specific area',
+    disabledDescription: '', // Never disabled
+  },
+  {
     id: 'issues',
     label: 'Issues',
     icon: 'clipboard-list',
@@ -90,20 +105,6 @@ const FILTER_OPTIONS: FilterOption[] = [
     icon: 'star',
     description: 'Exclude PNs who oppose your dealbreaker issues',
     disabledDescription: 'Complete the quiz and set dealbreakers to unlock',
-  },
-  {
-    id: 'location',
-    label: 'Location',
-    icon: 'map-marker',
-    description: 'PNs from a specific area',
-    disabledDescription: '', // Never disabled
-  },
-  {
-    id: 'random',
-    label: 'Random',
-    icon: 'shuffle-variant',
-    description: 'All PSAs in random order',
-    disabledDescription: '', // Never disabled
   },
 ];
 
@@ -125,12 +126,12 @@ export default function ExperienceMenu({
   const isFilterDisabled = (filterId: ExperienceFilter): boolean => {
     switch (filterId) {
       case 'issues':
-        return !canSeeAlignment;       // Requires questionnaire = complete
+        return !canSeeAlignment;       // Requires questionnaire = complete (1+ question)
       case 'most_important':
         return !canSeeAlignment || !canSeeDealbreakers; // Requires both
       case 'location':
       case 'random':
-        return false;                   // Always available (email gate is at tab level)
+        return false;                   // Always available — no account needed
     }
   };
 
@@ -215,9 +216,10 @@ const styles = StyleSheet.create({
 ## Filter Logic in `app/(tabs)/for-you.tsx`
 
 ### Issues Filter
-Show only PNs that have answered quiz questions the same way as the user. A PN needs **at least one** shared policy position to appear.
 
-```typescript
+Show only PNs that have answered quiz questions the same way as the user. A PN needs **at least one** shared policy position to appear. Uses quiz responses from Firestore (all users have a Firestore document via Firebase Anonymous Auth, Plan 01).
+
+```ts
 case 'issues':
   return feedItems.filter((item) => {
     // PN must share at least one policy position with user
@@ -237,9 +239,10 @@ case 'issues':
 ```
 
 ### Most Important Filter
-**Excludes** PNs who oppose the user on dealbreaker issues (aligned with Plan 03's `applyMustMatchFilter`). This is a **subtractive** filter — candidates are only removed if they actively oppose the user on a dealbreaker. Candidates with no position on a dealbreaker issue are kept (benefit of the doubt).
 
-```typescript
+**Excludes** PNs who oppose the user on dealbreaker issues (aligned with Plan 03's `applyMustMatchFilter`). This is a **subtractive** filter — candidates are only removed if they actively oppose the user on a dealbreaker. Candidates with no position on a dealbreaker issue are kept (benefit of the doubt). Dealbreakers are stored in Firestore and available to all users including anonymous (per Plan 01).
+
+```ts
 case 'most_important':
   const userDealbreakers = user?.dealbreakers || [];
   if (userDealbreakers.length === 0) return feedItems; // No dealbreakers = show all
@@ -255,7 +258,7 @@ case 'most_important':
       const candidatePosition = item.candidatePositions.find(
         (cp) => cp.issueId === dealbreakerId
       );
-      if (!candidatePosition) continue; // Candidate has no position = keep (not excluded)
+      if (!candidatePosition) continue; // Candidate has no position = keep
 
       const userValue = Number(userResponse.answer);
       const candidateValue = candidatePosition.spectrumPosition;
@@ -263,16 +266,17 @@ case 'most_important':
         (userValue >= 0 && candidateValue < 0) ||
         (userValue < 0 && candidateValue >= 0);
 
-      if (oppositeDirection) return false; // Eliminated — opposes user on dealbreaker
+      if (oppositeDirection) return false; // Eliminated
     }
-    return true; // Passes — no dealbreaker conflicts
+    return true;
   });
 ```
 
 ### Random Filter
-Show all PSAs in random shuffled order. No policy-based filtering.
 
-```typescript
+Show all PSAs in random shuffled order. No policy-based filtering. Available to all users including anonymous.
+
+```ts
 case 'random':
   // Shuffle using Fisher-Yates
   const shuffled = [...feedItems];
@@ -284,9 +288,10 @@ case 'random':
 ```
 
 ### Location Filter
-Show only PNs from a specific virtual polling location selected via the map modal.
 
-```typescript
+Show only PNs from a specific virtual polling location selected via the map modal. Available to all users including anonymous. The modal does not require user location — it lets the user tap on map zones to find candidates.
+
+```ts
 case 'location':
   if (!selectedLocation) return feedItems;
   return feedItems.filter((item) => {
@@ -300,13 +305,13 @@ case 'location':
 
 ## Location Map Modal: `src/components/feed/LocationMapModal.tsx`
 
-When the user selects "Location" from the experience menu, a modal opens showing a map of PA-01 or PA-02 with virtual polling locations.
+When the user selects "Location" from the experience menu, a modal opens showing a simplified SVG map of PA-01 or PA-02 with virtual polling locations. The user taps a zone to filter candidates by that area. No user location is required.
 
-### Approach: SVG-based static maps
+### Approach: SVG-based static maps (simplified for beta)
 
-Since we only need PA-01 and PA-02 for the beta, use pre-built SVG maps with tappable zones. This avoids adding a heavy map dependency (react-native-maps, mapbox, etc.).
+Since we only need PA-01 and PA-02 for the beta, use pre-built SVG maps with tappable zones. This avoids adding a heavy map dependency (react-native-maps, mapbox, etc.). Production versions can use geographically accurate boundaries.
 
-```tsx
+```
 import React, { useState } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import { Modal, Portal, Text, Button, useTheme } from 'react-native-paper';
@@ -441,27 +446,25 @@ const styles = StyleSheet.create({
 
 ### SVG Map Data
 
-The SVG paths above are simplified placeholders. For production, we'd need accurate boundary data for PA-01 and PA-02 congressional districts. Options:
-
-1. **GeoJSON → SVG conversion:** Download district boundaries from the US Census Bureau, convert to simplified SVG paths using a tool like mapshaper.org
-2. **Pre-rendered SVG:** Create clean SVG maps in Figma/Illustrator with labeled zones
-3. **react-native-svg only** — no additional map library needed since these are static district maps
+The SVG paths above are simplified placeholders for the beta. For production, district boundaries can be obtained from the US Census Bureau and converted to SVG using mapshaper.org, or clean SVG maps can be created in Figma/Illustrator.
 
 ### Candidate District/Zone Assignment
 
-For candidates to appear in location-filtered results, they need a `zone` field. This maps to the virtual polling locations within their district.
+Candidates provide their address during the application process (Plan 01's candidate application). Their address determines both their district and zone assignment.
 
-**File: `src/types/index.ts` — add zone to Candidate type:**
-```typescript
+**File: `src/types/index.ts` — zone already added to Candidate type in Plan 01:**
+
+```ts
 interface Candidate {
   // ... existing fields
-  district?: string;  // 'PA-01' | 'PA-02'
+  district: string;   // 'PA-01' | 'PA-02'
   zone?: string;      // 'pa01-north' | 'pa01-central' | etc.
 }
 ```
 
 **File: `src/services/firebase/firestore.ts` — assign zones to seeded candidates:**
-```typescript
+
+```ts
 // When seeding candidates, assign districts and zones
 const zones = {
   'PA-01': ['pa01-north', 'pa01-central', 'pa01-south'],
@@ -477,14 +480,15 @@ candidate.zone = zones[selectedDistrict][Math.floor(Math.random() * zones[select
 
 ## Integration into For You Page
 
-The ExperienceMenu reads user state directly via Plan 01's selectors (`selectCanSeeAlignment`, `selectCanSeeDealbreakers`), so the For You page doesn't need to pass `hasCompletedQuiz` as a prop.
+The ExperienceMenu reads user state directly via Plan 01's selectors (`selectCanSeeAlignment`, `selectCanSeeDealbreakers`), so the For You page doesn't need to pass capability props.
 
-```typescript
+```ts
 // In app/(tabs)/for-you.tsx:
 import { useUserStore, selectCanSeeAlignment } from '@/stores';
 
 const [locationModalVisible, setLocationModalVisible] = useState(false);
 const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
+const selectedDistrict = useUserStore((s) => s.selectedBrowsingDistrict) || 'PA-01';
 
 // Default filter depends on quiz completion (Plan 06)
 const canSeeAlignment = useUserStore(selectCanSeeAlignment);
@@ -492,7 +496,7 @@ const [experienceFilter, setExperienceFilter] = useState<ExperienceFilter>(
   canSeeAlignment ? 'issues' : 'random'
 );
 
-// ExperienceMenu handles its own gating via selectors — no hasCompletedQuiz prop needed:
+// ExperienceMenu handles its own gating via selectors:
 <ExperienceMenu
   selectedFilter={experienceFilter}
   onFilterChange={setExperienceFilter}
@@ -508,7 +512,7 @@ const [experienceFilter, setExperienceFilter] = useState<ExperienceFilter>(
     setSelectedLocation(zoneId);
     setExperienceFilter('location');
   }}
-  district={user?.district || 'PA-01'}
+  district={selectedDistrict}
 />
 ```
 
@@ -516,18 +520,21 @@ const [experienceFilter, setExperienceFilter] = useState<ExperienceFilter>(
 
 ## Progressive Filter Gating (Aligned with Plan 01)
 
-Filter availability is determined by the user's onboarding state, using Plan 01's capability selectors. The ExperienceMenu reads these directly from the store — no prop drilling needed.
+Filter availability is determined by the user's onboarding state, using Plan 01's capability selectors. The ExperienceMenu reads these directly from the store — no prop drilling needed. Anonymous users can use Random and Location.
 
 | User State | Available Filters | Locked Filters |
-|------------|-------------------|----------------|
-| Email verified only | Random, Location | Issues ("Complete the quiz to unlock"), Most Important ("Complete the quiz and set dealbreakers to unlock") |
-| Quiz complete, no dealbreakers | Random, Location, Issues | Most Important ("Set your dealbreakers to unlock") |
+| :---- | :---- | :---- |
+| Anonymous, no quiz | Random, Location | Issues ("Complete the quiz to unlock"), Most Important ("Complete the quiz and set dealbreakers to unlock") |
+| Upgraded account, no quiz | Random, Location | Issues, Most Important |
+| Quiz complete (1+ question), no dealbreakers | Random, Location, Issues | Most Important ("Set your dealbreakers to unlock") |
 | Quiz + dealbreakers complete | Random, Location, Issues, Most Important | None |
 
-```typescript
+Note: Since all users (including anonymous) have a Firestore document via Firebase Anonymous Auth (Plan 01), `selectCanSeeAlignment` works uniformly — it checks `onboarding.questionnaire === 'complete'` on the Firestore document. No dual-source branching needed.
+
+```ts
 // In ExperienceMenu, gating uses Plan 01 selectors:
-const canSeeAlignment = useUserStore(selectCanSeeAlignment);     // questionnaire = complete
-const canSeeDealbreakers = useUserStore(selectCanSeeDealbreakers); // dealbreakers = complete
+const canSeeAlignment = useUserStore(selectCanSeeAlignment);     // questionnaire = complete (1+ question)
+const canSeeDealbreakers = useUserStore(selectCanSeeDealbreakers); // dealbreakers = complete (available to all users)
 
 const isFilterDisabled = (filterId: ExperienceFilter): boolean => {
   switch (filterId) {
@@ -542,27 +549,51 @@ Locked filters show a lock icon and an explanation of what the user needs to com
 
 ---
 
+## Mass Endorsement (Plans 02/05)
+
+After applying a filter, a "Mass Endorse" button appears (see Plan 04's `MassEndorseButton` component). This allows users to endorse all candidates remaining after filtering in a single action.
+
+**Requirements for mass endorsement:**
+- Account created + fully verified (email + voter reg + photo ID)
+- Candidates must be in the user's verified district
+- Only endorses candidates the user hasn't already endorsed
+
+**Flow:**
+1. User applies a filter (e.g., Issues + Location)
+2. "Endorse all X candidates" button appears
+3. Confirmation dialog
+4. Batch endorsement
+5. Success feedback
+
+Anonymous users and unverified users will not see the mass endorse button.
+
+---
+
+## Cross-District Viewing
+
+Users can view candidates in any district by toggling the district selector on the home page (Plan 02). The Location filter's map modal also shows zones for the currently browsed district. However, the endorsement button (both individual and mass) is gated by district membership per Plan 01.
+
+| Action | District Requirement |
+| :---- | :---- |
+| Browse/view candidates in PA-01 | None (anonymous OK) |
+| Browse/view candidates in PA-02 | None (anonymous OK) |
+| Endorse candidate in PA-01 | Account + fully verified + `PA-01` in user's districts |
+| Endorse candidate in PA-02 | Account + fully verified + `PA-02` in user's districts |
+| Mass endorse in PA-01 | Same as individual endorsement |
+
+---
+
 ## Files to Create
 
 | File | Purpose |
-|------|---------|
+| :---- | :---- |
 | `src/components/feed/ExperienceMenu.tsx` | Dropdown with 4 filter options |
 | `src/components/feed/LocationMapModal.tsx` | SVG map for PA-01/PA-02 zone selection |
 
 ## Files to Modify
 
 | File | Change |
-|------|--------|
+| :---- | :---- |
 | `app/(tabs)/for-you.tsx` | Replace old filter menu with ExperienceMenu, add location modal state |
-| `src/types/index.ts` | Add `zone` field to Candidate type |
 | `src/services/firebase/firestore.ts` | Assign district/zone when seeding candidates |
 | `src/components/feed/index.ts` | Export new components |
-
----
-
-## Open Questions
-
-1. **Zone granularity:** How many virtual polling locations per district? The examples above use 3-4 zones. Actual boundaries TBD.
-2. **Map accuracy:** Do we need geographically accurate district maps, or are simplified zone diagrams acceptable for the beta?
-3. **Candidate zone assignment:** In production, how will candidates be assigned to zones — by their address, zip code, or self-selection?
-4. **Cross-district viewing:** Should users in PA-01 be able to view PA-02 candidates via the location filter?

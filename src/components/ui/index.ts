@@ -22,3 +22,7 @@ export { Modal, ConfirmModal, BottomSheet } from './Modal';
 
 // Empty states
 export { EmptyState, ErrorState, NoResults, OfflineState } from './EmptyState';
+
+// Gating
+export { default as GatedFeature } from './GatedFeature';
+export { default as VerificationChecklist } from './VerificationChecklist';

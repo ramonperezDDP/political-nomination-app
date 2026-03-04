@@ -1,24 +1,27 @@
 # Plan 03: Quiz Page Redesign
 
-**Feedback:** Remove Description and Search Issues. Break into 3 sections (2 global, 3 national, 2 local). Fit all 7 questions on one screen with no answers showing. Show contestant filter count in top bar. Graphically reflect completed questions.
+**Feedback:** Remove Description and Search Issues. Break into 3 sections (2 global, 3 national, 2 local). Fit all 7 questions on one screen with no answers showing. Show contestant filter count in top bar. Graphically reflect completed questions. Minimum of 1 question to "complete" the quiz.
 
 ---
 
 ## Current State
 
 ### Issues Selection (`app/(auth)/onboarding/issues.tsx`)
+
 - Displays ALL 22 issues grouped by category (Economy, Healthcare, etc.)
 - Search bar filters by name/description
 - User selects 4-7 issues
 - Collapsible category sections with icons and descriptions
 
 ### Questionnaire (`app/(auth)/onboarding/questionnaire.tsx`)
+
 - One question at a time (carousel)
 - Progress bar: "Question X of Y"
-- Supports single_choice and slider types
+- Supports single\_choice and slider types
 - Previous/Next navigation
 
 ### Current Issue Categories (22 issues across 9 categories)
+
 ```
 Economy: economy, taxes, minimum-wage
 Healthcare: healthcare, medicare, prescription-drugs
@@ -37,11 +40,11 @@ Infrastructure: infrastructure, housing
 
 The quiz is now a **single screen** showing exactly 7 issues in 3 sections. No issue selection step — the 7 issues are predefined per district before the nominating contest begins. Each issue is a compact tappable card that opens its question in a bottom sheet.
 
-**Minimum completion:** 3 questions — at least 1 global, 1 national, and 1 local (aligned with Plan 01's `checkQuizMinimum()`). All 7 are encouraged but not required.
+**Minimum completion:** 1 question answered marks the quiz as `complete` and unlocks alignment scores + the "Issues" filter (aligned with Plan 01's `checkQuizMinimum()`). All 7 are encouraged but not required.
 
-**Auto-save:** Each answer is saved to Firestore immediately. Users can leave and resume later with their progress intact.
+**Auto-save:** Each answer is saved immediately to Firestore via `updateSingleQuizResponse()`. Since all users — including anonymous users — have a Firestore document (via Firebase Anonymous Auth, Plan 01), there is no dual-storage branching. Quiz data is always written to Firestore under the user's UID.
 
-**Re-answering:** Tapping a completed issue reopens the modal with the current answer pre-selected. Saving an updated answer triggers a recalculation of candidate matching scores. Users can also change their dealbreaker list (via Settings), which similarly recalculates scores.
+**Re-answering:** Tapping a completed issue reopens the modal with the current answer pre-selected. Saving an updated answer triggers a recalculation of candidate matching scores. Users can also change their dealbreaker list (via Settings, available to all users including anonymous), which similarly recalculates scores.
 
 ### New Layout
 
@@ -72,6 +75,12 @@ The quiz is now a **single screen** showing exactly 7 issues in 3 sections. No i
 │ │  [ ]     │  │  [ ]     │                  │
 │ └──────────┘  └──────────┘                  │
 │                                             │
+│ ┌─────────────────────────────────────────┐ │
+│ │ You've completed 3 out of 7 quiz        │ │
+│ │ questions. Complete more to further     │ │
+│ │ refine your search.                     │ │
+│ └─────────────────────────────────────────┘ │
+│                                             │
 └─────────────────────────────────────────────┘
 ```
 
@@ -79,16 +88,11 @@ The quiz is now a **single screen** showing exactly 7 issues in 3 sections. No i
 
 ## Files to Modify
 
-### 1. New Screen: `app/(tabs)/quiz.tsx` (or refactor existing onboarding)
+### 1\. New Screen: `app/quiz.tsx`
 
-Since the quiz is now accessible from the Home page (not just onboarding), we need it as a standalone screen. Two options:
+The quiz is accessible from the Home page, the For You quiz prompt (Plan 06), and Settings — not just onboarding. It is a standalone screen at the root level.
 
-**Option A:** Add a new route `app/quiz.tsx` accessible from anywhere
-**Option B:** Refactor `app/(auth)/onboarding/issues.tsx` + `questionnaire.tsx` into a unified screen
-
-**Recommended: Option A** — Create `app/quiz.tsx` as a new standalone route, keeping the old onboarding screens intact for backward compatibility.
-
-```tsx
+```
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import {
   View,
@@ -101,7 +105,7 @@ import { Text, useTheme, Banner } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { SafeAreaView as NativeSafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { useConfigStore, useUserStore } from '@/stores';
+import { useConfigStore, useUserStore, selectCanSeeAlignment } from '@/stores';
 import { updateSingleQuizResponse } from '@/services/firebase/firestore';
 
 const SafeAreaView = Platform.OS === 'web' ? View : NativeSafeAreaView;
@@ -127,7 +131,7 @@ export default function QuizScreen() {
   const issues = useConfigStore((s) => s.issues);
   const questions = useConfigStore((s) => s.questions);
   const user = useUserStore((s) => s.userProfile);
-  const selectedDistrict = user?.district || 'PA-01';
+  const selectedDistrict = useUserStore((s) => s.selectedBrowsingDistrict) || 'PA-01';
 
   const [activeQuestion, setActiveQuestion] = useState<string | null>(null);
   const [responses, setResponses] = useState<Map<string, string | number>>(
@@ -136,16 +140,16 @@ export default function QuizScreen() {
 
   const districtIssues = DISTRICT_ISSUES[selectedDistrict] || DISTRICT_ISSUES['PA-01'];
 
-  // --- Resume: Load existing responses from user profile on mount ---
+  // --- Resume: Load existing responses from Firestore user profile ---
   useEffect(() => {
     if (user?.questionnaireResponses?.length) {
-      const existingResponses = new Map<string, string | number>();
+      const responseMap = new Map<string, string | number>();
       for (const r of user.questionnaireResponses) {
-        existingResponses.set(r.issueId, r.answer);
+        responseMap.set(r.issueId, r.answer);
       }
-      setResponses(existingResponses);
+      setResponses(responseMap);
     }
-  }, []); // Only on mount — don't overwrite local state on re-renders
+  }, []); // Only on mount
 
   // Resolve issue IDs to full Issue objects
   const resolveIssues = (ids: string[]) =>
@@ -159,30 +163,27 @@ export default function QuizScreen() {
   const totalContestants = 100; // Fetched from Firestore (approved candidates count)
   const matchingContestants = 0; // Computed based on current responses
 
-  // --- Minimum completion check (aligned with Plan 01) ---
-  const meetsMinimum = useMemo(() => {
-    const answered = new Set(responses.keys());
-    const hasGlobal = districtIssues.global.some((id) => answered.has(id));
-    const hasNational = districtIssues.national.some((id) => answered.has(id));
-    const hasLocal = districtIssues.local.some((id) => answered.has(id));
-    return hasGlobal && hasNational && hasLocal;
-  }, [responses, districtIssues]);
+  // --- Minimum completion check (1 question per Plan 01) ---
+  const meetsMinimum = completedCount >= 1;
 
-  // --- Auto-save: persist each answer to Firestore immediately ---
+  // --- Auto-save: persist each answer immediately ---
   const handleAnswer = useCallback(
     async (issueId: string, answer: string | number) => {
       // Update local state
       setResponses((prev) => new Map(prev).set(issueId, answer));
       setActiveQuestion(null);
 
-      // Persist to Firestore immediately
+      // Build response object
       const question = questions.find((q) => q.issueId === issueId);
-      if (question && user?.id) {
-        await updateSingleQuizResponse(user.id, {
-          questionId: question.id,
-          issueId,
-          answer,
-        });
+      const response = {
+        questionId: question?.id || issueId,
+        issueId,
+        answer,
+      };
+
+      // All users (anonymous + upgraded) have a Firestore doc — save directly
+      if (user?.id) {
+        await updateSingleQuizResponse(user.id, response);
       }
     },
     [questions, user?.id]
@@ -203,14 +204,15 @@ export default function QuizScreen() {
         </View>
       </View>
 
-      {/* "Answer more" banner — shown after meeting minimum but before completing all 7 */}
+      {/* Progress banner — shown after meeting minimum but before completing all 7 */}
       {meetsMinimum && completedCount < 7 && (
         <Banner
           visible
           icon="lightbulb-outline"
           style={styles.encourageBanner}
         >
-          You've unlocked personalized results! Answer more questions to improve your matches.
+          You've completed {completedCount} out of 7 quiz questions.
+          Complete more to further refine your search.
         </Banner>
       )}
 
@@ -256,9 +258,9 @@ export default function QuizScreen() {
 }
 ```
 
-### 2. Issue Section Component
+### 2\. Issue Section Component
 
-```tsx
+```
 interface IssueSectionProps {
   title: string;
   issues: Issue[];
@@ -317,13 +319,13 @@ function IssueSection({ title, issues, responses, onIssuePress, theme }: IssueSe
 }
 ```
 
-### 3. Question Modal (Bottom Sheet)
+### 3\. Question Modal (Bottom Sheet)
 
 When an issue card is tapped, a modal slides up showing the question with answer options. No answers are pre-shown on the main screen.
 
 **Re-answering:** If the user taps a completed issue, the modal opens with their current answer pre-selected. They can change it and save, which triggers an immediate Firestore write and recalculates matching scores.
 
-```tsx
+```
 interface QuestionModalProps {
   issueId: string | null;
   issues: Issue[];
@@ -398,13 +400,14 @@ function QuestionModal({ issueId, issues, existingAnswer, onAnswer, onDismiss }:
 }
 ```
 
-### 4. Contestant Filter Count (Top Bar)
+### 4\. Contestant Filter Count (Top Bar)
 
 **Logic:** Show `X/Y` where:
-- `Y` = total approved candidates in the user's district
+
+- `Y` = total approved candidates in the user's browsing district
 - `X` = candidates matching ANY of the user's current quiz answers
 
-```typescript
+```ts
 // In quiz screen, compute matching count:
 const computeMatchingCount = useCallback(
   (responses: Map<string, string | number>, candidates: Candidate[]) => {
@@ -436,7 +439,7 @@ const computeMatchingCount = useCallback(
 
 For "Must Match" (dealbreaker) issues, candidates with opposing positions are **excluded** entirely:
 
-```typescript
+```ts
 // Must Match filtering: eliminate candidates who don't align on dealbreaker issues
 const applyMustMatchFilter = (
   candidates: Candidate[],
@@ -466,15 +469,16 @@ const applyMustMatchFilter = (
 };
 ```
 
-### 5. Graphical Completion Feedback
+### 5\. Graphical Completion Feedback
 
 When a question is answered, the issue card transforms:
+
 - **Unanswered:** Gray border, gray icon, one-word label
 - **Answered:** Primary color border, primary background tint, white checkmark icon, label in primary color
 
 Additionally, a subtle animation (scale bounce) plays when completing a question:
 
-```typescript
+```ts
 // In IssueCard, add animated feedback:
 const scaleAnim = useRef(new Animated.Value(1)).current;
 
@@ -486,13 +490,15 @@ const onComplete = () => {
 };
 ```
 
-### 6. Saving Quiz Responses (Auto-Save)
+### 6\. Saving Quiz Responses (Auto-Save)
 
-Each answer is saved to Firestore **immediately** after the user confirms it — no batch save needed. This ensures partial completions persist and users can pick up where they left off.
+Each answer is saved **immediately** after the user confirms it — no batch save needed. This ensures partial completions persist and users can pick up where they left off.
 
-#### New Firestore helper: `updateSingleQuizResponse`
+**For all users (anonymous and upgraded):** saved directly to Firestore via `updateSingleQuizResponse()`. Since Firebase Anonymous Auth (Plan 01) gives every user a real UID and Firestore document from first launch, there is no need for local storage or sync logic.
 
-```typescript
+#### Firestore helper: `updateSingleQuizResponse`
+
+```ts
 // In src/services/firebase/firestore.ts:
 export async function updateSingleQuizResponse(
   userId: string,
@@ -507,41 +513,51 @@ export async function updateSingleQuizResponse(
   const updated = existing.filter((r) => r.issueId !== response.issueId);
   updated.push(response);
 
-  await updateDoc(userRef, {
+  const updateData: any = {
     questionnaireResponses: updated,
     updatedAt: serverTimestamp(),
-  });
+  };
+
+  // Mark questionnaire complete if minimum met (1 question)
+  if (updated.length >= 1) {
+    updateData['onboarding.questionnaire'] = 'complete';
+  }
+
+  await updateDoc(userRef, updateData);
 }
 ```
 
 This approach:
+
 - **Creates** a new response if the user hasn't answered this issue before
 - **Replaces** an existing response if the user re-answers (updates matching scores)
 - **Preserves** all other responses untouched
+- **Marks quiz complete** when the 1-question minimum is met
 
 #### Resume on mount
 
-When the quiz screen opens, existing responses are loaded from the user profile into local state:
+When the quiz screen opens, existing responses are loaded from the Firestore user profile (available via the Zustand store's real-time listener). Both anonymous and upgraded users have a Firestore document, so no branching is needed:
 
-```typescript
+```ts
 useEffect(() => {
   if (user?.questionnaireResponses?.length) {
-    const existingResponses = new Map<string, string | number>();
+    const responseMap = new Map<string, string | number>();
     for (const r of user.questionnaireResponses) {
-      existingResponses.set(r.issueId, r.answer);
+      responseMap.set(r.issueId, r.answer);
     }
-    setResponses(existingResponses);
+    setResponses(responseMap);
   }
-}, []); // Only on mount
+}, []);
 ```
 
 #### Updating `selectedIssues`
 
-The user's `selectedIssues` are set to the 7 district issues on first quiz answer (if not already set):
+The user's `selectedIssues` are set to the 7 district issues on first quiz answer (if not already set). Works for all users (anonymous and upgraded) since everyone has a Firestore document:
 
-```typescript
+```ts
 // Called once, on the user's first quiz answer:
 const ensureSelectedIssues = async () => {
+  if (!user?.id) return;
   if (user?.selectedIssues?.length) return; // Already set
   const allIssueIds = [
     ...districtIssues.global,
@@ -554,15 +570,15 @@ const ensureSelectedIssues = async () => {
 
 #### Dealbreaker changes
 
-Users can also change their dealbreaker list via the existing Settings > Dealbreakers screen (`app/settings/dealbreakers.tsx`). When dealbreakers change, candidate matching scores are recalculated the next time the For You feed loads (Plan 04/05). No additional work needed in the quiz screen itself — the dealbreaker state lives independently on the user document.
+Users can change their dealbreaker list via the existing Settings > Dealbreakers screen (`app/settings/dealbreakers.tsx`). Dealbreakers are available to all users including anonymous (saved to Firestore under their UID, per Plan 01). When dealbreakers change, candidate matching scores are recalculated the next time the For You feed loads (Plan 04/05). No additional work needed in the quiz screen itself — the dealbreaker state lives independently on the user document.
 
 ---
 
 ## Files to Create
 
 | File | Purpose |
-|------|---------|
-| `app/quiz.tsx` | Standalone quiz screen (accessible from Home + Settings) |
+| :---- | :---- |
+| `app/quiz.tsx` | Standalone quiz screen (accessible from Home + For You + Settings) |
 | `src/components/quiz/IssueSection.tsx` | Section component (Global/National/Local) |
 | `src/components/quiz/QuestionModal.tsx` | Bottom sheet with question + answer options |
 | `src/components/quiz/ContestantCounter.tsx` | Top bar X/Y contestant badge |
@@ -570,7 +586,7 @@ Users can also change their dealbreaker list via the existing Settings > Dealbre
 ## Files to Modify
 
 | File | Change |
-|------|--------|
+| :---- | :---- |
 | `src/stores/configStore.ts` | Add `questions` to state, fetch on init |
 | `src/services/firebase/firestore.ts` | Add `updateSingleQuizResponse()` for auto-save |
 | `src/components/home/VoterHome.tsx` | Quiz card links to `app/quiz.tsx` |
@@ -580,22 +596,24 @@ Users can also change their dealbreaker list via the existing Settings > Dealbre
 
 ## Mapping: 7 Issues to 3 Sections
 
-The feedback specifies 2 global, 3 national, 2 local. The exact mapping per district should be configurable. Default for PA-01:
+The feedback specifies 2 global, 3 national, 2 local. The exact mapping per district is configurable. Default for PA-01:
 
 | Section | Issues | Count |
-|---------|--------|-------|
+| :---- | :---- | :---- |
 | Global | Climate Change, Economy & Jobs | 2 |
 | National | Healthcare, Education, Gun Policy | 3 |
 | Local | Infrastructure, Housing | 2 |
 
-This mapping could be stored in Firestore under a `districts` collection for flexibility, or hardcoded for the beta.
+This mapping is stored in the `DISTRICT_ISSUES` config (hardcoded for beta, Firestore `districts` collection for production).
 
 ---
 
 ## Confirmed Decisions
 
-1. **Issues are predefined per district.** The 7 issues are defined before the nominating contest begins. Users do not choose their own issues. Minimum completion is 3 questions (1 global, 1 national, 1 local) — aligned with Plan 01's `checkQuizMinimum()`.
+1. **Issues are predefined per district.** The 7 issues are defined before the nominating contest begins. Users do not choose their own issues. Minimum completion is 1 question — aligned with Plan 01's `checkQuizMinimum()`.
 
-2. **Auto-save after each answer.** Each response is persisted to Firestore immediately via `updateSingleQuizResponse()`. Users can leave the quiz and resume later with all progress intact.
+2. **Auto-save after each answer.** Each response is persisted immediately to Firestore via `updateSingleQuizResponse()`. All users (anonymous and upgraded) have a Firestore document via Firebase Anonymous Auth (Plan 01), so there is no dual-storage branching. Users can leave the quiz and resume later with all progress intact.
 
-3. **Re-answering is allowed.** Tapping a completed issue reopens the modal with the current answer pre-selected. Saving an updated answer overwrites the previous response in Firestore, which triggers recalculation of candidate matching scores on the next feed load. Users can also change their dealbreaker list via Settings, which similarly affects matching.
+3. **Re-answering is allowed.** Tapping a completed issue reopens the modal with the current answer pre-selected. Saving an updated answer overwrites the previous response, which triggers recalculation of candidate matching scores on the next feed load.
+
+4. **Anonymous users can take the quiz.** No email/password account is required. Firebase Anonymous Auth (Plan 01) silently signs users in on first launch and gives them a Firestore document. Quiz data is saved under their anonymous UID. When the user later upgrades to an email/password account via `linkWithCredential`, the UID stays the same and all quiz data remains in place — no sync needed.

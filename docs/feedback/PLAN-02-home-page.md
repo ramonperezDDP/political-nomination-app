@@ -1,17 +1,19 @@
 # Plan 02: Home Page Redesign
 
-**Feedback:** Redesign top bar (logo left, remove tagline, add district toggle), replace content sections with ordered list (Video, Quiz, Character Search, Verify ID, Calendar, Submit/Endorse, About, FAQs).
+**Feedback:** Redesign top bar (logo left, remove tagline, add district toggle), replace content sections with ordered list (Video, Quiz, Character Search, Verify ID, Submit/Endorse, About The Contest with Calendar, FAQs). Video content will be a Vimeo URL. About section is an in-app explainer that includes the nomination calendar. Submit/Endorse supports mass endorsement after filtering.
 
 ---
 
 ## Current State
 
 ### Top Bar (`app/(tabs)/index.tsx`)
+
 - AMSP logo centered (160×44px)
 - Tagline below: "Your voice matters" (from `partyConfig.tagline`)
 - No district selector
 
 ### Content (`src/components/home/VoterHome.tsx`)
+
 1. Welcome Video card (placeholder)
 2. Quick Actions (Browse Candidates, View Leaderboard buttons)
 3. Resources (Register to Vote, Policy Preferences, Election Calendar)
@@ -36,7 +38,8 @@ Replace the current centered header with a new layout:
 ```
 
 **Current header code:**
-```tsx
+
+```
 <View style={styles.header}>
   <Image source={require('../../assets/amsp-logo.png')} style={styles.logo} />
   <Text variant="bodySmall" style={styles.tagline}>
@@ -46,7 +49,8 @@ Replace the current centered header with a new layout:
 ```
 
 **New header code:**
-```tsx
+
+```
 <View style={styles.header}>
   <View style={styles.headerLeft}>
     <Image source={require('../../assets/amsp-logo.png')} style={styles.logo} />
@@ -61,7 +65,8 @@ Replace the current centered header with a new layout:
 ```
 
 **New header styles:**
-```typescript
+
+```ts
 header: {
   flexDirection: 'row',
   alignItems: 'center',
@@ -84,9 +89,9 @@ headerRight: {
 
 **New file: `src/components/home/DistrictToggle.tsx`**
 
-A dropdown/toggle that switches between PA-01 and PA-02. This will be a small chip-style selector:
+A dropdown/toggle that switches between PA-01 and PA-02. Available to all users including anonymous — browsing is unrestricted (per Plan 01).
 
-```tsx
+```
 import React, { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Menu, Button, Text, useTheme } from 'react-native-paper';
@@ -150,59 +155,63 @@ const styles = StyleSheet.create({
 
 ### C. District State Management
 
-**File: `src/stores/userStore.ts` — add district to user state**
+**File: `src/stores/userStore.ts` — add browsing district to user state**
 
-```typescript
-// Add to UserState
-selectedDistrict: string; // 'PA-01' | 'PA-02'
+```ts
+// Add to store state
+selectedBrowsingDistrict: string; // 'PA-01' | 'PA-02' — for browsing only
 
 // Add action
-setSelectedDistrict: (district: string) => void;
+setSelectedBrowsingDistrict: (district: string) => void;
 
 // Implementation
-setSelectedDistrict: (district) => {
-  set({ selectedDistrict: district });
-  // Persist to Firestore user document
+setSelectedBrowsingDistrict: (district) => {
+  set({ selectedBrowsingDistrict: district });
+  // Persist for authenticated users only
   const userId = get().userProfile?.id;
   if (userId) {
-    updateUser(userId, { district });
+    updateUser(userId, { lastBrowsingDistrict: district });
   }
 },
 ```
 
-The selected district value will be read by:
+Note: This is a **browsing** district — which district's candidates the user is viewing. It is separate from the user's **verified** districts (which determine endorsement eligibility per Plan 01). Anonymous users can toggle this freely.
+
+The selected browsing district value will be read by:
+
 - Home page (to show district-specific content)
-- Quiz page (to load district-specific questions)
+- Quiz page (to load district-specific questions per Plan 03)
 - For You page (to filter candidates by district)
 
 ### D. Home Page Content Redesign
 
 **File: `src/components/home/VoterHome.tsx` — complete rewrite of content sections**
 
-Replace all current content with the ordered list from feedback. Each item is a pressable card:
+Replace all current content with the ordered list from feedback. Each item is a pressable card. The calendar is included inside the About section.
 
-```tsx
+```
 export default function VoterHome() {
   const router = useRouter();
   const theme = useTheme();
   const { partyConfig } = useConfigStore();
   const user = useUserStore((s) => s.userProfile);
+  const hasAccount = useUserStore(selectHasAccount);
 
-  // Track which quiz issues the user has completed
+  // Track which quiz issues the user has completed (Firestore — all users have a doc via Anonymous Auth)
   const completedIssueCount = user?.questionnaireResponses?.length || 0;
   const totalIssues = 7;
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
 
-      {/* 1. Video - A Brand New Way */}
-      <VideoCard />
+      {/* 1. Video — "A Brand New Way" (Vimeo embed) */}
+      <VideoCard videoUrl={partyConfig?.introVideoUrl} />
 
-      {/* 2. Quiz - 7 Issues Graphic */}
+      {/* 2. Quiz — 7 Issues Graphic */}
       <QuizCard
         completedCount={completedIssueCount}
         totalCount={totalIssues}
-        onPress={() => router.push('/(auth)/onboarding/issues')}
+        onPress={() => router.push('/quiz')}
       />
 
       {/* 3. Character Search */}
@@ -217,31 +226,29 @@ export default function VoterHome() {
       <ContentCard
         icon="shield-check"
         title="Verify Your Identity"
-        subtitle="Verify to unlock endorsement and voting features"
-        onPress={() => router.push('/(auth)/verify-identity')}
-        completed={user?.verificationStatus === 'verified'}
+        subtitle={hasAccount
+          ? "Verify to unlock endorsement features"
+          : "Create an account and verify to endorse candidates"
+        }
+        onPress={() => hasAccount
+          ? router.push('/(auth)/verify-identity')
+          : router.push('/(auth)/register')
+        }
+        completed={user?.verification?.photoId === 'verified'}
       />
 
-      {/* 5. Calendar */}
-      <NominationCalendar />
-
-      {/* 6. Submit/Endorse */}
+      {/* 5. Submit / Endorse */}
       <ContentCard
         icon="thumb-up"
         title="Submit / Endorse"
-        subtitle="Endorse your preferred candidates"
+        subtitle="Apply filters and endorse matching candidates"
         onPress={() => router.push('/(tabs)/for-you')}
       />
 
-      {/* 7. About The Contest */}
-      <ContentCard
-        icon="information"
-        title="About The Contest"
-        subtitle="Learn how the AMSP nomination process works"
-        onPress={() => { /* open info modal or web link */ }}
-      />
+      {/* 6. About The Contest (includes nomination calendar) */}
+      <AboutContestCard />
 
-      {/* 8. FAQs */}
+      {/* 7. FAQs */}
       <FAQSection />
 
     </ScrollView>
@@ -251,11 +258,11 @@ export default function VoterHome() {
 
 ### E. Quiz Graphic Card
 
-**New component within VoterHome or extracted to `src/components/home/QuizCard.tsx`**
+**New component: `src/components/home/QuizCard.tsx`**
 
-Shows 7 issue icons in a row/grid with one-word labels. Completed issues are visually distinct (filled color, checkmark). Tapping navigates to the quiz.
+Shows 7 issue icons in a row/grid with one-word labels. Completed issues are visually distinct (filled color, checkmark). Tapping navigates to the quiz. Works for both anonymous and authenticated users.
 
-```tsx
+```
 interface QuizCardProps {
   completedCount: number;
   totalCount: number;
@@ -266,7 +273,7 @@ function QuizCard({ completedCount, totalCount, onPress }: QuizCardProps) {
   const theme = useTheme();
   const { issues } = useConfigStore();
 
-  // Show first 7 issues (or the user's selected 7)
+  // Show first 7 issues (district-specific)
   const displayIssues = issues.slice(0, 7);
 
   return (
@@ -330,23 +337,16 @@ function getOneWordLabel(name: string): string {
 }
 ```
 
-### F. Nomination Calendar Component
+### F. About The Contest Card (with Nomination Calendar)
 
-**New component: `src/components/home/NominationCalendar.tsx`**
+**New component: `src/components/home/AboutContestCard.tsx`**
 
-Displays the weekly nomination timeline from the feedback document:
+An in-app explainer that includes the nomination timeline as a static graphic. Replaces the separate Calendar item.
 
 ```
-Sun-Mon     | Tue  | Wed | Thu          | Fri          | Sat
-Entire Field| 20   | 10  | 4            | 2            | AMSP
-            |      |     | Virtual      | Final        | Nominee
-            |      |     | Town Hall    | Debate       |
-─────────── Endorsement Round ──────────
-```
-
-```tsx
-function NominationCalendar() {
+function AboutContestCard() {
   const theme = useTheme();
+  const [expanded, setExpanded] = useState(false);
 
   const stages = [
     { label: 'Entire Field', span: 2, sub: '' },
@@ -358,49 +358,93 @@ function NominationCalendar() {
   ];
 
   return (
-    <Card style={styles.calendarCard}>
+    <Card style={styles.aboutCard}>
       <Card.Content>
-        <Text variant="titleMedium" style={styles.cardTitle}>
-          Nomination Timeline
-        </Text>
-        <Text variant="bodySmall" style={styles.calendarNote}>
-          Each day represents one week of the actual process
-        </Text>
-        <View style={styles.calendarRow}>
-          {stages.map((stage, i) => (
-            <View
-              key={i}
-              style={[
-                styles.calendarCell,
-                { flex: stage.span },
-                i < stages.length - 1 && styles.calendarCellBorder,
-              ]}
-            >
-              <Text variant="labelLarge" style={styles.calendarCount}>
-                {stage.label}
-              </Text>
-              {stage.sub ? (
-                <Text variant="labelSmall" style={styles.calendarSub}>
-                  {stage.sub}
-                </Text>
-              ) : null}
-            </View>
-          ))}
-        </View>
-        <View style={styles.endorsementBar}>
-          <Text variant="labelSmall" style={styles.endorsementText}>
-            Endorsement Round
+        <Pressable
+          onPress={() => setExpanded(!expanded)}
+          style={styles.aboutHeader}
+        >
+          <MaterialCommunityIcons
+            name="information"
+            size={24}
+            color={theme.colors.primary}
+          />
+          <Text variant="titleMedium" style={styles.aboutTitle}>
+            About The Contest
           </Text>
-        </View>
+          <MaterialCommunityIcons
+            name={expanded ? 'chevron-up' : 'chevron-down'}
+            size={24}
+            color={theme.colors.outline}
+          />
+        </Pressable>
+
+        {expanded && (
+          <View style={styles.aboutContent}>
+            <Text variant="bodyMedium" style={styles.aboutText}>
+              The AMSP nomination process narrows the field over one week through
+              endorsement rounds. Each day represents one week of the actual process.
+            </Text>
+
+            {/* Nomination Timeline */}
+            <View style={styles.calendarRow}>
+              {stages.map((stage, i) => (
+                <View
+                  key={i}
+                  style={[
+                    styles.calendarCell,
+                    { flex: stage.span },
+                    i < stages.length - 1 && styles.calendarCellBorder,
+                  ]}
+                >
+                  <Text variant="labelLarge" style={styles.calendarCount}>
+                    {stage.label}
+                  </Text>
+                  {stage.sub ? (
+                    <Text variant="labelSmall" style={styles.calendarSub}>
+                      {stage.sub}
+                    </Text>
+                  ) : null}
+                </View>
+              ))}
+            </View>
+            <View style={styles.endorsementBar}>
+              <Text variant="labelSmall" style={styles.endorsementText}>
+                Endorsement Round
+              </Text>
+            </View>
+
+            <Text variant="bodyMedium" style={styles.aboutText}>
+              Voters endorse candidates whose positions align with their values.
+              Candidates who don't meet the endorsement threshold at each stage
+              are eliminated. The final nominee represents the party.
+            </Text>
+          </View>
+        )}
       </Card.Content>
     </Card>
   );
 }
 ```
 
-### G. Bottom Tab Bar — No Changes Needed
+### G. Mass Endorsement via Submit/Endorse
+
+The "Submit / Endorse" card on the home page routes to the For You page, where users can apply filters (Issues, Most Important, Location) and then mass-endorse all remaining candidates. See Plan 04 and Plan 05 for the mass endorsement button implementation on the For You page.
+
+**Mass endorsement flow:**
+
+1. User taps "Submit / Endorse" on home page → navigates to For You
+2. User applies filters (e.g., Issues + Location)
+3. A "Mass Endorse" button appears showing count: "Endorse all X candidates"
+4. Requires full verification + district match (Plan 01 gating)
+5. Confirmation dialog: "Endorse X candidates in [district]?"
+6. Batch creates endorsements for all filtered candidates
+7. Success toast: "X endorsements submitted"
+
+### H. Bottom Tab Bar — No Changes Needed
 
 The current tab bar already matches the feedback:
+
 - Home
 - For You
 - Leaderboard
@@ -413,39 +457,31 @@ No changes required to `app/(tabs)/_layout.tsx`.
 ## Files to Create
 
 | File | Purpose |
-|------|---------|
+| :---- | :---- |
 | `src/components/home/DistrictToggle.tsx` | PA-01/PA-02 dropdown selector |
 | `src/components/home/QuizCard.tsx` | 7-issue graphic card with completion status |
-| `src/components/home/NominationCalendar.tsx` | Weekly nomination timeline |
-| `src/components/home/ContentCard.tsx` | Reusable card for Character Search, Verify ID, Submit/Endorse, About |
+| `src/components/home/AboutContestCard.tsx` | In-app explainer with nomination timeline |
+| `src/components/home/ContentCard.tsx` | Reusable card for Character Search, Verify ID, Submit/Endorse |
+| `src/components/home/VideoCard.tsx` | Vimeo video embed card |
 
 ## Files to Modify
 
 | File | Change |
-|------|--------|
+| :---- | :---- |
 | `app/(tabs)/index.tsx` | Replace centered header with left-aligned logo + district toggle |
-| `src/components/home/VoterHome.tsx` | Replace all content with 8-item ordered list |
+| `src/components/home/VoterHome.tsx` | Replace all content with 7-item ordered list |
 | `src/components/home/index.ts` | Export new components |
-| `src/stores/userStore.ts` | Add `selectedDistrict` state + `setSelectedDistrict` action |
-| `src/types/index.ts` | Ensure `district` field on User type is used consistently |
+| `src/stores/userStore.ts` | Add `selectedBrowsingDistrict` state + `setSelectedBrowsingDistrict` action |
 
 ---
 
 ## District Toggle Behavior
 
 When the user switches district:
-1. The home page content updates (future: district-specific video, calendar)
-2. The quiz loads district-specific questions (if any differ)
+
+1. The home page content updates (district-specific video, quiz issues)
+2. The quiz loads district-specific questions (Plan 03)
 3. The For You feed filters candidates by district
-4. The value persists to the user's Firestore document
+4. The value persists for authenticated users to their Firestore document
 
-For the beta with only PA-01 and PA-02, the toggle is a simple two-option dropdown. The architecture supports adding more districts later by extending the `DISTRICTS` array.
-
----
-
-## Open Questions
-
-1. **Video content** — Is there a "A Brand New Way" video URL to embed, or should this remain a placeholder?
-2. **About The Contest** — Should this open an in-app modal, a web link, or a new screen?
-3. **Submit/Endorse** — This was noted as "not discussed". Should it route to For You page, or to a separate endorsement management screen?
-4. **Calendar interactivity** — Is the calendar purely informational, or should stages be tappable for details?
+For the beta with only PA-01 and PA-02, the toggle is a simple two-option dropdown. The architecture supports adding more districts later by extending the `DISTRICTS` array. Anonymous users can toggle freely — it is stored in local state only.

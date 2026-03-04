@@ -10,23 +10,17 @@ export default function AuthLayout() {
   const isInitialized = useAuthStore((state) => state.isInitialized);
   const user = useAuthStore((state) => state.user);
 
-  // Check if user has completed onboarding (has selected issues and questionnaire responses)
-  const hasCompletedOnboarding =
-    (user?.selectedIssues?.length || 0) >= 4 &&
-    (user?.questionnaireResponses?.length || 0) > 0;
-
   // Wait for auth to initialize
   if (!isInitialized) {
     return null;
   }
 
-  // If authenticated and completed onboarding, redirect to tabs
-  if (isAuthenticated && hasCompletedOnboarding) {
+  // If authenticated with a non-anonymous account, redirect to tabs
+  // Anonymous users can also access tabs (handled by tabs layout)
+  // but they should be able to reach auth screens to register/login
+  if (isAuthenticated && user && !user.isAnonymous) {
     return <Redirect href="/(tabs)" />;
   }
-
-  // If authenticated but hasn't completed onboarding, let them continue in auth flow
-  // (they'll be directed to onboarding screens)
 
   // On web, use Slot to avoid react-native-screens animated style issues
   if (Platform.OS === 'web') {

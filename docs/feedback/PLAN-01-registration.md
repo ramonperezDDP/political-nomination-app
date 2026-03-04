@@ -1,6 +1,6 @@
 # Plan 01: Registration Simplification & Progressive Access Model
 
-**Feedback:** Only require First Name, Last Name, and Email for new users, then go directly to the home page. Build a progressive verification/onboarding system where users unlock capabilities as they complete verification steps.
+**Feedback:** Only require First Name, Last Name, and Email for new users, then go directly to the home page. Build a progressive verification/onboarding system where users unlock capabilities as they complete verification steps. Introduce an anonymous mode so users can enter the app and take the quiz without creating an account.
 
 ---
 
@@ -11,6 +11,7 @@ Register Screen → Verify Identity → Onboarding: Issues → Onboarding: Quest
 ```
 
 **Current registration fields:**
+
 - Full Name (2-50 chars)
 - Email
 - Password (8+ chars, uppercase, lowercase, number)
@@ -18,14 +19,16 @@ Register Screen → Verify Identity → Onboarding: Issues → Onboarding: Quest
 - Accept Terms checkbox
 
 **Current user state model (single dimension):**
-```typescript
+
+```ts
 role: 'unregistered' | 'constituent' | 'candidate' | 'admin';
 state: 'unverified' | 'verified' | 'pn_applicant' | 'approved_pn';
 verificationStatus: 'pending' | 'verified' | 'failed';
 ```
 
 **Current gate in `app/(auth)/_layout.tsx`:**
-```typescript
+
+```ts
 const hasCompletedOnboarding =
   (user?.selectedIssues?.length || 0) >= 4 &&
   (user?.questionnaireResponses?.length || 0) > 0;
@@ -42,48 +45,228 @@ This is a binary gate — users CANNOT reach the home page until they select 4+ 
 ## Proposed Flow
 
 ```
-Register Screen (First Name, Last Name, Email, Password) → Home Page (with progressive prompts)
+App opens → Firebase Anonymous Auth (silent, automatic)
+  → Home Page (anonymous Firestore user created)
+  → User takes quiz (saved to Firestore under anonymous UID)
+  → User upgrades to email/password account (anonymous UID preserved, all data stays)
+  → User verifies email, voter registration, photo ID (progressive)
 ```
+
+### Anonymous Mode via Firebase Anonymous Authentication
+
+On first launch, the app silently calls `signInAnonymously()`. This gives the user a real Firebase UID and creates a Firestore `users` document — without requiring any email, password, or personal information. All user data (quiz responses, browsing district, dealbreakers) is stored in Firestore under this anonymous UID, using the exact same schema as a full account.
+
+When the user later decides to create an account, we call `linkWithCredential(EmailAuthProvider.credential(email, password))` to **upgrade** the anonymous account in place. The UID stays the same, and all Firestore data remains attached — no sync or migration needed.
+
+Anonymous users can:
+
+- Browse the home page
+- Take the quiz (saved to Firestore under their anonymous UID)
+- View the For You feed (Random and Location filters)
+- View candidate profiles
+- Toggle between districts to browse candidates/PSAs
+- Set dealbreakers (saved to Firestore)
+
+### Anonymous User Lifecycle
+
+```ts
+// In authStore.ts initialize():
+initialize: () => {
+  const unsubscribe = onAuthStateChanged(async (firebaseUser) => {
+    if (firebaseUser) {
+      // User exists (anonymous or full account) — set up Firestore listener
+      set({ firebaseUser, isInitialized: true });
+      setupUserSubscription(firebaseUser.uid);
+    } else {
+      // No user at all — sign in anonymously
+      const result = await signInAnonymously();
+      // onAuthStateChanged will fire again with the new anonymous user
+    }
+  });
+  return unsubscribe;
+},
+```
+
+```ts
+// When anonymous user is created, set up their Firestore document:
+const createAnonymousUserDoc = async (uid: string) => {
+  await createUser(uid, {
+    email: '',
+    firstName: '',
+    lastName: '',
+    displayName: 'Anonymous',
+    role: 'constituent',
+    isAnonymous: true,
+    verification: {
+      email: 'unverified',
+      voterRegistration: 'unverified',
+      photoId: 'unverified',
+    },
+    onboarding: {
+      questionnaire: 'incomplete',
+      dealbreakers: 'incomplete',
+    },
+    districts: [],
+    selectedIssues: [],
+    questionnaireResponses: [],
+    dealbreakers: [],
+    // Abandonment tracking metadata
+    lastActiveAt: serverTimestamp(),
+    sessionCount: 1,
+    firstSeenAt: serverTimestamp(),
+    appVersion: APP_VERSION,
+    platform: Platform.OS,
+  });
+};
+```
+
+### Account Upgrade (Anonymous → Email/Password)
+
+```ts
+// In authStore.ts:
+upgradeAnonymousAccount: async (email, password, firstName, lastName) => {
+  const { firebaseUser } = get();
+  if (!firebaseUser || !firebaseUser.isAnonymous) {
+    throw new Error('No anonymous account to upgrade');
+  }
+
+  // Link the anonymous account with email/password credentials
+  const credential = EmailAuthProvider.credential(email, password);
+  const result = await linkWithCredential(firebaseUser, credential);
+
+  // Update the existing Firestore document (same UID, data preserved)
+  const displayName = `${firstName} ${lastName}`;
+  await updateUser(result.user.uid, {
+    email,
+    firstName,
+    lastName,
+    displayName,
+    isAnonymous: false,
+    'verification.email': 'pending',  // Verification email about to be sent
+  });
+
+  // Update Firebase Auth profile
+  await updateUserProfile({ displayName });
+
+  // Send email verification
+  await sendEmailVerification();
+
+  return true;
+},
+```
+
+The key advantage: the user's UID never changes. Quiz responses, dealbreakers, browsing history — everything stays in place. No data migration, no sync logic, no dual-storage branching.
+
+### Abandonment Tracking Metadata
+
+Every user document (anonymous or full account) includes metadata for identifying abandoned accounts:
+
+```ts
+export interface UserMetadata {
+  lastActiveAt: Timestamp;     // Updated on each app session start
+  sessionCount: number;        // Incremented on each app session start
+  firstSeenAt: Timestamp;      // Set once on account creation
+  appVersion: string;          // App version at last session
+  platform: string;            // 'ios' | 'android' | 'web'
+  lastQuizActivityAt?: Timestamp; // Last time user answered a quiz question
+  upgradePromptCount?: number; // How many times we've shown the "create account" prompt
+}
+```
+
+**Updated on each app session:**
+
+```ts
+// In authStore.ts initialize(), after auth state is confirmed:
+const updateSessionMetadata = async (uid: string) => {
+  await updateUser(uid, {
+    lastActiveAt: serverTimestamp(),
+    sessionCount: FieldValue.increment(1),
+    appVersion: APP_VERSION,
+    platform: Platform.OS,
+  });
+};
+```
+
+**Cleanup strategy for abandoned anonymous accounts:**
+
+A scheduled Cloud Function (e.g., daily) queries for anonymous accounts that meet abandonment criteria and deletes them:
+
+```ts
+// In functions/src/admin/cleanupAnonymousUsers.ts:
+export const cleanupAbandonedAnonymous = functions.pubsub
+  .schedule('every 24 hours')
+  .onRun(async () => {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - 90); // 90 days inactive
+
+    const abandoned = await db.collection('users')
+      .where('isAnonymous', '==', true)
+      .where('lastActiveAt', '<', cutoffDate)
+      .limit(500)
+      .get();
+
+    const batch = db.batch();
+    for (const doc of abandoned.docs) {
+      // Delete Firestore document
+      batch.delete(doc.ref);
+      // Delete Firebase Auth user
+      await admin.auth().deleteUser(doc.id);
+    }
+    await batch.commit();
+
+    console.log(`Cleaned up ${abandoned.size} abandoned anonymous accounts`);
+  });
+```
+
+**Abandonment criteria (configurable):**
+
+| Criteria | Threshold | Rationale |
+| :---- | :---- | :---- |
+| No activity for 90+ days | `lastActiveAt < now - 90d` | User hasn't opened the app in 3 months |
+| AND `isAnonymous === true` | — | Only clean up accounts that were never upgraded |
+| AND `sessionCount <= 2` | Optional | Only clean up drive-by users, not engaged anonymous users |
+| AND no quiz responses | Optional | Preserve anonymous users who invested effort |
 
 ### New User State Model (5 independent dimensions)
 
 Each user occupies a state across 5 independent verification/onboarding axes:
 
 | Dimension | States | How it's achieved |
-|-----------|--------|-------------------|
-| 1. Email | `unverified` / `verified` | User clicks verification link in email |
-| 2. Voter Registration | `unverified` / `verified` | User confirms voter registration details |
-| 3. Photo ID | `unverified` / `verified` | User uploads photo ID + passes verification |
-| 4. Questionnaire | `incomplete` / `complete` | User answers minimum 3 policy questions (1 global, 1 national, 1 local) |
-| 5. Dealbreakers | `incomplete` / `complete` | User selects their dealbreaker issues (0-3) |
+| :---- | :---- | :---- |
+| 1\. Email | `unverified` / `verified` | User clicks verification link in email |
+| 2\. Voter Registration | `unverified` / `verified` | User confirms voter registration details |
+| 3\. Photo ID | `unverified` / `verified` | User uploads photo ID + passes verification |
+| 4\. Questionnaire | `incomplete` / `complete` | User answers minimum 1 policy question |
+| 5\. Dealbreakers | `incomplete` / `complete` | User selects their dealbreaker issues (0-3) |
 
-**Questionnaire completion:** A minimum of **3 questions** (at least 1 from each section: global, national, local) marks the questionnaire as `complete`. However, the UI should prompt users that answering more questions produces better candidate matches. The quiz screen shows: *"You've unlocked matching! Answer more questions to improve your results."*
+**Questionnaire completion:** A minimum of **1 question** marks the questionnaire as `complete` and unlocks alignment scores and the "Issues" filter. However, the UI prompts users that answering more questions produces better candidate matches. The quiz screen shows: *"You've completed X out of 7 quiz questions. Complete more to further refine your search."*
 
 ### Progressive Capability Unlocking
 
 | Capability | Required State |
-|------------|---------------|
-| Access app, browse home page | Email = verified |
-| View For You feed (random PSAs) | Email = verified |
-| View candidate profiles | Email = verified |
-| Toggle between districts to browse candidates/PSAs | Email = verified |
-| View matching/alignment scores | Questionnaire = complete |
-| Use "Issues" filter in For You | Questionnaire = complete |
-| Use "Most Important" filter | Questionnaire = complete |
-| Use "Dealbreakers" filter | Dealbreakers = complete |
-| Cast a **binding endorsement** for a candidate | Email + Voter Reg + Photo ID verified, AND user shares a district with the candidate |
-| Run for office (candidate application) | All 3 verifications complete |
+| :---- | :---- |
+| Access app, browse home page | None (anonymous — auto-signed-in) |
+| Take the policy quiz | None (saved to Firestore under anonymous UID) |
+| View For You feed (Random filter) | None (anonymous) |
+| View candidate profiles | None (anonymous) |
+| Toggle between districts to browse candidates/PSAs | None (anonymous) |
+| Set dealbreakers | None (anonymous — saved to Firestore) |
+| View matching/alignment scores | Questionnaire = complete (1+ question) |
+| Use "Issues" filter in For You | Questionnaire = complete (1+ question) |
+| Use "Most Important" filter | Questionnaire = complete AND Dealbreakers = complete |
+| Cast a **binding endorsement** for a candidate | Upgraded account + Email + Voter Reg + Photo ID verified, AND user shares a district with the candidate |
+| Run for office (candidate application) | Upgraded account + all 3 verifications complete |
 
-**Pre-email-verification:** Authenticated users who haven't verified email see a screen prompting them to check their inbox/resend the verification link. They cannot proceed to the main app until email is verified.
+**Anonymous users** (auto-signed-in via Firebase Anonymous Auth) have a real Firestore document and can freely browse, take the quiz, and set dealbreakers. When they attempt a gated action (endorsing, applying as candidate), they are prompted to upgrade their account with email/password.
 
 ### District-Gated Endorsement
 
 A voter can hold **multiple districts simultaneously** in a hierarchy. When voter registration is verified, their district assignments are populated. Example:
 
 ```
-User districts: ['USA', 'MI', 'MI-HD-7', 'MI-SD-15']
-                  ↑       ↑        ↑            ↑
-               Federal   State   House Dist  Senate Dist
+User districts: ['USA', 'PA', 'PA-01']
+                  ↑       ↑      ↑
+               Federal   State  Congressional Dist
 ```
 
 Each candidate is also assigned to a district (the contest they're running in). The endorsement button for a given candidate checks:
@@ -98,11 +281,11 @@ Users can still **browse** candidates from any district by toggling the district
 Every locked feature shows what it does AND what the user needs to unlock it:
 
 | Locked Feature | What User Sees |
-|----------------|----------------|
-| Entire app (pre-email verification) | "Check your email to verify your account" screen with resend button |
-| Alignment score on PSA | Circle shows "?" with tooltip: "Complete the policy quiz to see your match" |
+| :---- | :---- |
+| Alignment score on PSA (no quiz) | Circle shows "?" with tooltip: "Complete the policy quiz to see your match" |
 | Issues/Most Important filters | Grayed out in dropdown: "Complete the quiz to unlock" |
-| Dealbreakers filter | Grayed out: "Set your dealbreakers to unlock" |
+| Most Important filter (no dealbreakers) | Grayed out: "Set your dealbreakers to unlock" |
+| Endorse button (anonymous) | Lock icon: "Create an account to endorse" → signup prompt |
 | Endorse button (not fully verified) | Lock icon: "Verify your identity to endorse" → tapping shows checklist |
 | Endorse button (wrong district) | Lock icon: "You are not verified in this candidate's district" → tapping shows voter registration prompt |
 | Candidate application | CTA disabled: "Complete identity verification to apply" |
@@ -115,7 +298,7 @@ Every locked feature shows what it does AND what the user needs to unlock it:
 
 **Replace the old single-dimension state fields with the new model:**
 
-```typescript
+```ts
 // OLD — Remove these
 export type UserState = 'unverified' | 'verified' | 'pn_applicant' | 'approved_pn';
 export type VerificationStatus = 'pending' | 'verified' | 'failed';
@@ -131,26 +314,27 @@ export interface UserVerification {
 }
 
 export interface UserOnboarding {
-  questionnaire: OnboardingState;       // Min 3 questions answered (1 per section)
+  questionnaire: OnboardingState;       // Min 1 question answered
   dealbreakers: OnboardingState;        // Dealbreakers selection done (even if 0)
 }
 
 // Hierarchical district model
 export interface UserDistrict {
-  id: string;          // e.g., 'MI-HD-7'
-  type: DistrictType;  // 'federal' | 'state' | 'house' | 'senate' | 'local'
-  name: string;        // e.g., 'Michigan House District 7'
-  state?: string;      // e.g., 'MI' (two-letter state code)
+  id: string;          // e.g., 'PA-01'
+  type: DistrictType;  // 'federal' | 'state' | 'congressional' | 'local'
+  name: string;        // e.g., 'Pennsylvania 1st Congressional District'
+  state?: string;      // e.g., 'PA' (two-letter state code)
 }
 
-export type DistrictType = 'federal' | 'state' | 'house' | 'senate' | 'local';
+export type DistrictType = 'federal' | 'state' | 'congressional' | 'local';
 
 export interface User {
   id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  displayName: string;                  // Computed: firstName + lastName (backward compat)
+  email: string;                        // '' for anonymous users
+  firstName: string;                    // '' for anonymous users
+  lastName: string;                     // '' for anonymous users
+  displayName: string;                  // 'Anonymous' for anonymous users
+  isAnonymous: boolean;                 // true until account upgrade
   photoUrl?: string;
   gender?: Gender;
   role: UserRole;                       // 'constituent' | 'candidate' | 'admin'
@@ -161,27 +345,38 @@ export interface User {
   questionnaireResponses: QuestionnaireResponse[];
   dealbreakers: string[];
   zipCode?: string;
+  // Abandonment tracking metadata
+  lastActiveAt: Timestamp;              // Updated each app session
+  sessionCount: number;                 // Incremented each app session
+  firstSeenAt: Timestamp;               // Set once on creation
+  appVersion: string;                   // App version at last session
+  platform: string;                     // 'ios' | 'android' | 'web'
+  lastQuizActivityAt?: Timestamp;       // Last quiz answer timestamp
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
 ```
 
 **Keep `UserRole` but simplify it:**
-```typescript
+
+```ts
 // Remove 'unregistered' — everyone who signs up is a constituent
 export type UserRole = 'constituent' | 'candidate' | 'admin';
 ```
 
 **Add district to Candidate type:**
-```typescript
+
+```ts
 export interface Candidate {
   // ... existing fields
-  district: string;    // The district this candidate is running in (e.g., 'MI-HD-7')
+  district: string;    // The district this candidate is running in (e.g., 'PA-01')
+  zone?: string;       // Virtual polling zone within district (e.g., 'pa01-north')
 }
 ```
 
 **Update `RegisterFormData`:**
-```typescript
+
+```ts
 export interface RegisterFormData {
   firstName: string;
   lastName: string;
@@ -197,7 +392,19 @@ export interface RegisterFormData {
 
 ### File: `src/stores/userStore.ts` — New selectors for progressive gating
 
-```typescript
+Since all users (anonymous and upgraded) have a Firestore document, these selectors work uniformly — no branching between local and remote state:
+
+```ts
+// ─── Authentication Selectors ───
+
+/** Whether the user has upgraded from anonymous to a full account */
+export const selectHasAccount = (state: UserState) =>
+  state.userProfile !== null && state.userProfile.isAnonymous === false;
+
+/** Whether the user is anonymous (auto-signed-in, no email/password) */
+export const selectIsAnonymous = (state: UserState) =>
+  state.userProfile?.isAnonymous === true;
+
 // ─── Verification Selectors ───
 
 export const selectEmailVerified = (state: UserState) =>
@@ -223,6 +430,7 @@ export const selectUserDistrictIds = (state: UserState): string[] =>
 /** Check if user shares a district with a specific candidate */
 export const selectCanEndorseCandidate = (candidateDistrict: string) =>
   (state: UserState): boolean => {
+    if (!selectHasAccount(state)) return false;
     if (!selectFullyVerified(state)) return false;
     const userDistrictIds = selectUserDistrictIds(state);
     return userDistrictIds.includes(candidateDistrict);
@@ -231,6 +439,7 @@ export const selectCanEndorseCandidate = (candidateDistrict: string) =>
 /** Get the reason endorsement is locked for a candidate */
 export const selectEndorseLockReason = (candidateDistrict: string) =>
   (state: UserState): string | null => {
+    if (selectIsAnonymous(state)) return 'Create an account to endorse';
     if (!selectEmailVerified(state)) return 'Verify your email to endorse';
     if (!selectVoterRegVerified(state)) return 'Complete voter registration to endorse';
     if (!selectPhotoIdVerified(state)) return 'Upload photo ID to endorse';
@@ -243,6 +452,8 @@ export const selectEndorseLockReason = (candidateDistrict: string) =>
 
 // ─── Onboarding Selectors ───
 
+/** Questionnaire is complete (1+ question answered).
+ *  Works uniformly for both anonymous and upgraded users (both have Firestore docs). */
 export const selectQuestionnaireComplete = (state: UserState) =>
   state.userProfile?.onboarding?.questionnaire === 'complete';
 
@@ -250,10 +461,6 @@ export const selectDealbreakersComplete = (state: UserState) =>
   state.userProfile?.onboarding?.dealbreakers === 'complete';
 
 // ─── Capability Selectors ───
-
-/** User can browse app content (For You, candidate profiles) */
-export const selectCanBrowse = (state: UserState) =>
-  selectEmailVerified(state);
 
 /** User can see alignment scores and use Issues/Most Important filters */
 export const selectCanSeeAlignment = (state: UserState) =>
@@ -272,6 +479,9 @@ export const selectCanApply = (state: UserState) =>
 /** Returns list of verification steps not yet completed */
 export const selectMissingVerifications = (state: UserState): string[] => {
   const missing: string[] = [];
+  if (selectIsAnonymous(state)) {
+    missing.push('account');
+  }
   const v = state.userProfile?.verification;
   if (!v || v.email !== 'verified') missing.push('email');
   if (!v || v.voterRegistration !== 'verified') missing.push('voterRegistration');
@@ -310,7 +520,8 @@ export const selectCompletionPercent = (state: UserState): number => {
 ### File: `app/(auth)/register.tsx` — Simplify form fields
 
 **New Zod schema — split name into two fields:**
-```typescript
+
+```ts
 const registerSchema = z.object({
   firstName: z.string().min(1, 'First name is required').max(50),
   lastName: z.string().min(1, 'Last name is required').max(50),
@@ -320,159 +531,72 @@ const registerSchema = z.object({
     .regex(/[a-z]/, 'Must contain lowercase')
     .regex(/[0-9]/, 'Must contain number'),
   confirmPassword: z.string(),
-  acceptTerms: z.literal(true, {
-    errorMap: () => ({ message: 'You must accept the terms' }),
-  }),
 }).refine(data => data.password === data.confirmPassword, {
   message: 'Passwords do not match',
   path: ['confirmPassword'],
 });
 ```
 
-**Update `onSubmit` — navigate to home after signup:**
-```typescript
+**Update `onSubmit` — upgrade anonymous account:**
+
+```ts
 const onSubmit = async (data: RegisterForm) => {
   const displayName = `${data.firstName} ${data.lastName}`;
-  const success = await signUp(
+  const success = await upgradeAnonymousAccount(
     data.email,
     data.password,
-    displayName,
     data.firstName,
     data.lastName
   );
   if (success) {
-    // Navigate to tabs — email verification gate in _layout.tsx
-    // will show the "check your email" screen until verified
+    // Stay on tabs — UID unchanged, all data preserved
     router.replace('/(tabs)');
   }
 };
 ```
 
-### File: `src/stores/authStore.ts` — New initial state on signup
+### File: `src/stores/authStore.ts` — Account upgrade (not creation)
 
-```typescript
-signUp: async (email, password, displayName, firstName, lastName) => {
-  // ... create Firebase Auth user (unchanged) ...
+Since anonymous users already have a Firestore document, upgrading is an **update**, not a create. The `upgradeAnonymousAccount` action (defined above in the Anonymous Mode section) links email/password credentials to the existing anonymous UID and updates the Firestore document with the user's name and email. All quiz responses, dealbreakers, and browsing state are already in Firestore under this UID — nothing needs to sync.
 
-  // Create Firestore document with honest initial state
-  await createUser(result.user.uid, {
-    email: result.user.email || email,
-    firstName,
-    lastName,
-    displayName,
-    role: 'constituent',
-    verification: {
-      email: 'pending',                // Verification email sent, not yet clicked
-      voterRegistration: 'unverified',
-      photoId: 'unverified',
-    },
-    onboarding: {
-      questionnaire: 'incomplete',
-      dealbreakers: 'incomplete',
-    },
-    districts: [],                     // Empty until voter registration verified
-    selectedIssues: [],
-    questionnaireResponses: [],
-    dealbreakers: [],
-  });
+### File: `app/(auth)/_layout.tsx` — Remove mandatory onboarding gate
 
-  // Send email verification (non-blocking)
-  await sendEmailVerification();
-
-  return true;
-},
-```
-
-### File: `app/(auth)/_layout.tsx` — Email verification gate (replaces onboarding gate)
-
-```typescript
+```ts
 // OLD: Block until onboarding complete
 // if (isAuthenticated && hasCompletedOnboarding) { return <Redirect ... /> }
 
-// NEW: Authenticated users go to tabs, BUT...
+// NEW: Authenticated users go straight to tabs
 if (isAuthenticated) {
   return <Redirect href="/(tabs)" />;
 }
 ```
 
-### File: `app/(tabs)/_layout.tsx` — Email verification screen before browse
+### File: `app/(tabs)/_layout.tsx` — Allow anonymous access
 
-```typescript
-const isAuthenticated = useAuthStore(selectIsAuthenticated);
-const emailVerified = useUserStore(selectEmailVerified);
+```ts
+// OLD: Required authentication to access tabs
+// if (!isAuthenticated) { return <Redirect href="/(auth)/login" /> }
 
-// Must be authenticated
-if (!isAuthenticated) {
-  return <Redirect href="/(auth)/login" />;
-}
-
-// Must have verified email to browse
-if (!emailVerified) {
-  return <EmailVerificationScreen />;
-}
-
-// Render normal tab layout
+// NEW: Allow anonymous access — tabs are open to everyone
+// Authentication is only checked at the point of gated actions (endorsing, etc.)
 return <Tabs ...>...</Tabs>;
-```
-
-### New Component: `EmailVerificationScreen`
-
-Shown inside the tabs layout when email is not yet verified. Simple screen with:
-- AMSP logo
-- "Check your email" message
-- The email address they registered with
-- "Resend verification email" button
-- "I've verified my email" button (refreshes auth state)
-- "Sign out" link
-
-```tsx
-function EmailVerificationScreen() {
-  const { firebaseUser, resendVerification } = useAuthStore();
-  const theme = useTheme();
-
-  const handleRefresh = async () => {
-    // Reload Firebase user to check emailVerified flag
-    await firebaseUser?.reload();
-    // Auth state listener will pick up the change
-  };
-
-  return (
-    <View style={styles.container}>
-      <MaterialCommunityIcons name="email-outline" size={64} color={theme.colors.primary} />
-      <Text variant="headlineSmall" style={styles.title}>Verify Your Email</Text>
-      <Text variant="bodyMedium" style={styles.subtitle}>
-        We sent a verification link to:
-      </Text>
-      <Text variant="bodyLarge" style={styles.email}>
-        {firebaseUser?.email}
-      </Text>
-      <Button mode="contained" onPress={handleRefresh} style={styles.button}>
-        I've Verified My Email
-      </Button>
-      <Button mode="text" onPress={resendVerification}>
-        Resend Verification Email
-      </Button>
-    </View>
-  );
-}
 ```
 
 ---
 
 ## Questionnaire Completion Logic
 
-### Minimum 3 questions (1 per section) to mark `complete`
+### Minimum 1 question to mark `complete`
 
-```typescript
+```ts
 // In userStore.ts updateQuestionnaireResponses():
 updateQuestionnaireResponses: async (userId, responses) => {
   const updates: Partial<User> = {
     questionnaireResponses: responses,
   };
 
-  // Check if minimum threshold met: 1 global + 1 national + 1 local
-  const hasMinimum = checkQuizMinimum(responses);
-  if (hasMinimum) {
+  // Check if minimum threshold met: 1 question answered
+  if (responses.length >= 1) {
     updates['onboarding.questionnaire'] = 'complete';
   }
 
@@ -480,36 +604,24 @@ updateQuestionnaireResponses: async (userId, responses) => {
 },
 ```
 
-```typescript
-// Helper: Check 1 global + 1 national + 1 local answered
+```ts
+// Helper: Check quiz minimum (1 question answered)
 function checkQuizMinimum(responses: QuestionnaireResponse[]): boolean {
-  const answeredIssueIds = new Set(responses.map((r) => r.issueId));
-
-  // These come from the DISTRICT_ISSUES config (see Plan 03)
-  // For now, use a general categorization
-  const GLOBAL_ISSUES = ['climate-change', 'economy'];
-  const NATIONAL_ISSUES = ['healthcare', 'education', 'gun-policy', 'immigration', 'criminal-justice'];
-  const LOCAL_ISSUES = ['infrastructure', 'housing'];
-
-  const hasGlobal = GLOBAL_ISSUES.some((id) => answeredIssueIds.has(id));
-  const hasNational = NATIONAL_ISSUES.some((id) => answeredIssueIds.has(id));
-  const hasLocal = LOCAL_ISSUES.some((id) => answeredIssueIds.has(id));
-
-  return hasGlobal && hasNational && hasLocal;
+  return responses.length >= 1;
 }
 ```
 
 ### Quiz UI prompt for more answers
 
-On the quiz screen, once 3 questions are answered (minimum met), show a banner:
+On the quiz screen, once the minimum (1 question) is met but not all 7 are answered, show a banner:
 
-```tsx
+```
 {meetsMinimum && answeredCount < 7 && (
   <View style={styles.morePrompt}>
     <MaterialCommunityIcons name="chart-line" size={20} color={theme.colors.primary} />
     <Text variant="bodySmall" style={styles.morePromptText}>
-      Matching unlocked! Answer more questions to improve your results
-      ({answeredCount}/7)
+      You've completed {answeredCount} out of 7 quiz questions.
+      Complete more to further refine your search.
     </Text>
   </View>
 )}
@@ -523,28 +635,28 @@ On the quiz screen, once 3 questions are answered (minimum met), show a banner:
 
 When a user completes voter registration verification, their district assignments are populated based on their registration address. Districts are **hierarchical** — a user belongs to multiple levels simultaneously:
 
-```typescript
-// Example: User registered in Ann Arbor, Michigan
+```ts
+// Example: User registered in Bucks County, Pennsylvania
 const userDistricts: UserDistrict[] = [
-  { id: 'USA',       type: 'federal', name: 'United States of America' },
-  { id: 'MI',        type: 'state',   name: 'Michigan',              state: 'MI' },
-  { id: 'MI-HD-7',   type: 'house',   name: 'Michigan House Dist 7', state: 'MI' },
-  { id: 'MI-SD-15',  type: 'senate',  name: 'Michigan Senate Dist 15', state: 'MI' },
+  { id: 'USA',   type: 'federal',        name: 'United States of America' },
+  { id: 'PA',    type: 'state',          name: 'Pennsylvania',         state: 'PA' },
+  { id: 'PA-01', type: 'congressional',  name: 'Pennsylvania 1st Congressional District', state: 'PA' },
 ];
 ```
 
 ### Candidate district assignment
 
-Each candidate runs in a specific district contest:
+Each candidate runs in a specific district contest. Candidates provide their address during the application process, which determines their district and zone assignment:
 
-```typescript
-// Example: Candidate running for MI House District 7
-candidate.district = 'MI-HD-7';
+```ts
+// Example: Candidate running in PA-01
+candidate.district = 'PA-01';
+candidate.zone = 'pa01-north';  // Virtual polling zone within the district
 ```
 
 ### Endorsement gating per-candidate
 
-```tsx
+```
 // In FullScreenPSA.tsx or candidate/[id].tsx:
 const lockReason = useUserStore(selectEndorseLockReason(candidate.district));
 const canEndorse = lockReason === null;
@@ -562,24 +674,25 @@ const canEndorse = lockReason === null;
 )}
 
 // Lock modal shows the specific reason:
+// - "Create an account to endorse" (anonymous users)
 // - "Verify your email" / "Upload photo ID" / "Complete voter registration"
 // - OR "You are not verified in this candidate's district"
 ```
 
 ### Browsing vs. Endorsing
 
-Users can freely **browse** candidates from any district using the district toggle on the home page (see Plan 02). Browsing only requires email verification. But the **Endorse** button checks district membership per-candidate.
+Users can freely **browse** candidates from any district using the district toggle on the home page (see Plan 02). Browsing requires no account. But the **Endorse** button checks district membership per-candidate.
 
-| Action | District Requirement |
-|--------|---------------------|
-| Browse candidates in PA-01 | None (email verified) |
-| Browse candidates in MI-HD-7 | None (email verified) |
-| Endorse candidate in PA-01 | User must have `PA-01` in their districts array |
-| Endorse candidate in MI-HD-7 | User must have `MI-HD-7` in their districts array |
+| Action | Requirement |
+| :---- | :---- |
+| Browse candidates in PA-01 | None (anonymous) |
+| Browse candidates in PA-02 | None (anonymous) |
+| Endorse candidate in PA-01 | Account + fully verified + `PA-01` in user's districts array |
+| Endorse candidate in PA-02 | Account + fully verified + `PA-02` in user's districts array |
 
 ### Voter registration → district population
 
-```typescript
+```ts
 // When voter registration verification completes (admin or automated):
 const populateUserDistricts = async (
   userId: string,
@@ -605,7 +718,7 @@ The `lookupDistrictsByAddress` function would query a district lookup service (e
 
 A wrapper component that shows locked state + prompt for any gated feature:
 
-```tsx
+```
 import React from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import { Text, useTheme } from 'react-native-paper';
@@ -679,7 +792,7 @@ const styles = StyleSheet.create({
 
 A modal/card showing the user's progress across all 5 dimensions with CTAs for incomplete steps:
 
-```tsx
+```
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Text, Button, Divider, useTheme } from 'react-native-paper';
@@ -718,7 +831,7 @@ export default function VerificationChecklist() {
       id: 'questionnaire', label: 'Policy Quiz', icon: 'clipboard-check',
       status: user.onboarding?.questionnaire || 'incomplete',
       route: '/quiz',
-      description: 'Answer at least 3 policy questions to see your matches',
+      description: 'Answer at least 1 policy question to see your matches',
     },
     {
       id: 'dealbreakers', label: 'Dealbreakers', icon: 'alert-circle',
@@ -793,7 +906,7 @@ const styles = StyleSheet.create({
 
 Firebase Auth tracks this automatically. Sync it to our model:
 
-```typescript
+```ts
 // In authStore.ts initialize():
 const unsubscribe = onAuthStateChanged(async (firebaseUser) => {
   if (firebaseUser) {
@@ -811,7 +924,7 @@ const unsubscribe = onAuthStateChanged(async (firebaseUser) => {
 
 ### When voter registration is verified (populates districts)
 
-```typescript
+```ts
 // Called by admin review or automated verification service:
 const verifyVoterRegistration = async (
   userId: string,
@@ -824,9 +937,9 @@ const verifyVoterRegistration = async (
 };
 ```
 
-### When questionnaire meets minimum (3 questions, 1 per section)
+### When questionnaire meets minimum (1 question answered)
 
-```typescript
+```ts
 updateQuestionnaireResponses: async (userId, responses) => {
   const updates: Partial<User> = { questionnaireResponses: responses };
 
@@ -840,7 +953,7 @@ updateQuestionnaireResponses: async (userId, responses) => {
 
 ### When dealbreakers are set
 
-```typescript
+```ts
 updateDealbreakers: async (userId, dealbreakers) => {
   if (dealbreakers.length > 3) {
     set({ error: 'Maximum 3 dealbreakers' });
@@ -856,7 +969,7 @@ updateDealbreakers: async (userId, dealbreakers) => {
 
 ### When photo ID is uploaded
 
-```typescript
+```ts
 const handlePhotoIdUpload = async (idDocUrl: string) => {
   await updateUser(userId, {
     'verification.photoId': 'pending',
@@ -869,7 +982,7 @@ const handlePhotoIdUpload = async (idDocUrl: string) => {
 
 ## Migration: Existing Users
 
-```typescript
+```ts
 function migrateUserState(user: any): Partial<User> {
   const wasVerified = user.state === 'verified' || user.verificationStatus === 'verified';
 
@@ -881,12 +994,12 @@ function migrateUserState(user: any): Partial<User> {
     },
     onboarding: {
       questionnaire:
-        (user.questionnaireResponses?.length || 0) >= 3 ? 'complete' : 'incomplete',
+        (user.questionnaireResponses?.length || 0) >= 1 ? 'complete' : 'incomplete',
       dealbreakers:
         user.dealbreakers !== undefined ? 'complete' : 'incomplete',
     },
     districts: user.district
-      ? [{ id: user.district, type: 'house', name: user.district }]
+      ? [{ id: user.district, type: 'congressional', name: user.district }]
       : [],
     firstName: user.displayName?.split(' ')[0] || '',
     lastName: user.displayName?.split(' ').slice(1).join(' ') || '',
@@ -899,47 +1012,50 @@ function migrateUserState(user: any): Partial<User> {
 ## Files to Create
 
 | File | Purpose |
-|------|---------|
+| :---- | :---- |
 | `src/components/ui/GatedFeature.tsx` | Reusable lock overlay / inline badge for gated features |
 | `src/components/ui/VerificationChecklist.tsx` | Progress card showing all 5 steps with CTAs |
-| `src/components/ui/EmailVerificationScreen.tsx` | Pre-browse gate: "Check your email to verify" |
+| `functions/src/admin/cleanupAnonymousUsers.ts` | Scheduled Cloud Function to delete abandoned anonymous accounts (90+ days inactive) |
 
 ## Files to Modify
 
 | File | Change |
-|------|--------|
-| `src/types/index.ts` | Replace `UserState`/`VerificationStatus` with `UserVerification`/`UserOnboarding`/`UserDistrict`; add `firstName`/`lastName`/`districts`; simplify `UserRole`; add `district` to Candidate |
+| :---- | :---- |
+| `src/types/index.ts` | Replace `UserState`/`VerificationStatus` with `UserVerification`/`UserOnboarding`/`UserDistrict`; add `firstName`/`lastName`/`districts`; simplify `UserRole`; add `district`/`zone` to Candidate |
 | `app/(auth)/register.tsx` | Split name → firstName + lastName; navigate to `/(tabs)` on success |
 | `app/(auth)/_layout.tsx` | Remove mandatory onboarding gate; authenticated users go to tabs |
-| `app/(tabs)/_layout.tsx` | Add email verification gate before rendering tabs |
-| `src/stores/authStore.ts` | Create user with new multi-dimensional state; sync email verification |
-| `src/stores/userStore.ts` | Add capability selectors, district selectors, `selectEndorseLockReason`; update quiz/dealbreaker completion logic |
+| `app/(tabs)/_layout.tsx` | Remove authentication requirement; allow anonymous access |
+| `src/stores/authStore.ts` | Add `signInAnonymously()` on first launch; add `upgradeAnonymousAccount()` for account upgrade via `linkWithCredential`; update session metadata on each app open |
+| `src/stores/userStore.ts` | Add capability selectors (`selectCanSeeAlignment`, `selectCanSeeDealbreakers`, `selectIsAnonymous`), district selectors, `selectEndorseLockReason`; update quiz/dealbreaker completion logic |
 | `src/stores/index.ts` | Export new selectors |
 
 ## Files Using Gating (consumers, updated in later plans)
 
 | File | Gated Feature |
-|------|---------------|
-| `src/components/feed/FullScreenPSA.tsx` | Alignment circle (quiz gate), endorse button (verification + district gate) |
+| :---- | :---- |
+| `src/components/feed/FullScreenPSA.tsx` | Alignment circle (quiz gate), endorse button (account + verification + district gate) |
 | `src/components/feed/ExperienceMenu.tsx` | Issues/Most Important (quiz gate), Dealbreakers filter (dealbreakers gate) |
-| `app/(tabs)/for-you.tsx` | Quiz prompt card for incomplete questionnaire |
+| `app/(tabs)/for-you.tsx` | Quiz prompt card for incomplete questionnaire, mass endorsement button |
 | `src/components/home/VoterHome.tsx` | Verification progress card on home page |
 | `app/(candidate)/apply.tsx` | Gate application behind full verification |
-| `app/candidate/[id].tsx` | Gate endorsement behind verification + district match |
+| `app/candidate/[id].tsx` | Gate endorsement behind account + verification + district match |
 
 ---
 
 ## Summary
 
 ```
-Sign up (First + Last name + Email)
-    → Verify email → App unlocks for browsing
+App opens → Firebase Anonymous Auth (silent, automatic)
+    → Firestore user doc created under anonymous UID
     → Browse freely, toggle districts to explore candidates
-    → See "?" on alignment → prompted to take quiz
-    → Answer 3+ questions → alignment unlocked (prompted for more)
-    → Set dealbreakers → Dealbreakers filter unlocks
-    → Try to endorse → see verification checklist
-    → Verify voter registration → districts assigned (USA, MI, MI-HD-7, MI-SD-15)
+    → Take quiz (saved to Firestore under anonymous UID)
+    → See "?" on alignment → complete 1+ question to unlock
+    → Answer 1+ question → alignment unlocked, prompted for more
+    → Set dealbreakers → Most Important filter unlocks (anonymous OK)
+    → Try to endorse → see signup/verification checklist
+    → Upgrade account (linkWithCredential) → UID preserved, all data stays
+    → Verify email → ✓
+    → Verify voter registration → districts assigned (USA, PA, PA-01)
     → Upload photo ID → ✓
     → Endorse button active for candidates in YOUR districts
     → Try to endorse candidate in another district → "Not in your district" lock

@@ -1,26 +1,59 @@
 import { Timestamp } from '@react-native-firebase/firestore';
 
 // User Types
-export type UserRole = 'unregistered' | 'constituent' | 'candidate' | 'admin';
-export type UserState = 'unverified' | 'verified' | 'pn_applicant' | 'approved_pn';
-export type VerificationStatus = 'pending' | 'verified' | 'failed';
+export type UserRole = 'constituent' | 'candidate' | 'admin';
+
+// Independent verification/onboarding states (Plan 01)
+export type VerificationState = 'unverified' | 'pending' | 'verified' | 'failed';
+export type OnboardingState = 'incomplete' | 'complete';
+
+export interface UserVerification {
+  email: VerificationState;
+  voterRegistration: VerificationState;
+  photoId: VerificationState;
+}
+
+export interface UserOnboarding {
+  questionnaire: OnboardingState;
+  dealbreakers: OnboardingState;
+}
+
+// Hierarchical district model
+export type DistrictType = 'federal' | 'state' | 'congressional' | 'local';
+
+export interface UserDistrict {
+  id: string;
+  type: DistrictType;
+  name: string;
+  state?: string;
+}
 
 export type Gender = 'male' | 'female' | 'non-binary' | 'prefer-not-to-say';
 
 export interface User {
   id: string;
   email: string;
+  firstName: string;
+  lastName: string;
   displayName: string;
+  isAnonymous: boolean;
   photoUrl?: string;
   gender?: Gender;
   role: UserRole;
-  state: UserState;
-  verificationStatus: VerificationStatus;
+  verification: UserVerification;
+  onboarding: UserOnboarding;
+  districts: UserDistrict[];
   selectedIssues: string[];
   questionnaireResponses: QuestionnaireResponse[];
   dealbreakers: string[];
-  district?: string;
   zipCode?: string;
+  // Abandonment tracking metadata
+  lastActiveAt: Timestamp;
+  sessionCount: number;
+  firstSeenAt: Timestamp;
+  appVersion: string;
+  platform: string;
+  lastQuizActivityAt?: Timestamp;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
@@ -54,6 +87,8 @@ export interface Candidate {
   profileViews: number;
   endorsementCount: number;
   trendingScore: number;
+  district: string;
+  zone?: string;
   publishedAt?: Timestamp;
   createdAt: Timestamp;
   updatedAt: Timestamp;
@@ -337,10 +372,11 @@ export interface LoginFormData {
 }
 
 export interface RegisterFormData {
+  firstName: string;
+  lastName: string;
   email: string;
   password: string;
   confirmPassword: string;
-  displayName: string;
 }
 
 export interface OnboardingFormData {

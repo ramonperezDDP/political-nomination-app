@@ -17,10 +17,8 @@ export default function TabLayout() {
     return null;
   }
 
-  // Redirect to auth if not authenticated
-  if (!isAuthenticated) {
-    return <Redirect href="/(auth)/login" />;
-  }
+  // Allow anonymous access — all users (including anonymous) can access tabs
+  // Authentication is only checked at the point of gated actions (endorsing, etc.)
 
   return (
     <Tabs

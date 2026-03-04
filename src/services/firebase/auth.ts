@@ -7,6 +7,34 @@ export interface AuthResult {
   error?: string;
 }
 
+// Sign in anonymously (silent, automatic on first launch)
+export const signInAnonymously = async (): Promise<AuthResult> => {
+  try {
+    const result = await auth().signInAnonymously();
+    return { success: true, user: result.user };
+  } catch (error: any) {
+    return { success: false, error: getAuthErrorMessage(error.code) };
+  }
+};
+
+// Link anonymous account with email/password credentials
+export const linkWithCredential = async (
+  email: string,
+  password: string
+): Promise<AuthResult> => {
+  try {
+    const user = auth().currentUser;
+    if (!user || !user.isAnonymous) {
+      return { success: false, error: 'No anonymous account to upgrade' };
+    }
+    const credential = auth.EmailAuthProvider.credential(email, password);
+    const result = await user.linkWithCredential(credential);
+    return { success: true, user: result.user };
+  } catch (error: any) {
+    return { success: false, error: getAuthErrorMessage(error.code) };
+  }
+};
+
 // Sign in with email and password
 export const signInWithEmail = async (
   email: string,

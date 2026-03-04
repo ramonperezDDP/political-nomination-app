@@ -119,7 +119,7 @@ Located in `functions/package.json`:
 | Package | Version | Purpose | License |
 |---------|---------|---------|---------|
 | firebase-admin | ^11.11.0 | Firebase Admin SDK | Apache-2.0 |
-| firebase-functions | ^4.5.0 | Cloud Functions SDK | Apache-2.0 |
+| firebase-functions | ^4.5.0 | Cloud Functions SDK (triggers + scheduled/Pub/Sub) | Apache-2.0 |
 
 ### Development Dependencies
 
@@ -197,6 +197,15 @@ political-nomination-app
 | @react-native-firebase | firebase (JS SDK) | firebase-admin | firebase-functions |
 |------------------------|-------------------|----------------|-------------------|
 | 21.x | 12.x | 11.x - 13.x | 4.x |
+
+### Firebase Auth Providers
+
+The app uses the following Firebase Authentication providers (no additional packages required):
+
+| Provider | Purpose | Package |
+|----------|---------|---------|
+| Anonymous | Silent first-launch sign-in; real UID without credentials | `@react-native-firebase/auth` / `firebase/auth` |
+| Email/Password | Account upgrade via `linkWithCredential`; full registration | `@react-native-firebase/auth` / `firebase/auth` |
 
 ### TypeScript Compatibility
 

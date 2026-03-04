@@ -23,7 +23,8 @@ A cross-platform mobile application for democratic nominations, built with React
 
 The America's Main Street Party App is a participatory democracy platform that enables:
 
-- **Voters** to discover candidates aligned with their policy preferences, complete questionnaires, and provide endorsements
+- **Anonymous visitors** to browse candidates, take the policy quiz, and explore the platform without creating an account (via Firebase Anonymous Auth)
+- **Registered voters** to discover candidates aligned with their policy preferences, unlock alignment scores, and provide endorsements after progressive identity verification
 - **Candidates** to apply for nomination, build profiles, and track campaign metrics
 - **Administrators** to manage party configuration and contest stages
 
@@ -58,10 +59,11 @@ The America's Main Street Party App is a participatory democracy platform that e
 │                     Firebase Services                        │
 ├─────────────────┬─────────────────┬─────────────────────────┤
 │ Authentication  │   Firestore     │     Cloud Storage       │
-│ (Email/Pass)    │   (Database)    │     (File Uploads)      │
+│ (Anonymous +    │   (Database)    │     (File Uploads)      │
+│  Email/Pass)    │                 │                         │
 ├─────────────────┴─────────────────┴─────────────────────────┤
 │                   Cloud Functions                            │
-│  (Triggers, Notifications, Rankings, Feed Generation)        │
+│  (Triggers, Notifications, Rankings, Feed, Scheduled Cleanup)│
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -480,7 +482,7 @@ Enable the following services in Firebase Console:
 
 | Service | Location | Configuration |
 |---------|----------|---------------|
-| Authentication | Build > Authentication | Enable Email/Password provider |
+| Authentication | Build > Authentication | Enable Email/Password and Anonymous providers |
 | Firestore | Build > Firestore Database | Create database in production mode |
 | Storage | Build > Storage | Set up Cloud Storage |
 | Hosting | Build > Hosting | Set up for SPA deployment |
@@ -799,6 +801,17 @@ The app supports iOS, Android, and Web from a single codebase using Expo/Metro p
 | `stores/authStore.ts` | `stores/authStore.web.ts` | Web uses `User` type from `firebase/auth` |
 
 Consumer code (components, other stores) imports from `@/services/firebase/auth` and Metro picks the right file automatically. No `Platform.OS` conditionals needed.
+
+### Authentication Model
+
+The app uses a **progressive access model** built on Firebase Anonymous Authentication:
+
+1. **First launch**: `signInAnonymously()` creates a real Firebase UID and Firestore user document — no email/password required
+2. **Anonymous users** can browse candidates, take the policy quiz, set dealbreakers, and toggle between districts
+3. **Account upgrade**: When users register, `linkWithCredential()` upgrades the anonymous account in place — the UID stays the same and all Firestore data (quiz responses, dealbreakers, etc.) is preserved
+4. **Progressive verification**: Five independent dimensions (email, voter registration, photo ID, questionnaire, dealbreakers) unlock capabilities incrementally
+5. **District-gated endorsements**: Users can browse any district but can only endorse candidates in their verified districts
+6. **Cleanup**: A scheduled Cloud Function (`cleanupAbandonedAnonymous`) runs daily to delete anonymous accounts inactive for 90+ days
 
 ---
 

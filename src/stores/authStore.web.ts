@@ -1,15 +1,21 @@
 import { create } from 'zustand';
+import { Platform } from 'react-native';
 import { type User as FirebaseUser } from 'firebase/auth';
 import {
   signInWithEmail,
-  createAccount,
+  signInAnonymously as firebaseSignInAnonymously,
+  linkWithCredential,
   signOut as firebaseSignOut,
   onAuthStateChanged,
   sendPasswordResetEmail,
   sendEmailVerification,
+  updateUserProfile,
 } from '@/services/firebase/auth';
-import { createUser, getUser, subscribeToUser } from '@/services/firebase/firestore';
-import type { User, UserRole, UserState } from '@/types';
+import { createUser, getUser, updateUser, subscribeToUser } from '@/services/firebase/firestore';
+import type { User } from '@/types';
+
+// App version — update on each release
+const APP_VERSION = '1.0.0';
 
 interface AuthState {
   // State
@@ -22,10 +28,11 @@ interface AuthState {
   // Actions
   initialize: () => () => void;
   signIn: (email: string, password: string) => Promise<boolean>;
-  signUp: (
+  upgradeAnonymousAccount: (
     email: string,
     password: string,
-    displayName: string
+    firstName: string,
+    lastName: string
   ) => Promise<boolean>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<boolean>;
@@ -42,13 +49,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   isInitialized: false,
   error: null,
 
-  // Initialize auth state listener
+  // Initialize auth state listener with anonymous auth
   initialize: () => {
     let userUnsubscribe: (() => void) | null = null;
 
     const unsubscribe = onAuthStateChanged(async (firebaseUser) => {
-      set({ firebaseUser, isLoading: true });
-
       // Clean up previous user subscription
       if (userUnsubscribe) {
         userUnsubscribe();
@@ -56,12 +61,82 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       }
 
       if (firebaseUser) {
+        set({ firebaseUser, isLoading: true });
+
+        // Check if Firestore user doc exists
+        const existingUser = await getUser(firebaseUser.uid);
+
+        if (!existingUser) {
+          // New anonymous user — create Firestore document
+          try {
+            await createUser(firebaseUser.uid, {
+              email: firebaseUser.email || '',
+              firstName: '',
+              lastName: '',
+              displayName: firebaseUser.isAnonymous ? 'Anonymous' : (firebaseUser.displayName || ''),
+              isAnonymous: firebaseUser.isAnonymous,
+              role: 'constituent',
+              verification: {
+                email: 'unverified',
+                voterRegistration: 'unverified',
+                photoId: 'unverified',
+              },
+              onboarding: {
+                questionnaire: 'incomplete',
+                dealbreakers: 'incomplete',
+              },
+              districts: [],
+              selectedIssues: [],
+              questionnaireResponses: [],
+              dealbreakers: [],
+              lastActiveAt: new Date() as any,
+              sessionCount: 1,
+              firstSeenAt: new Date() as any,
+              appVersion: APP_VERSION,
+              platform: Platform.OS,
+            });
+          } catch (error: any) {
+            console.error('Error creating user doc:', error.message);
+          }
+        } else {
+          // Existing user — update session metadata
+          try {
+            await updateUser(firebaseUser.uid, {
+              lastActiveAt: new Date() as any,
+              appVersion: APP_VERSION,
+              platform: Platform.OS,
+            });
+          } catch (error: any) {
+            console.error('Error updating session metadata:', error.message);
+          }
+
+          // Sync email verification status from Firebase Auth
+          if (!firebaseUser.isAnonymous && firebaseUser.emailVerified) {
+            if (existingUser.verification?.email !== 'verified') {
+              try {
+                await updateUser(firebaseUser.uid, {
+                  'verification.email': 'verified' as any,
+                });
+              } catch (error: any) {
+                console.error('Error syncing email verification:', error.message);
+              }
+            }
+          }
+        }
+
         // Subscribe to user data changes for real-time updates
         userUnsubscribe = subscribeToUser(firebaseUser.uid, (userData) => {
           set({ user: userData, isLoading: false, isInitialized: true });
         });
       } else {
-        set({ user: null, isLoading: false, isInitialized: true });
+        // No user at all — sign in anonymously
+        set({ user: null });
+        const result = await firebaseSignInAnonymously();
+        if (!result.success) {
+          console.error('Anonymous sign-in failed:', result.error);
+          set({ isLoading: false, isInitialized: true });
+        }
+        // onAuthStateChanged will fire again with the new anonymous user
       }
     });
 
@@ -88,47 +163,55 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     return true;
   },
 
-  // Sign up with email/password
-  signUp: async (email: string, password: string, displayName: string) => {
+  // Upgrade anonymous account to email/password
+  upgradeAnonymousAccount: async (
+    email: string,
+    password: string,
+    firstName: string,
+    lastName: string
+  ) => {
     set({ isLoading: true, error: null });
 
-    console.log('Starting signup for:', email);
-    const result = await createAccount(email, password, displayName);
+    const { firebaseUser } = get();
+    if (!firebaseUser || !firebaseUser.isAnonymous) {
+      set({ isLoading: false, error: 'No anonymous account to upgrade' });
+      return false;
+    }
 
+    // Link anonymous account with email/password credentials
+    const result = await linkWithCredential(email, password);
     if (!result.success || !result.user) {
-      console.log('Auth creation failed:', result.error);
       set({ isLoading: false, error: result.error });
       return false;
     }
 
-    console.log('Auth user created, creating Firestore document...');
-    // Create user document in Firestore
     try {
-      await createUser(result.user.uid, {
-        email: result.user.email || email,
+      // Update the existing Firestore document (same UID, data preserved)
+      const displayName = `${firstName} ${lastName}`;
+      await updateUser(result.user.uid, {
+        email,
+        firstName,
+        lastName,
         displayName,
-        role: 'unregistered' as UserRole,
-        state: 'unverified' as UserState,
-        verificationStatus: 'pending',
-        selectedIssues: [],
-        questionnaireResponses: [],
-        dealbreakers: [],
+        isAnonymous: false,
+        'verification.email': 'pending' as any,
       });
 
-      console.log('Firestore document created, sending verification email...');
+      // Update Firebase Auth profile
+      await updateUserProfile({ displayName });
+
       // Send email verification
       await sendEmailVerification();
 
-      console.log('Signup complete!');
+      set({ isLoading: false });
       return true;
     } catch (error: any) {
-      console.log('Firestore error:', error.message);
       set({ isLoading: false, error: error.message });
       return false;
     }
   },
 
-  // Sign out
+  // Sign out — signs out completely, then anonymous auth kicks in via onAuthStateChanged
   signOut: async () => {
     set({ isLoading: true, error: null });
     await firebaseSignOut();
@@ -179,8 +262,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 // Selectors
 export const selectIsAuthenticated = (state: AuthState) =>
   state.firebaseUser !== null;
-export const selectIsVerified = (state: AuthState) =>
-  state.user?.verificationStatus === 'verified';
 export const selectUserRole = (state: AuthState) => state.user?.role;
 export const selectIsCandidate = (state: AuthState) =>
   state.user?.role === 'candidate';
