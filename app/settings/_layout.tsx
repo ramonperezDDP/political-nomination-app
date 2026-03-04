@@ -1,8 +1,21 @@
-import { Stack } from 'expo-router';
+import { Stack, router } from 'expo-router';
 import { useTheme } from 'react-native-paper';
+import { Platform } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Pressable } from 'react-native';
 
 export default function SettingsLayout() {
   const theme = useTheme();
+
+  const headerLeft = () => (
+    <Pressable onPress={() => router.back()} hitSlop={8} style={{ marginRight: 8 }}>
+      <MaterialCommunityIcons
+        name={Platform.OS === 'ios' ? 'chevron-left' : 'arrow-left'}
+        size={Platform.OS === 'ios' ? 32 : 24}
+        color={theme.colors.onSurface}
+      />
+    </Pressable>
+  );
 
   return (
     <Stack
@@ -15,6 +28,7 @@ export default function SettingsLayout() {
         contentStyle: {
           backgroundColor: theme.colors.background,
         },
+        headerLeft,
       }}
     >
       <Stack.Screen
