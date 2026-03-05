@@ -94,11 +94,9 @@ interface AlignmentBadgeProps {
 export function AlignmentBadge({ score, size = 'medium', style }: AlignmentBadgeProps) {
   const getColor = () => {
     if (score === null) return '#9e9e9e';
-    if (score >= 80) return '#4caf50';
-    if (score >= 60) return '#8bc34a';
-    if (score >= 40) return '#ff9800';
-    if (score >= 20) return '#ff5722';
-    return '#f44336';
+    if (score >= 61) return '#4caf50';
+    if (score >= 31) return '#ffc107';
+    return '#ff9800';
   };
 
   const getSizeStyles = () => {

@@ -261,6 +261,7 @@ export interface CandidatePreview {
   topIssues: string[];
   endorsementCount: number;
   averageSpectrum: number; // -100 to 100
+  district: string;
 }
 
 // Notification Types

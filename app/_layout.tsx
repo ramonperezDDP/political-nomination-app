@@ -4,7 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { PaperProvider } from 'react-native-paper';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { StyleSheet, Platform, View, Text as RNText } from 'react-native';
+import { StyleSheet, Platform, View, Text as RNText, LogBox } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
 import {
@@ -18,6 +18,9 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { enableScreens } from 'react-native-screens';
 import { useAuthStore, useConfigStore, useUserStore } from '@/stores';
 import { amspLightTheme } from '@/constants/theme';
+
+// Suppress known React 18 + Zustand/Firebase subscription warning
+LogBox.ignoreLogs(['The result of getSnapshot should be cached']);
 
 // Disable native screens on web to avoid CSSStyleDeclaration errors
 // from react-native-screens' Animated wrapper
@@ -103,10 +106,12 @@ export default function RootLayout() {
     };
   }, [initializeAuth, initializeConfig]);
 
-  // Fetch endorsements when user is authenticated
+  // Fetch endorsements and subscribe to user profile when authenticated
   useEffect(() => {
     if (user?.id) {
       fetchEndorsements(user.id);
+      const unsubProfile = useUserStore.getState().subscribeToProfile(user.id);
+      return () => unsubProfile();
     }
   }, [user?.id, fetchEndorsements]);
 

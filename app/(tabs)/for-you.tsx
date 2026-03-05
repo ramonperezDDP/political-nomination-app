@@ -1,27 +1,29 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   StyleSheet,
   View,
   FlatList,
-  Alert,
-  Pressable,
-  PixelRatio,
-  Keyboard,
   Platform,
+  StatusBar,
+  useWindowDimensions,
 } from 'react-native';
-import { Text, useTheme, Menu, Divider, IconButton, TouchableRipple } from 'react-native-paper';
-import { SafeAreaView as NativeSafeAreaView } from 'react-native-safe-area-context';
-
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore, useConfigStore } from '@/stores';
+import { useUserStore, selectCanSeeAlignment } from '@/stores';
 import { getCandidatesForFeed, reseedAllData, inferGenderFromName } from '@/services/firebase/firestore';
 import { calculateAlignmentScore } from '@/utils/alignment';
-import PSACard from '@/components/feed/PSACard';
-import { EmptyState, LoadingScreen, SearchInput } from '@/components/ui';
+import FullScreenPSA from '@/components/feed/FullScreenPSA';
+import ExperienceMenu from '@/components/feed/ExperienceMenu';
+import QuizPromptCard from '@/components/feed/QuizPromptCard';
+import MassEndorseButton from '@/components/feed/MassEndorseButton';
+import { LoadingScreen } from '@/components/ui';
 import type { FeedItem, Candidate, User } from '@/types';
 
-const SafeAreaView = Platform.OS === 'web' ? View : NativeSafeAreaView;
+type ExperienceFilter = 'random' | 'issues' | 'most_important' | 'location';
 
-type FilterType = 'all' | 'high-alignment' | 'community' | 'no-dealbreakers';
+type DisplayItem =
+  | (FeedItem & { type?: 'candidate' })
+  | { id: string; type: 'prompt' };
 
 // Generate feed item from candidate data
 const generateFeedItem = (
@@ -32,12 +34,10 @@ const generateFeedItem = (
   issues: Array<{ id: string; name: string }>,
   userResponses: Array<{ issueId: string; answer: string | number | string[] }> = []
 ): FeedItem => {
-  // Only use candidate's actual priority issues (priority <= 5), not all positions
   const candidatePriorityIssues = (candidate.topIssues || [])
     .filter((ti) => ti.priority <= 5)
     .sort((a, b) => a.priority - b.priority);
   const candidateIssueIds = candidatePriorityIssues.map((ti) => ti.issueId);
-  // Pass ALL positions for dealbreaker checking, but only priority issues for scoring
   const allPositions = candidate.topIssues || [];
   const { score, matchedIssues, hasDealbreaker, matchedDealbreakers } = calculateAlignmentScore({
     candidateIssues: candidateIssueIds,
@@ -79,6 +79,7 @@ const generateFeedItem = (
       averageSpectrum: candidate.topIssues?.length
         ? Math.round(candidate.topIssues.reduce((sum, i) => sum + i.spectrumPosition, 0) / candidate.topIssues.length)
         : 0,
+      district: candidate.district,
     },
     alignmentScore: score,
     matchedIssues,
@@ -89,415 +90,146 @@ const generateFeedItem = (
 };
 
 export default function ForYouScreen() {
-  const theme = useTheme();
-  const { issues } = useConfigStore();
+  const insets = useSafeAreaInsets();
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
+
   const { user } = useAuthStore();
-
-
-  // Get font scale for accessibility - scales with user's text size preferences
-  const fontScale = PixelRatio.getFontScale();
+  const { issues } = useConfigStore();
+  const canSeeAlignment = useUserStore(selectCanSeeAlignment);
 
   const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isReseeding, setIsReseeding] = useState(false);
-  const [filterMenuVisible, setFilterMenuVisible] = useState(false);
-  const [selectedFilter, setSelectedFilter] = useState<FilterType>('all');
-  const [selectedIssue, setSelectedIssue] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [loadTrigger, setLoadTrigger] = useState(0);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [experienceFilter, setExperienceFilter] = useState<ExperienceFilter>(
+    canSeeAlignment ? 'issues' : 'random'
+  );
 
-  // Fetch candidates and generate feed - auto-seeds data if needed
+  // Auto-switch to 'issues' when user completes quiz
+  useEffect(() => {
+    if (canSeeAlignment && experienceFilter === 'random') {
+      setExperienceFilter('issues');
+    }
+  }, [canSeeAlignment]);
+
+  // Data fetching
   useEffect(() => {
     const loadFeed = async () => {
-      // Wait for issues to be loaded first
-      if (issues.length === 0) {
-        console.log('Waiting for issues to load...');
-        return;
-      }
-
+      if (issues.length === 0) return;
       setIsLoading(true);
       try {
         let candidatesData = await getCandidatesForFeed();
-        console.log('Fetched candidates for feed:', candidatesData.length);
-
-        // Auto-seed data if no candidates exist
         if (candidatesData.length === 0) {
-          console.log('No candidates found - auto-seeding data...');
-          try {
-            await reseedAllData();
-            // Fetch again after seeding
-            candidatesData = await getCandidatesForFeed();
-            console.log('After seeding, fetched candidates:', candidatesData.length);
-          } catch (seedError) {
-            console.warn('Error auto-seeding data:', seedError);
-          }
+          await reseedAllData();
+          candidatesData = await getCandidatesForFeed();
         }
-
         const userIssues = user?.selectedIssues || [];
         const userDealbreakers = user?.dealbreakers || [];
         const userResponses = user?.questionnaireResponses || [];
-
         const items = candidatesData.map(({ candidate, user: candidateUser }) =>
           generateFeedItem(candidate, candidateUser, userIssues, userDealbreakers, issues, userResponses)
         );
-
-        // Sort by alignment score (highest first, null scores last)
         items.sort((a, b) => (b.alignmentScore ?? -1) - (a.alignmentScore ?? -1));
-        console.log('Generated feed items:', items.length);
         setFeedItems(items);
       } catch (error) {
         console.warn('Error loading feed:', error);
       }
       setIsLoading(false);
     };
-
     loadFeed();
-  }, [issues, user, loadTrigger]);
+  }, [issues, user]);
 
-  const handleReseedData = async () => {
-    setIsReseeding(true);
-    try {
-      await reseedAllData();
-      Alert.alert('Success', 'Sample data has been loaded. Refreshing feed...');
-      setLoadTrigger((prev) => prev + 1);
-    } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to load sample data');
+  // Apply experience filter
+  const filteredItems = useMemo(() => {
+    switch (experienceFilter) {
+      case 'issues':
+        return feedItems.filter((item) => item.matchedIssues.length > 0);
+      case 'most_important':
+        return feedItems.filter((item) => !item.hasDealbreaker);
+      case 'location':
+        return feedItems;
+      case 'random':
+      default:
+        return [...feedItems].sort(() => Math.random() - 0.5);
     }
-    setIsReseeding(false);
-  };
+  }, [feedItems, experienceFilter]);
 
-  const handleRefresh = () => {
-    setLoadTrigger((prev) => prev + 1);
-  };
+  // Item height = full screen minus tab bar
+  const TAB_BAR_HEIGHT = Platform.OS === 'ios' ? 49 + insets.bottom : 56;
+  const itemHeight = screenHeight - TAB_BAR_HEIGHT;
 
-  const getFilteredFeed = () => {
-    let filtered = feedItems;
-
-    // Search filter - by candidate name
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase().trim();
-      filtered = filtered.filter((item) =>
-        item.candidate.displayName.toLowerCase().includes(query)
-      );
+  // Prepend quiz prompt if user hasn't completed quiz
+  const displayItems: DisplayItem[] = useMemo(() => {
+    if (!canSeeAlignment) {
+      return [
+        { id: 'quiz-prompt', type: 'prompt' as const },
+        ...filteredItems,
+      ];
     }
-
-    // Filter menu options
-    switch (selectedFilter) {
-      case 'high-alignment':
-        filtered = filtered.filter((item) => item.alignmentScore !== null && item.alignmentScore >= 80);
-        break;
-      case 'no-dealbreakers':
-        filtered = filtered.filter((item) => !item.hasDealbreaker);
-        break;
-      case 'community':
-        // In production, this would filter by community/district
-        break;
-    }
-
-    // Issue pill filter
-    if (selectedIssue) {
-      filtered = filtered.filter((item) =>
-        item.matchedIssues.includes(selectedIssue)
-      );
-    }
-
-    return filtered;
-  };
-
-  const filteredFeed = getFilteredFeed();
-
-  // Filter counts for menu labels
-  const filterCounts = {
-    all: feedItems.length,
-    highAlignment: feedItems.filter((item) => item.alignmentScore !== null && item.alignmentScore >= 80).length,
-    noDealbreakers: feedItems.filter((item) => !item.hasDealbreaker).length,
-  };
-
-  // Get autocomplete suggestions based on search query
-  const getSuggestions = () => {
-    if (!searchQuery.trim() || searchQuery.length < 1) return [];
-    const query = searchQuery.toLowerCase().trim();
-    return feedItems
-      .filter((item) =>
-        item.candidate.displayName.toLowerCase().includes(query)
-      )
-      .slice(0, 5); // Limit to 5 suggestions
-  };
-
-  const suggestions = getSuggestions();
-
-  const handleSuggestionSelect = (candidateName: string) => {
-    setSearchQuery(candidateName);
-    setShowSuggestions(false);
-    Keyboard.dismiss();
-  };
-
-  const handleSearchChange = (text: string) => {
-    setSearchQuery(text);
-    setShowSuggestions(text.length > 0);
-  };
-
-  const renderPSACard = ({ item }: { item: FeedItem }) => (
-    <PSACard
-      feedItem={item}
-      selectedIssueId={selectedIssue}
-      issues={issues}
-    />
-  );
+    return filteredItems;
+  }, [filteredItems, canSeeAlignment]);
 
   if (isLoading) {
     return <LoadingScreen message="Loading your feed..." />;
   }
 
   return (
-    <SafeAreaView
-      style={[styles.container, { backgroundColor: theme.colors.background }]}
-      edges={['top']}
-    >
-      {/* Header */}
-      <View style={styles.header}>
-        <Text variant="titleLarge" style={styles.title}>
-          For You
-        </Text>
-        <View style={styles.filterRow}>
-          <Menu
-            visible={filterMenuVisible}
-            onDismiss={() => setFilterMenuVisible(false)}
-            anchor={
-              <IconButton
-                icon="filter-variant"
-                onPress={() => setFilterMenuVisible(true)}
-              />
-            }
-          >
-            <Menu.Item
-              onPress={() => {
-                setSelectedFilter('all');
-                setFilterMenuVisible(false);
-              }}
-              title={`All Candidates (${filterCounts.all})`}
-              leadingIcon={selectedFilter === 'all' ? 'check' : undefined}
-            />
-            <Menu.Item
-              onPress={() => {
-                setSelectedFilter('high-alignment');
-                setFilterMenuVisible(false);
-              }}
-              title={`High Alignment 80%+ (${filterCounts.highAlignment})`}
-              leadingIcon={selectedFilter === 'high-alignment' ? 'check' : undefined}
-            />
-            <Menu.Item
-              onPress={() => {
-                setSelectedFilter('no-dealbreakers');
-                setFilterMenuVisible(false);
-              }}
-              title={`No Dealbreakers (${filterCounts.noDealbreakers})`}
-              leadingIcon={selectedFilter === 'no-dealbreakers' ? 'check' : undefined}
-            />
-            <Divider />
-            <Menu.Item
-              onPress={() => {
-                setSelectedFilter('community');
-                setFilterMenuVisible(false);
-              }}
-              title="My Community"
-              leadingIcon={selectedFilter === 'community' ? 'check' : undefined}
-            />
-          </Menu>
-        </View>
-      </View>
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" />
 
-      {/* Search Bar with Autocomplete */}
-      <View style={styles.searchContainer}>
-        <SearchInput
-          label=""
-          placeholder="Search candidates..."
-          value={searchQuery}
-          onChangeText={handleSearchChange}
-          onFocus={() => setShowSuggestions(searchQuery.length > 0)}
-          onBlur={() => {
-            // Delay hiding to allow suggestion tap to register
-            setTimeout(() => setShowSuggestions(false), 200);
-          }}
-          style={styles.searchBar}
-        />
-        {/* Autocomplete Suggestions Dropdown */}
-        {showSuggestions && suggestions.length > 0 && (
-          <View style={[styles.suggestionsContainer, { backgroundColor: theme.colors.surface }]}>
-            {suggestions.map((item, index) => (
-              <TouchableRipple
-                key={item.id}
-                onPress={() => handleSuggestionSelect(item.candidate.displayName)}
-                style={[
-                  styles.suggestionItem,
-                  index < suggestions.length - 1 && {
-                    borderBottomWidth: 1,
-                    borderBottomColor: theme.colors.outlineVariant,
-                  },
-                ]}
-              >
-                <View style={styles.suggestionContent}>
-                  <Text variant="bodyMedium" style={{ flex: 1 }}>
-                    {item.candidate.displayName}
-                  </Text>
-                  <Text
-                    variant="labelSmall"
-                    style={{ color: theme.colors.primary }}
-                  >
-                    {item.alignmentScore !== null ? `${item.alignmentScore}% match` : 'N/A'}
-                  </Text>
-                </View>
-              </TouchableRipple>
-            ))}
-          </View>
-        )}
-      </View>
+      {/* Experience dropdown */}
+      <ExperienceMenu
+        selectedFilter={experienceFilter}
+        onFilterChange={setExperienceFilter}
+        style={{ top: insets.top + 8 }}
+      />
 
-      {/* Issue Pills */}
-      {(user?.selectedIssues?.length || 0) > 0 && (
-        <FlatList
-          horizontal
-          data={user?.selectedIssues || []}
-          renderItem={({ item }) => {
-            const issue = issues.find((i) => i.id === item);
-            const isSelected = selectedIssue === item;
-            return (
-              <Pressable
-                onPress={() => setSelectedIssue(isSelected ? null : item)}
-                accessibilityRole="button"
-                accessibilityState={{ selected: isSelected }}
-                accessibilityLabel={`Filter by ${issue?.name || item}${isSelected ? ', currently selected' : ''}`}
-                style={[
-                  styles.issuePill,
-                  {
-                    backgroundColor: isSelected
-                      ? theme.colors.primary
-                      : theme.colors.surfaceVariant,
-                    paddingHorizontal: 16 * fontScale,
-                    paddingVertical: 10 * fontScale,
-                    minHeight: 36 * fontScale,
-                  },
-                ]}
-              >
-                <Text
-                  variant="labelLarge"
-                  style={{
-                    color: isSelected ? '#fff' : theme.colors.onSurface,
-                    fontWeight: isSelected ? '600' : '400',
-                  }}
-                >
-                  {issue?.name || item}
-                </Text>
-              </Pressable>
-            );
-          }}
-          keyExtractor={(item) => item}
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.issuePillsContainer}
-        />
-      )}
+      {/* Mass Endorse button */}
+      <MassEndorseButton
+        filteredItems={filteredItems}
+        experienceFilter={experienceFilter}
+        style={{ top: insets.top + 48 }}
+      />
 
-      {/* Feed */}
-      {feedItems.length === 0 ? (
-        <EmptyState
-          icon="account-group-outline"
-          title="Loading Candidates"
-          message="Setting up your personalized feed. This may take a moment..."
-          actionLabel="Retry"
-          onAction={handleRefresh}
-        />
-      ) : filteredFeed.length === 0 ? (
-        <EmptyState
-          icon="account-search-outline"
-          title="No candidates found"
-          message={searchQuery ? `No candidates match "${searchQuery}"` : "Try adjusting your filters"}
-          actionLabel="Clear Search & Filters"
-          onAction={() => {
-            setSearchQuery('');
-            setSelectedFilter('all');
-            setSelectedIssue(null);
-          }}
-        />
-      ) : (
-        <FlatList
-          data={filteredFeed}
-          renderItem={renderPSACard}
-          keyExtractor={(item) => item.id}
-          showsVerticalScrollIndicator={true}
-          contentContainerStyle={styles.feedContent}
-          onScrollBeginDrag={() => {
-            setShowSuggestions(false);
-            Keyboard.dismiss();
-          }}
-        />
-      )}
-    </SafeAreaView>
+      {/* Full-screen paging list */}
+      <FlatList
+        data={displayItems}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item, index }) => {
+          if (item.type === 'prompt') {
+            return <QuizPromptCard height={itemHeight} />;
+          }
+          return (
+            <FullScreenPSA
+              feedItem={item as FeedItem}
+              isActive={index === activeIndex}
+              height={itemHeight}
+            />
+          );
+        }}
+        pagingEnabled
+        snapToInterval={itemHeight}
+        decelerationRate="fast"
+        showsVerticalScrollIndicator={false}
+        horizontal={false}
+        onMomentumScrollEnd={(e) => {
+          const newIndex = Math.round(
+            e.nativeEvent.contentOffset.y / itemHeight
+          );
+          setActiveIndex(newIndex);
+        }}
+        getItemLayout={(_, index) => ({
+          length: itemHeight,
+          offset: itemHeight * index,
+          index,
+        })}
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-  },
-  title: {
-    fontWeight: 'bold',
-  },
-  filterRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  searchContainer: {
-    paddingHorizontal: 16,
-    paddingBottom: 8,
-    zIndex: 10,
-    position: 'relative',
-  },
-  searchBar: {
-    marginBottom: 0,
-  },
-  suggestionsContainer: {
-    position: 'absolute',
-    top: 56,
-    left: 16,
-    right: 16,
-    borderRadius: 8,
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    zIndex: 20,
-  },
-  suggestionItem: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-  },
-  suggestionContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  issuePillsContainer: {
-    paddingHorizontal: 16,
-    paddingTop: 4,
-    paddingBottom: 12,
-  },
-  issuePill: {
-    borderRadius: 20,
-    marginRight: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  feedContent: {
-    padding: 16,
-    paddingTop: 0,
+    backgroundColor: '#000',
   },
 });
