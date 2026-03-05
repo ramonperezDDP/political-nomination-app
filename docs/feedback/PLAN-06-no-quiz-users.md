@@ -4,36 +4,44 @@
 
 ---
 
-## Current State
+## Current State (Post-Plan 04)
 
-### For You Page (`app/(tabs)/for-you.tsx`)
+### What Already Exists
 
-- No quiz completion check exists
-- All users see the same feed regardless of quiz status
-- No prompt to take the quiz
+**Most of Plan 06's integration logic is already implemented in Plan 04.**
 
-### Onboarding Gate (`app/(auth)/_layout.tsx`)
+**`src/components/feed/QuizPromptCard.tsx`** — **Stub** created in Plan 04. Shows a full-screen card with clipboard icon, "Discover Your Matches" title, and "Take Quiz" button. Dark background (`#1a1a2e`). **Missing from spec:** dynamic progress count, AMSP logo/branding, "Continue Quiz" label, scroll hint, chevron-down.
 
-- Currently BLOCKS access to the main app until quiz is completed
-- After Plan 01, this gate is removed — anonymous users and authenticated users alike can access For You without taking the quiz
+**`app/(tabs)/for-you.tsx`** — Already has all Plan 06 integration:
+- `canSeeAlignment` selector imported and used (line 98)
+- `experienceFilter` defaults to `canSeeAlignment ? 'issues' : 'random'` (line 103-105)
+- Auto-switch from `'random'` to `'issues'` when quiz completed via `useEffect` (lines 108-112)
+- `displayItems` prepends `{ id: 'quiz-prompt', type: 'prompt' }` when `!canSeeAlignment` (lines 161-169)
+- `renderItem` renders `QuizPromptCard` for prompt type items (lines 198-199)
+- QuizPromptCard uses same `itemHeight` as FullScreenPSA for paging snap
 
-### Quiz Completion Check (`src/stores/userStore.ts`)
+**`src/components/feed/index.ts`** — Already exports QuizPromptCard (line 6).
 
-```ts
-selectHasCompletedOnboarding: (state) =>
-  (state.userProfile?.selectedIssues?.length || 0) >= 4 &&
-  (state.userProfile?.questionnaireResponses?.length || 0) > 0,
-```
+**`src/stores/userStore.ts`** — `selectCanSeeAlignment` checks `onboarding.questionnaire === 'complete'` on the Firestore document. Works uniformly for anonymous and upgraded users since all have a Firestore doc via Firebase Anonymous Auth (Plan 01).
 
-After Plan 01, this is replaced by `selectCanSeeAlignment`, which checks `onboarding.questionnaire === 'complete'` on the user's Firestore document. This works uniformly for both anonymous and upgraded users since all users have a Firestore document via Firebase Anonymous Auth (Plan 01).
+### What Does NOT Exist Yet
 
-The quiz is marked complete when the user answers a minimum of **1 question** (per Plan 01/03).
+The only remaining work is upgrading the **QuizPromptCard stub** to match the full spec:
+
+| Feature | Current Stub | Plan 06 Spec |
+| :---- | :---- | :---- |
+| Background | Dark `#1a1a2e` | AMSP purple (`theme.colors.primary`) |
+| Logo | None | AMSP logo (`assets/amsp-logo.png` — exists) |
+| Icon | Clipboard outline, 64px, dim | White circle (80px) with clipboard icon in purple |
+| Title | "Discover Your Matches" | "Unlock Personalized Results" |
+| Progress text | Static subtitle | Dynamic: "You've completed X out of 7 quiz questions. Complete more to further refine your search." |
+| Button label | Always "Take Quiz" | Dynamic: "Take the Quiz" (0 answered) / "Continue Quiz" (1+ answered) |
+| Scroll hint | None | "or scroll down to browse randomly" + chevron-down |
+| User data | Not read | Reads `userProfile.questionnaireResponses.length` from userStore |
 
 ---
 
 ## Proposed Design
-
-This plan uses Plan 01's capability selectors to determine quiz status. The key selector is `selectCanSeeAlignment`. Filter gating is handled by the ExperienceMenu component per Plan 05.
 
 ### Behavior Flow
 
@@ -43,20 +51,17 @@ User opens For You tab
         ├── selectCanSeeAlignment?  (1+ quiz question answered)
         │       │
         │       ├── YES → Default to "Issues" filter, show normal feed
+        │       │         (Already implemented in for-you.tsx)
         │       │
         │       └── NO  → Default to "Random" filter
         │                  Show quiz prompt as FIRST item in feed
+        │                  (Already implemented in for-you.tsx)
         │                  "Issues" locked in ExperienceMenu (Plan 05)
         │                  "Most Important" locked in ExperienceMenu (Plan 05)
         │                  Prompt shown every visit until 1+ question answered
-        │
 ```
 
-### Quiz Prompt Card
-
-A full-screen card (same height as a PSA in the paging FlatList from Plan 04) shown as the first item in the feed. Uses the AMSP branding. Not dismissible — user must scroll past it to see PSAs.
-
-The prompt dynamically shows the user's progress:
+### Quiz Prompt Card (Full Spec)
 
 ```
 ┌─────────────────────────────────────────────┐
@@ -83,17 +88,26 @@ The prompt dynamically shows the user's progress:
 
 ---
 
-## New Component: `src/components/feed/QuizPromptCard.tsx`
+## Step 1: Upgrade QuizPromptCard Stub
 
-```
+**File:** `src/components/feed/QuizPromptCard.tsx` — **Replace stub** with full implementation
+
+Key changes from current stub:
+- Add `useUserStore` to read `userProfile.questionnaireResponses.length` for progress count
+- AMSP purple background via `useTheme().colors.primary`
+- AMSP logo image (asset exists at `assets/amsp-logo.png`)
+- White icon circle with purple clipboard icon
+- Dynamic progress text: "You've completed X out of 7 quiz questions"
+- Dynamic button label: "Take the Quiz" vs "Continue Quiz"
+- Scroll hint text + chevron-down icon
+
+```tsx
 import React from 'react';
-import { View, Image, StyleSheet, Dimensions } from 'react-native';
+import { View, Image, StyleSheet } from 'react-native';
 import { Text, Button, useTheme } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useUserStore } from '@/stores';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 interface QuizPromptCardProps {
   height: number;
@@ -102,25 +116,23 @@ interface QuizPromptCardProps {
 export default function QuizPromptCard({ height }: QuizPromptCardProps) {
   const theme = useTheme();
   const router = useRouter();
-  const user = useUserStore((s) => s.userProfile);
-
   // All users (anonymous + upgraded) have a Firestore doc via Firebase Anonymous Auth
+  const user = useUserStore((s) => s.userProfile);
   const completedCount = user?.questionnaireResponses?.length || 0;
 
   return (
     <View style={[styles.container, { height }]}>
-      {/* Background — AMSP purple */}
       <View style={[styles.background, { backgroundColor: theme.colors.primary }]} />
 
       <View style={styles.content}>
-        {/* Logo */}
+        {/* AMSP Logo */}
         <Image
           source={require('../../../assets/amsp-logo.png')}
           style={styles.logo}
           resizeMode="contain"
         />
 
-        {/* Icon */}
+        {/* Icon circle */}
         <View style={styles.iconCircle}>
           <MaterialCommunityIcons
             name="clipboard-check-outline"
@@ -134,13 +146,13 @@ export default function QuizPromptCard({ height }: QuizPromptCardProps) {
           Unlock Personalized Results
         </Text>
 
-        {/* Dynamic progress description */}
+        {/* Dynamic progress */}
         <Text variant="bodyLarge" style={styles.description}>
           You've completed {completedCount} out of 7 quiz questions.
           Complete more to further refine your search.
         </Text>
 
-        {/* CTA Button */}
+        {/* CTA */}
         <Button
           mode="contained"
           onPress={() => router.push('/quiz')}
@@ -158,7 +170,6 @@ export default function QuizPromptCard({ height }: QuizPromptCardProps) {
         <Text variant="bodySmall" style={styles.scrollHint}>
           or scroll down to browse randomly
         </Text>
-
         <MaterialCommunityIcons
           name="chevron-down"
           size={24}
@@ -172,7 +183,6 @@ export default function QuizPromptCard({ height }: QuizPromptCardProps) {
 
 const styles = StyleSheet.create({
   container: {
-    width: SCREEN_WIDTH,
     position: 'relative',
   },
   background: {
@@ -219,7 +229,7 @@ const styles = StyleSheet.create({
   ctaButtonContent: {
     height: 48,
     paddingHorizontal: 24,
-    flexDirection: 'row-reverse', // Icon on right
+    flexDirection: 'row-reverse',
   },
   ctaButtonLabel: {
     fontSize: 16,
@@ -235,83 +245,19 @@ const styles = StyleSheet.create({
 });
 ```
 
+**Note:** The spec previously used `Dimensions.get('window').width` for the container width. This is unnecessary — the container gets its width from the parent FlatList which is already full-screen. The `height` prop from `for-you.tsx` handles the vertical dimension.
+
 ---
 
-## Integration in `app/(tabs)/for-you.tsx`
+## Integration in `app/(tabs)/for-you.tsx` — ALREADY DONE
 
-### Step 1: Check quiz status using Plan 01 selectors
+All for-you.tsx integration from this plan was implemented in Plan 04. No changes needed:
 
-```ts
-import { useUserStore, selectCanSeeAlignment } from '@/stores';
-
-// Inside ForYouScreen component:
-// selectCanSeeAlignment checks onboarding.questionnaire === 'complete'
-// Works uniformly for both anonymous and upgraded users (both have Firestore docs)
-const canSeeAlignment = useUserStore(selectCanSeeAlignment);
-```
-
-### Step 2: Default filter based on quiz status
-
-```ts
-const [experienceFilter, setExperienceFilter] = useState<ExperienceFilter>(
-  canSeeAlignment ? 'issues' : 'random'
-);
-
-// Auto-switch to 'issues' when user completes quiz minimum while app is open:
-useEffect(() => {
-  if (canSeeAlignment && experienceFilter === 'random') {
-    setExperienceFilter('issues');
-  }
-}, [canSeeAlignment]);
-```
-
-### Step 3: Prepend prompt card to feed
-
-```ts
-const displayItems = useMemo(() => {
-  if (!canSeeAlignment) {
-    // Insert quiz prompt as the first item
-    return [
-      { id: 'quiz-prompt', type: 'prompt' as const },
-      ...filteredItems,
-    ];
-  }
-  return filteredItems;
-}, [filteredItems, canSeeAlignment]);
-```
-
-### Step 4: Render prompt card in paging FlatList (Plan 04)
-
-The QuizPromptCard uses the same `itemHeight` as Plan 04's `FullScreenPSA`, so it snaps correctly in the paging FlatList:
-
-```ts
-renderItem={({ item, index }) => {
-  if (item.type === 'prompt') {
-    return <QuizPromptCard height={itemHeight} />;
-  }
-  return (
-    <FullScreenPSA
-      feedItem={item}
-      isActive={index === activeIndex}
-      height={itemHeight}
-    />
-  );
-}}
-```
-
-### Step 5: Filter gating handled by ExperienceMenu (Plan 05)
-
-The ExperienceMenu component reads Plan 01's capability selectors directly from the store — no props needed. Gating logic:
-
-```ts
-// Already handled in ExperienceMenu via Plan 01 selectors:
-// - Issues: disabled when !selectCanSeeAlignment (quiz incomplete)
-// - Most Important: disabled when !selectCanSeeAlignment OR !selectCanSeeDealbreakers
-// - Location: always available (anonymous OK)
-// - Random: always available (anonymous OK)
-```
-
-Locked filters show a lock icon with an explanation (e.g., "Complete the quiz to unlock").
+- **Step 1 (quiz status check):** `canSeeAlignment` already imported and used (line 98)
+- **Step 2 (default filter):** `experienceFilter` already defaults based on quiz status (lines 103-105), auto-switches on completion (lines 108-112)
+- **Step 3 (prepend prompt):** `displayItems` already prepends quiz prompt when `!canSeeAlignment` (lines 161-169)
+- **Step 4 (render in FlatList):** `renderItem` already handles prompt type (lines 198-199)
+- **Step 5 (filter gating):** Handled by ExperienceMenu (Plan 05)
 
 ---
 
@@ -330,18 +276,35 @@ The prompt appears every time the user opens the For You tab, not just once. Thi
 
 ---
 
-## Files to Create
+## Files Summary
 
-| File | Purpose |
-| :---- | :---- |
-| `src/components/feed/QuizPromptCard.tsx` | Full-screen quiz CTA card with dynamic progress |
+### Files to Create
 
-## Files to Modify
+None — QuizPromptCard already exists as a stub.
+
+### Files to Modify
 
 | File | Change |
 | :---- | :---- |
-| `app/(tabs)/for-you.tsx` | Use `selectCanSeeAlignment` for quiz check, prepend prompt card, default to Random |
-| `src/components/feed/index.ts` | Export QuizPromptCard |
+| `src/components/feed/QuizPromptCard.tsx` | **Replace stub** with full implementation (AMSP branding, dynamic progress, scroll hint) |
+
+### Files Unchanged (Already Done in Plan 04)
+
+| File | Status |
+| :---- | :---- |
+| `app/(tabs)/for-you.tsx` | All integration logic already implemented (quiz check, default filter, auto-switch, prepended prompt, renderItem) |
+| `src/components/feed/index.ts` | QuizPromptCard already exported |
+
+---
+
+## Implementation Order
+
+1. Replace `QuizPromptCard.tsx` stub with full spec implementation
+2. Verify: `npx tsc --noEmit`
+3. Build and test:
+   - Fresh anonymous user → sees quiz prompt as first card with "0 out of 7" and "Take the Quiz"
+   - Answer 1 quiz question → prompt disappears, filter switches to Issues
+   - User with some answers but incomplete → sees "X out of 7" and "Continue Quiz"
 
 ---
 
@@ -349,9 +312,9 @@ The prompt appears every time the user opens the For You tab, not just once. Thi
 
 | Plan | Dependency |
 | :---- | :---- |
-| Plan 01 (Registration) | Provides `selectCanSeeAlignment` and `selectCanSeeDealbreakers` selectors. Provides `selectIsAnonymous` for knowing if user has upgraded. Firebase Anonymous Auth gives all users a Firestore document from first launch. Removes onboarding gate so all users can reach For You. |
-| Plan 03 (Quiz Page) | "Take the Quiz" / "Continue Quiz" button routes to `/quiz`. Quiz auto-saves each answer to Firestore (all users have a Firestore doc via Anonymous Auth). `checkQuizMinimum()` marks quiz complete after 1 question. |
-| Plan 04 (For You Rework) | QuizPromptCard uses the same `itemHeight` as FullScreenPSA in the paging FlatList. Vertical swipe only. Tab bar visible. |
+| Plan 01 (Registration) | Provides `selectCanSeeAlignment` and `selectCanSeeDealbreakers` selectors. Firebase Anonymous Auth gives all users a Firestore document from first launch. Removes onboarding gate so all users can reach For You. |
+| Plan 03 (Quiz Page) | "Take the Quiz" / "Continue Quiz" routes to `/quiz`. Quiz auto-saves each answer to Firestore (all users have a doc via Anonymous Auth). `checkQuizMinimum()` marks quiz complete after 1 question. |
+| Plan 04 (For You Rework) | QuizPromptCard stub created. All for-you.tsx integration already done: quiz check, default filter, auto-switch, prompt prepending, renderItem handling. |
 | Plan 05 (Experience Filters) | ExperienceMenu reads selectors directly — Issues requires `selectCanSeeAlignment`, Most Important requires both `selectCanSeeAlignment` + `selectCanSeeDealbreakers`. Random and Location always available (anonymous OK). |
 
 ---
@@ -360,11 +323,12 @@ The prompt appears every time the user opens the For You tab, not just once. Thi
 
 | Scenario | Behavior |
 | :---- | :---- |
-| Anonymous user with 0 quiz responses | Prompt shown, Random default, Issues/Most Important locked |
-| Anonymous user with 1+ quiz response | `onboarding.questionnaire = 'complete'` in Firestore → `selectCanSeeAlignment` returns true → prompt removed, Issues unlocked, auto-switch to Issues. Most Important still locked until dealbreakers are set. |
-| Upgraded user with 0 quiz responses | Prompt shown, Random default, Issues/Most Important locked |
-| Upgraded user with 1+ quiz response | `onboarding.questionnaire = 'complete'` → prompt removed, Issues unlocked, auto-switch to Issues |
+| Anonymous user with 0 quiz responses | Prompt shown with "0 out of 7", "Take the Quiz" button, Random default, Issues/Most Important locked |
+| Anonymous user with 1+ quiz response | `onboarding.questionnaire = 'complete'` in Firestore → `selectCanSeeAlignment` true → prompt removed, Issues unlocked, auto-switch to Issues. Most Important locked until dealbreakers set. |
+| Upgraded user with 0 quiz responses | Same as anonymous — prompt shown, Random default |
+| Upgraded user with 1+ quiz response | Prompt removed, Issues unlocked, auto-switch to Issues |
 | User with all 7 answered | Best matching quality. No additional UI change beyond the 1-question threshold. |
 | User completes quiz while on For You tab | Real-time Firestore listener → `selectCanSeeAlignment` flips → prompt disappears, filter auto-switches to Issues |
 | User navigates away from For You and returns | Prompt reappears if quiz minimum still not met |
 | User has quiz done but no dealbreakers set | Issues filter available. Most Important still locked ("Set your dealbreakers to unlock"). Dealbreakers available to all users including anonymous. |
+| AMSP logo asset missing | Shouldn't happen — `assets/amsp-logo.png` exists in the codebase. If missing, the Image component renders empty but doesn't crash. |

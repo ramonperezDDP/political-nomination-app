@@ -4,16 +4,45 @@
 
 ---
 
-## Current State
+## Current State (Post-Plan 04)
 
-### Filter Menu (`app/(tabs)/for-you.tsx` lines 249-292)
+### What Already Exists
 
-- "All Candidates" — no filter
-- "High Alignment (80%+)" — `alignmentScore >= 80`
-- "No Dealbreakers" — `!hasDealbreaker`
-- "My Community" — placeholder (not implemented)
+**`src/components/feed/ExperienceMenu.tsx`** — **Stub** (cycle-through on tap). Cycles through 4 filters: Explore, My Issues, Top Picks, My Area. No dropdown, no gating, no lock icons. Comment on line 26: `// Stub: cycle through filters on tap — full dropdown in Plan 05`.
 
-### No location/map functionality exists anywhere in the codebase.
+**`src/components/feed/MassEndorseButton.tsx`** — **Fully implemented**. Shows "Endorse all N" when non-random filter active, user is fully verified, and endorsable candidates exist. Uses `ConfirmModal`. Filters by district match. Already integrated in `for-you.tsx`.
+
+**`app/(tabs)/for-you.tsx`** — Full-screen TikTok-style paging FlatList (Plan 04). Already has:
+- `experienceFilter` state (default: `canSeeAlignment ? 'issues' : 'random'`)
+- Auto-switch from `'random'` to `'issues'` when quiz completed
+- `ExperienceMenu` rendered at `top: insets.top + 8` (right side)
+- `MassEndorseButton` rendered at `top: insets.top + 48` (left side)
+- `QuizPromptCard` prepended when quiz not completed
+- Simplified filter logic in `useMemo`:
+  - `issues`: `item.matchedIssues.length > 0`
+  - `most_important`: `!item.hasDealbreaker`
+  - `location`: returns all items (no-op)
+  - `random`: `Math.random() - 0.5` sort
+
+**`src/types/index.ts` / `index.web.ts`** — `Candidate` has both `district: string` (required) and `zone?: string` (optional). `CandidatePreview` has `district: string` but **no `zone` field**.
+
+**`src/components/feed/index.ts`** — Already exports ExperienceMenu and MassEndorseButton.
+
+**`react-native-svg`** — Already a dependency (v15.8.0) but unused in the codebase.
+
+### What Does NOT Exist Yet
+
+- No dropdown/menu in ExperienceMenu (just a cycle-through stub)
+- No filter gating (locked/disabled state for Issues, Most Important)
+- No `onLocationPress` callback support in ExperienceMenu
+- No `LocationMapModal` component
+- No `selectedLocation` / `locationModalVisible` state in for-you.tsx
+- No `selectedBrowsingDistrict` usage in for-you.tsx feed
+- No `zone` on `CandidatePreview` type
+- **No `district` or `zone` assigned in `seedCandidates()`** (both native and web) — candidates seeded without these fields
+- **No `district` assigned in `processApplication` Cloud Function** when approving candidates
+- No district-based feed filtering in `getCandidatesForFeed()` — currently fetches all candidates regardless of browsing district
+- `generateFeedItem()` in for-you.tsx does not pass `zone` to the CandidatePreview object
 
 ---
 
@@ -51,13 +80,105 @@ A dropdown button in the **top-right corner** of the For You page. Selecting a f
 
 ---
 
-## New Component: `src/components/feed/ExperienceMenu.tsx`
+## Step 1: Data Prerequisites
 
+### 1a. Add `zone` to `CandidatePreview` type
+
+**Files:** `src/types/index.ts` and `src/types/index.web.ts`
+
+Add `zone?: string;` after `district` in the `CandidatePreview` interface:
+
+```ts
+export interface CandidatePreview {
+  id: string;
+  displayName: string;
+  photoUrl?: string;
+  gender?: Gender;
+  topIssues: string[];
+  endorsementCount: number;
+  averageSpectrum: number;
+  district: string;
+  zone?: string;     // NEW — virtual polling location zone
+}
 ```
+
+### 1b. Pass `zone` in `generateFeedItem()` (`app/(tabs)/for-you.tsx`)
+
+Add `zone: candidate.zone` to the candidate object in `generateFeedItem` (~line 82):
+
+```ts
+candidate: {
+  id: candidate.id,
+  displayName: user?.displayName || 'Candidate',
+  // ... existing fields ...
+  district: candidate.district,
+  zone: candidate.zone,        // NEW
+},
+```
+
+### 1c. Assign `district` and `zone` in `seedCandidates()` (CRITICAL)
+
+**Files:** `src/services/firebase/firestore.ts` (~line 1536) and `src/services/firebase/firestore.web.ts` (~line 804)
+
+Currently seeded candidates have **no district or zone fields**. This means:
+- Location filter cannot work (no district/zone to match against)
+- Endorsement district-gating fails silently (candidate.district is undefined)
+
+Add district/zone assignment to the seed batch:
+
+```ts
+// Zone definitions
+const ZONES: Record<string, string[]> = {
+  'PA-01': ['pa01-north', 'pa01-central', 'pa01-south'],
+  'PA-02': ['pa02-west', 'pa02-center', 'pa02-northeast', 'pa02-south'],
+};
+const DISTRICTS = Object.keys(ZONES);
+
+// Inside the seed loop, before batch.set(candidateRef, {...}):
+const district = DISTRICTS[i % DISTRICTS.length]; // Alternate between PA-01 and PA-02
+const districtZones = ZONES[district];
+const zone = districtZones[Math.floor(Math.random() * districtZones.length)];
+
+// Add to the candidate document:
+batch.set(candidateRef, {
+  // ... existing fields ...
+  district,
+  zone,
+} as Candidate);
+```
+
+### 1d. Assign `district` in `processApplication` Cloud Function
+
+**File:** `functions/src/candidates/processApplication.ts` (~line 110)
+
+The `approveCandidate()` function creates a candidate record without `district`. For real candidates, district should come from the application data (address-based). For now, default to the first available district or pull from application:
+
+```ts
+await candidateRef.set({
+  // ... existing fields ...
+  district: applicationData.district || 'PA-01', // From application or default
+  zone: applicationData.zone || '',               // From address lookup or empty
+});
+```
+
+---
+
+## Step 2: Replace ExperienceMenu Stub
+
+**File:** `src/components/feed/ExperienceMenu.tsx` — **Full rewrite** (replacing stub)
+
+Key changes from stub:
+- Add React Native Paper `Menu` with proper dropdown behavior
+- Add filter gating via `selectCanSeeAlignment` and `selectCanSeeDealbreakers`
+- Add `onLocationPress` callback prop for opening location modal
+- Lock icon + disabled description for gated filters
+- Check icon for selected filter
+- Style prop stays `ViewStyle | ViewStyle[]` for compatibility with existing `for-you.tsx` usage
+
+```tsx
 import React, { useState } from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
-import { Menu, Button, Text, useTheme } from 'react-native-paper';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Menu, Button } from 'react-native-paper';
 import { useUserStore, selectCanSeeAlignment, selectCanSeeDealbreakers } from '@/stores';
 
 export type ExperienceFilter = 'random' | 'location' | 'issues' | 'most_important';
@@ -65,8 +186,8 @@ export type ExperienceFilter = 'random' | 'location' | 'issues' | 'most_importan
 interface ExperienceMenuProps {
   selectedFilter: ExperienceFilter;
   onFilterChange: (filter: ExperienceFilter) => void;
-  onLocationPress?: () => void; // Opens location modal
-  style?: ViewStyle;
+  onLocationPress?: () => void;
+  style?: ViewStyle | ViewStyle[];
 }
 
 interface FilterOption {
@@ -74,36 +195,36 @@ interface FilterOption {
   label: string;
   icon: string;
   description: string;
-  disabledDescription: string; // Shown when filter is locked
+  disabledDescription: string;
 }
 
 const FILTER_OPTIONS: FilterOption[] = [
   {
     id: 'random',
-    label: 'Random',
+    label: 'Explore',
     icon: 'shuffle-variant',
     description: 'All PSAs in random order',
-    disabledDescription: '', // Never disabled
+    disabledDescription: '',
   },
   {
     id: 'location',
-    label: 'Location',
+    label: 'My Area',
     icon: 'map-marker',
     description: 'PNs from a specific area',
-    disabledDescription: '', // Never disabled
+    disabledDescription: '',
   },
   {
     id: 'issues',
-    label: 'Issues',
+    label: 'My Issues',
     icon: 'clipboard-list',
     description: 'PNs matching your policy positions',
     disabledDescription: 'Complete the quiz to unlock',
   },
   {
     id: 'most_important',
-    label: 'Most Important',
+    label: 'Top Picks',
     icon: 'star',
-    description: 'Exclude PNs who oppose your dealbreaker issues',
+    description: 'Exclude PNs who oppose your dealbreakers',
     disabledDescription: 'Complete the quiz and set dealbreakers to unlock',
   },
 ];
@@ -115,9 +236,7 @@ export default function ExperienceMenu({
   style,
 }: ExperienceMenuProps) {
   const [visible, setVisible] = useState(false);
-  const theme = useTheme();
 
-  // Use Plan 01 capability selectors for granular gating
   const canSeeAlignment = useUserStore(selectCanSeeAlignment);
   const canSeeDealbreakers = useUserStore(selectCanSeeDealbreakers);
 
@@ -126,12 +245,11 @@ export default function ExperienceMenu({
   const isFilterDisabled = (filterId: ExperienceFilter): boolean => {
     switch (filterId) {
       case 'issues':
-        return !canSeeAlignment;       // Requires questionnaire = complete (1+ question)
+        return !canSeeAlignment;
       case 'most_important':
-        return !canSeeAlignment || !canSeeDealbreakers; // Requires both
-      case 'location':
-      case 'random':
-        return false;                   // Always available — no account needed
+        return !canSeeAlignment || !canSeeDealbreakers;
+      default:
+        return false;
     }
   };
 
@@ -211,109 +329,19 @@ const styles = StyleSheet.create({
 });
 ```
 
----
-
-## Filter Logic in `app/(tabs)/for-you.tsx`
-
-### Issues Filter
-
-Show only PNs that have answered quiz questions the same way as the user. A PN needs **at least one** shared policy position to appear. Uses quiz responses from Firestore (all users have a Firestore document via Firebase Anonymous Auth, Plan 01).
-
-```ts
-case 'issues':
-  return feedItems.filter((item) => {
-    // PN must share at least one policy position with user
-    if (item.matchedIssues.length === 0) return false;
-
-    // Check if PN has at least one answer matching user's answer direction
-    const userResponses = user?.questionnaireResponses || [];
-    return item.candidatePositions.some((cp) => {
-      const userResponse = userResponses.find((r) => r.issueId === cp.issueId);
-      if (!userResponse) return false;
-      const userValue = Number(userResponse.answer);
-      // Same direction = both positive or both negative on spectrum
-      return (userValue >= 0 && cp.spectrumPosition >= 0) ||
-             (userValue < 0 && cp.spectrumPosition < 0);
-    });
-  });
-```
-
-### Most Important Filter
-
-**Excludes** PNs who oppose the user on dealbreaker issues (aligned with Plan 03's `applyMustMatchFilter`). This is a **subtractive** filter — candidates are only removed if they actively oppose the user on a dealbreaker. Candidates with no position on a dealbreaker issue are kept (benefit of the doubt). Dealbreakers are stored in Firestore and available to all users including anonymous (per Plan 01).
-
-```ts
-case 'most_important':
-  const userDealbreakers = user?.dealbreakers || [];
-  if (userDealbreakers.length === 0) return feedItems; // No dealbreakers = show all
-
-  return feedItems.filter((item) => {
-    // Exclude candidates who OPPOSE the user on any dealbreaker issue
-    for (const dealbreakerId of userDealbreakers) {
-      const userResponse = user?.questionnaireResponses?.find(
-        (r) => r.issueId === dealbreakerId
-      );
-      if (!userResponse) continue; // User hasn't answered this one = skip
-
-      const candidatePosition = item.candidatePositions.find(
-        (cp) => cp.issueId === dealbreakerId
-      );
-      if (!candidatePosition) continue; // Candidate has no position = keep
-
-      const userValue = Number(userResponse.answer);
-      const candidateValue = candidatePosition.spectrumPosition;
-      const oppositeDirection =
-        (userValue >= 0 && candidateValue < 0) ||
-        (userValue < 0 && candidateValue >= 0);
-
-      if (oppositeDirection) return false; // Eliminated
-    }
-    return true;
-  });
-```
-
-### Random Filter
-
-Show all PSAs in random shuffled order. No policy-based filtering. Available to all users including anonymous.
-
-```ts
-case 'random':
-  // Shuffle using Fisher-Yates
-  const shuffled = [...feedItems];
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-  return shuffled;
-```
-
-### Location Filter
-
-Show only PNs from a specific virtual polling location selected via the map modal. Available to all users including anonymous. The modal does not require user location — it lets the user tap on map zones to find candidates.
-
-```ts
-case 'location':
-  if (!selectedLocation) return feedItems;
-  return feedItems.filter((item) => {
-    // Match candidate's district/zone to selected location
-    return item.candidate.district === selectedLocation
-      || item.candidate.zone === selectedLocation;
-  });
-```
+**Note:** Filter labels use the existing stub names (Explore, My Issues, Top Picks, My Area) for UI consistency with Plan 04's labels, rather than the original plan's "Random" / "Location" / "Issues" / "Most Important".
 
 ---
 
-## Location Map Modal: `src/components/feed/LocationMapModal.tsx`
+## Step 3: Create LocationMapModal
 
-When the user selects "Location" from the experience menu, a modal opens showing a simplified SVG map of PA-01 or PA-02 with virtual polling locations. The user taps a zone to filter candidates by that area. No user location is required.
+**File:** `src/components/feed/LocationMapModal.tsx` — **New file**
 
-### Approach: SVG-based static maps (simplified for beta)
+Uses `react-native-svg` (already installed v15.8.0, unused until now) and React Native Paper `Portal` + `Modal`.
 
-Since we only need PA-01 and PA-02 for the beta, use pre-built SVG maps with tappable zones. This avoids adding a heavy map dependency (react-native-maps, mapbox, etc.). Production versions can use geographically accurate boundaries.
-
-```
+```tsx
 import React, { useState } from 'react';
-import { View, Pressable, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { Modal, Portal, Text, Button, useTheme } from 'react-native-paper';
 import Svg, { Path, G, Text as SvgText } from 'react-native-svg';
 
@@ -324,7 +352,6 @@ interface LocationMapModalProps {
   district: string; // 'PA-01' or 'PA-02'
 }
 
-// Virtual polling location zones for each district
 const PA01_ZONES = [
   { id: 'pa01-north', label: 'North', path: 'M50,10 L150,10 L150,80 L50,80 Z', center: { x: 100, y: 45 } },
   { id: 'pa01-central', label: 'Central', path: 'M50,80 L150,80 L150,150 L50,150 Z', center: { x: 100, y: 115 } },
@@ -346,7 +373,6 @@ export default function LocationMapModal({
 }: LocationMapModalProps) {
   const [selectedZone, setSelectedZone] = useState<string | null>(null);
   const theme = useTheme();
-
   const zones = district === 'PA-02' ? PA02_ZONES : PA01_ZONES;
 
   return (
@@ -421,26 +447,15 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 24,
   },
-  title: {
-    textAlign: 'center',
-    marginBottom: 4,
-  },
-  subtitle: {
-    textAlign: 'center',
-    color: '#666',
-    marginBottom: 16,
-  },
+  title: { textAlign: 'center', marginBottom: 4 },
+  subtitle: { textAlign: 'center', color: '#666', marginBottom: 16 },
   mapContainer: {
     backgroundColor: '#f5f5f5',
     borderRadius: 12,
     padding: 8,
     marginBottom: 16,
   },
-  actions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 12,
-  },
+  actions: { flexDirection: 'row', justifyContent: 'space-between', gap: 12 },
 });
 ```
 
@@ -448,63 +463,111 @@ const styles = StyleSheet.create({
 
 The SVG paths above are simplified placeholders for the beta. For production, district boundaries can be obtained from the US Census Bureau and converted to SVG using mapshaper.org, or clean SVG maps can be created in Figma/Illustrator.
 
-### Candidate District/Zone Assignment
-
-Candidates provide their address during the application process (Plan 01's candidate application). Their address determines both their district and zone assignment.
-
-**File: `src/types/index.ts` — zone already added to Candidate type in Plan 01:**
-
-```ts
-interface Candidate {
-  // ... existing fields
-  district: string;   // 'PA-01' | 'PA-02'
-  zone?: string;      // 'pa01-north' | 'pa01-central' | etc.
-}
-```
-
-**File: `src/services/firebase/firestore.ts` — assign zones to seeded candidates:**
-
-```ts
-// When seeding candidates, assign districts and zones
-const zones = {
-  'PA-01': ['pa01-north', 'pa01-central', 'pa01-south'],
-  'PA-02': ['pa02-west', 'pa02-center', 'pa02-northeast', 'pa02-south'],
-};
-
-// Randomly assign a zone within the district
-candidate.district = selectedDistrict;
-candidate.zone = zones[selectedDistrict][Math.floor(Math.random() * zones[selectedDistrict].length)];
-```
-
 ---
 
-## Integration into For You Page
+## Step 4: Upgrade Filter Logic in `app/(tabs)/for-you.tsx`
 
-The ExperienceMenu reads user state directly via Plan 01's selectors (`selectCanSeeAlignment`, `selectCanSeeDealbreakers`), so the For You page doesn't need to pass capability props.
+### Current simplified filter logic (lines 142-154):
 
 ```ts
-// In app/(tabs)/for-you.tsx:
-import { useUserStore, selectCanSeeAlignment } from '@/stores';
+const filteredItems = useMemo(() => {
+  switch (experienceFilter) {
+    case 'issues':
+      return feedItems.filter((item) => item.matchedIssues.length > 0);
+    case 'most_important':
+      return feedItems.filter((item) => !item.hasDealbreaker);
+    case 'location':
+      return feedItems;
+    case 'random':
+    default:
+      return [...feedItems].sort(() => Math.random() - 0.5);
+  }
+}, [feedItems, experienceFilter]);
+```
 
+### Replace with full filter implementations:
+
+```ts
+const filteredItems = useMemo(() => {
+  switch (experienceFilter) {
+    case 'issues':
+      return feedItems.filter((item) => {
+        if (item.matchedIssues.length === 0) return false;
+        const userResponses = user?.questionnaireResponses || [];
+        return item.candidatePositions.some((cp) => {
+          const userResponse = userResponses.find((r) => r.issueId === cp.issueId);
+          if (!userResponse) return false;
+          const userValue = Number(userResponse.answer);
+          return (userValue >= 0 && cp.spectrumPosition >= 0) ||
+                 (userValue < 0 && cp.spectrumPosition < 0);
+        });
+      });
+
+    case 'most_important': {
+      const userDealbreakers = user?.dealbreakers || [];
+      if (userDealbreakers.length === 0) return feedItems;
+      return feedItems.filter((item) => {
+        for (const dealbreakerId of userDealbreakers) {
+          const userResponse = user?.questionnaireResponses?.find(
+            (r) => r.issueId === dealbreakerId
+          );
+          if (!userResponse) continue;
+          const candidatePosition = item.candidatePositions.find(
+            (cp) => cp.issueId === dealbreakerId
+          );
+          if (!candidatePosition) continue;
+          const userValue = Number(userResponse.answer);
+          const candidateValue = candidatePosition.spectrumPosition;
+          if ((userValue >= 0 && candidateValue < 0) ||
+              (userValue < 0 && candidateValue >= 0)) {
+            return false;
+          }
+        }
+        return true;
+      });
+    }
+
+    case 'location':
+      if (!selectedLocation) return feedItems;
+      return feedItems.filter((item) =>
+        item.candidate.district === selectedLocation ||
+        item.candidate.zone === selectedLocation
+      );
+
+    case 'random':
+    default: {
+      const shuffled = [...feedItems];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      return shuffled;
+    }
+  }
+}, [feedItems, experienceFilter, selectedLocation, user]);
+```
+
+### Add new state and imports to for-you.tsx:
+
+```ts
+// New imports:
+import LocationMapModal from '@/components/feed/LocationMapModal';
+import { selectBrowsingDistrict } from '@/stores';
+
+// New state (add alongside existing state):
 const [locationModalVisible, setLocationModalVisible] = useState(false);
 const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
-const selectedDistrict = useUserStore((s) => s.selectedBrowsingDistrict) || 'PA-01';
+const selectedDistrict = useUserStore(selectBrowsingDistrict);
 
-// Default filter depends on quiz completion (Plan 06)
-const canSeeAlignment = useUserStore(selectCanSeeAlignment);
-const [experienceFilter, setExperienceFilter] = useState<ExperienceFilter>(
-  canSeeAlignment ? 'issues' : 'random'
-);
-
-// ExperienceMenu handles its own gating via selectors:
+// Update ExperienceMenu to add onLocationPress:
 <ExperienceMenu
   selectedFilter={experienceFilter}
   onFilterChange={setExperienceFilter}
   onLocationPress={() => setLocationModalVisible(true)}
-  style={styles.experienceMenu}
+  style={{ top: insets.top + 8 }}
 />
 
-// Location map modal:
+// Add LocationMapModal below the FlatList:
 <LocationMapModal
   visible={locationModalVisible}
   onDismiss={() => setLocationModalVisible(false)}
@@ -514,6 +577,18 @@ const [experienceFilter, setExperienceFilter] = useState<ExperienceFilter>(
   }}
   district={selectedDistrict}
 />
+```
+
+---
+
+## Step 5: Export New Component
+
+**File:** `src/components/feed/index.ts`
+
+Add export for LocationMapModal (ExperienceMenu already exported):
+
+```ts
+export { default as LocationMapModal } from './LocationMapModal';
 ```
 
 ---
@@ -531,47 +606,23 @@ Filter availability is determined by the user's onboarding state, using Plan 01'
 
 Note: Since all users (including anonymous) have a Firestore document via Firebase Anonymous Auth (Plan 01), `selectCanSeeAlignment` works uniformly — it checks `onboarding.questionnaire === 'complete'` on the Firestore document. No dual-source branching needed.
 
-```ts
-// In ExperienceMenu, gating uses Plan 01 selectors:
-const canSeeAlignment = useUserStore(selectCanSeeAlignment);     // questionnaire = complete (1+ question)
-const canSeeDealbreakers = useUserStore(selectCanSeeDealbreakers); // dealbreakers = complete (available to all users)
-
-const isFilterDisabled = (filterId: ExperienceFilter): boolean => {
-  switch (filterId) {
-    case 'issues':       return !canSeeAlignment;
-    case 'most_important': return !canSeeAlignment || !canSeeDealbreakers;
-    default:             return false;
-  }
-};
-```
-
-Locked filters show a lock icon and an explanation of what the user needs to complete.
-
 ---
 
-## Mass Endorsement (Plans 02/05)
+## Mass Endorsement (Already Implemented)
 
-After applying a filter, a "Mass Endorse" button appears (see Plan 04's `MassEndorseButton` component). This allows users to endorse all candidates remaining after filtering in a single action.
+`MassEndorseButton` was **fully implemented in Plan 04** and is already integrated in `for-you.tsx`. No changes needed for Plan 05.
 
-**Requirements for mass endorsement:**
-- Account created + fully verified (email + voter reg + photo ID)
-- Candidates must be in the user's verified district
-- Only endorses candidates the user hasn't already endorsed
-
-**Flow:**
-1. User applies a filter (e.g., Issues + Location)
-2. "Endorse all X candidates" button appears
-3. Confirmation dialog
-4. Batch endorsement
-5. Success feedback
-
-Anonymous users and unverified users will not see the mass endorse button.
+Behavior:
+- Appears when non-random filter active, user is fully verified, and endorsable candidates exist
+- Filters by district match + not already endorsed
+- Shows confirmation dialog before batch endorsement
+- Hidden for anonymous/unverified users
 
 ---
 
 ## Cross-District Viewing
 
-Users can view candidates in any district by toggling the district selector on the home page (Plan 02). The Location filter's map modal also shows zones for the currently browsed district. However, the endorsement button (both individual and mass) is gated by district membership per Plan 01.
+Users can view candidates in any district by toggling the district selector on the home page (`DistrictToggle` component). The Location filter's map modal shows zones for the currently browsed district via `selectBrowsingDistrict`. The endorsement button (both individual and mass) is gated by district membership per Plan 01.
 
 | Action | District Requirement |
 | :---- | :---- |
@@ -583,17 +634,50 @@ Users can view candidates in any district by toggling the district selector on t
 
 ---
 
-## Files to Create
+## Implementation Order
+
+1. **Step 1a**: Add `zone?: string` to `CandidatePreview` in `src/types/index.ts` and `src/types/index.web.ts`
+2. **Step 1b**: Pass `zone` in `generateFeedItem()` in `app/(tabs)/for-you.tsx`
+3. **Step 1c**: Add `district` + `zone` to `seedCandidates()` in `firestore.ts` and `firestore.web.ts`
+4. **Step 1d**: Add `district` to `processApplication` Cloud Function
+5. **Step 2**: Replace `ExperienceMenu.tsx` stub with full dropdown implementation
+6. **Step 3**: Create `LocationMapModal.tsx`
+7. **Step 4**: Upgrade filter logic + add location state/modal to `for-you.tsx`
+8. **Step 5**: Export `LocationMapModal` from `feed/index.ts`
+9. **Re-seed data**: Run the app to re-seed candidates with district/zone data
+10. **Verify**: `npx tsc --noEmit`, build, test all 4 filters + location modal
+
+---
+
+## Files Summary
+
+### Files to Create
 
 | File | Purpose |
 | :---- | :---- |
-| `src/components/feed/ExperienceMenu.tsx` | Dropdown with 4 filter options |
 | `src/components/feed/LocationMapModal.tsx` | SVG map for PA-01/PA-02 zone selection |
 
-## Files to Modify
+### Files to Modify (Replace)
 
 | File | Change |
 | :---- | :---- |
-| `app/(tabs)/for-you.tsx` | Replace old filter menu with ExperienceMenu, add location modal state |
-| `src/services/firebase/firestore.ts` | Assign district/zone when seeding candidates |
-| `src/components/feed/index.ts` | Export new components |
+| `src/components/feed/ExperienceMenu.tsx` | **Replace stub** with full dropdown + gating |
+
+### Files to Modify (Edit)
+
+| File | Change |
+| :---- | :---- |
+| `src/types/index.ts` | Add `zone?: string` to `CandidatePreview` |
+| `src/types/index.web.ts` | Add `zone?: string` to `CandidatePreview` |
+| `app/(tabs)/for-you.tsx` | Add `zone` to generateFeedItem, upgrade filter logic, add location state + modal |
+| `src/services/firebase/firestore.ts` | Assign district/zone in `seedCandidates()` |
+| `src/services/firebase/firestore.web.ts` | Assign district/zone in `seedCandidates()` |
+| `functions/src/candidates/processApplication.ts` | Add district to candidate creation |
+| `src/components/feed/index.ts` | Export `LocationMapModal` |
+
+### Files Unchanged (Already Done in Plan 04)
+
+| File | Status |
+| :---- | :---- |
+| `src/components/feed/MassEndorseButton.tsx` | Fully implemented, no changes needed |
+| `app/_layout.tsx` | subscribeToProfile already wired up |
