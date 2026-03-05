@@ -25,6 +25,7 @@ The America's Main Street Party App is a participatory democracy platform that e
 
 - **Anonymous visitors** to browse candidates, take the policy quiz, and explore the platform without creating an account (via Firebase Anonymous Auth)
 - **Registered voters** to discover candidates aligned with their policy preferences, unlock alignment scores, and provide endorsements after progressive identity verification
+- **For You feed** with a full-screen TikTok-style vertical swipe experience, experience filters (Explore, My Area, My Issues, Top Picks), SVG location maps for zone-based browsing, and mass endorsement
 - **Candidates** to apply for nomination, build profiles, and track campaign metrics
 - **Administrators** to manage party configuration and contest stages
 
@@ -810,9 +811,11 @@ The app uses a **progressive access model** built on Firebase Anonymous Authenti
 2. **Anonymous users** can browse candidates, take the policy quiz, set dealbreakers, and toggle between districts
 3. **Account upgrade**: When users register, `linkWithCredential()` upgrades the anonymous account in place — the UID stays the same and all Firestore data (quiz responses, dealbreakers, etc.) is preserved
 4. **Progressive verification**: Five independent dimensions (email, voter registration, photo ID, questionnaire, dealbreakers) unlock capabilities incrementally
-5. **Alignment scores gated on quiz**: Users who haven't completed the policy quiz see "N/A" instead of a match percentage on candidate cards, the leaderboard, and candidate profiles
+5. **Alignment scores gated on quiz**: Users who haven't completed the policy quiz see "?" on the For You feed and "N/A" on candidate cards, leaderboard, and candidate profiles
 6. **District-gated endorsements**: Users can browse any district but can only endorse candidates in their verified districts
-7. **Cleanup**: A scheduled Cloud Function (`cleanupAbandonedAnonymous`) runs daily to delete anonymous accounts inactive for 90+ days
+7. **Experience filters**: The For You feed supports 4 filter modes — Explore (random), My Area (SVG zone maps), My Issues (policy-aligned), and Top Picks (no dealbreakers). Filters unlock progressively as users complete the quiz and set dealbreakers
+8. **Mass endorsement**: After filtering, verified users can endorse all matching candidates in their district with a single action
+9. **Cleanup**: A scheduled Cloud Function (`cleanupAbandonedAnonymous`) runs daily to delete anonymous accounts inactive for 90+ days
 
 ---
 
@@ -903,6 +906,8 @@ eas submit --platform android
 > - iOS build issues (gRPC/Firebase conflicts)
 > - Metro bundler hanging issues
 > - Dev server connection problems
+> - React Native runtime issues (Portal touch-blocking, Zustand infinite re-renders, stable dependencies)
+> - Web build & deployment issues (CSSStyleDeclaration, icon fonts, phone frame)
 > - Quick recovery steps
 
 ### Common Issues

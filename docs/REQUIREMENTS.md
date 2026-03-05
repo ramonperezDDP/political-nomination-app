@@ -34,7 +34,7 @@ This document outlines the system requirements for deploying the America's Main 
 
 | Software | Version | Purpose |
 |----------|---------|---------|
-| Node.js | 18.x LTS (required) | JavaScript runtime |
+| Node.js | 20.x LTS (recommended) | JavaScript runtime |
 | npm | 9.x+ | Package manager |
 | Git | 2.40+ | Version control |
 
@@ -50,8 +50,10 @@ This document outlines the system requirements for deploying the America's Main 
 
 | Software | Version | Purpose |
 |----------|---------|---------|
+| Xcode | 15+ | iOS builds (macOS only) |
 | Java JDK | 17 | Android builds |
 | Android SDK | 34 | Android builds |
+| CocoaPods | 1.16+ | iOS dependency management (install via Homebrew, not Ruby gems) |
 | Watchman | Latest | File watching (performance) |
 
 ## Network Requirements
@@ -116,7 +118,7 @@ The application requires a Firebase project with the following services enabled:
 
 | File | Platform | Location |
 |------|----------|----------|
-| GoogleService-Info.plist | iOS | Project root |
+| GoogleService-Info.plist | iOS | Project root AND `ios/PoliticalNomination/` |
 | google-services.json | Android | android/app/ |
 | Firebase Admin SDK JSON | Server | Secure location |
 

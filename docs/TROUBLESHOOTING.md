@@ -13,6 +13,7 @@ This document covers common issues encountered when developing the America's Mai
 - [Quick Recovery Steps](#quick-recovery-steps)
 - [Web Build & Deployment Issues](#web-build--deployment-issues)
 - [Known Runtime Warnings](#known-runtime-warnings-non-blocking)
+- [React Native Runtime Issues](#react-native-runtime-issues)
 - [Verified Clean Build Procedure](#verified-clean-build-procedure)
 
 ---
@@ -547,6 +548,135 @@ curl -sI "https://party-nomination-app.web.app/assets/node_modules/@expo/vector-
 
 ---
 
+## React Native Runtime Issues
+
+These are runtime bugs encountered on iOS (not web-specific) and their fixes.
+
+### Portal Components Blocking All Touch Events
+
+**Symptom:** All buttons on a screen become unresponsive — tab bar, pressable elements, and scroll gestures stop working entirely. The screen appears normal but nothing is tappable.
+
+**Cause:** React Native Paper components that use `<Portal>` (e.g., `Modal`, `Menu`, `Dialog`) render at the `<PaperProvider>` root level. Even when `visible={false}`, the Portal container can intercept touch events because it sits above other content in the view hierarchy.
+
+**Affected components:**
+- `react-native-paper` `<Menu>` — renders dropdown via Portal
+- `react-native-paper` `<Modal>` / `<Dialog>` — renders overlay via Portal
+- Any custom component wrapping these (e.g., `ConfirmModal`, `EndorseLockModal`)
+
+**Fix: Conditionally render Portal-based components.** Only mount them when they need to be visible:
+
+```tsx
+// BAD — Portal is always mounted, can block touches even when hidden
+<ConfirmModal visible={showConfirm} onDismiss={() => setShowConfirm(false)} ... />
+
+// GOOD — Portal only exists when needed
+{showConfirm && (
+  <ConfirmModal visible={showConfirm} onDismiss={() => setShowConfirm(false)} ... />
+)}
+```
+
+**Alternative for dropdowns:** Replace Paper's `<Menu>` with a custom dropdown using `<View>` + `<Pressable>` (no Portal). See `src/components/feed/ExperienceMenu.tsx` for an example implementation with an absolutely-positioned backdrop for dismiss handling.
+
+**Files fixed:** `FullScreenPSA.tsx` (EndorseLockModal), `MassEndorseButton.tsx` (ConfirmModal), `for-you.tsx` (LocationMapModal).
+
+---
+
+### Zustand Selector Causing Infinite Re-renders (System Hang)
+
+**Symptom:** The iOS Simulator freezes completely, requiring a force quit. The app becomes entirely unresponsive and the system may hang. In development, Metro shows rapid re-render cycles.
+
+**Cause:** A Zustand selector that creates a **new array or object reference** on every call triggers an infinite re-render loop. Zustand uses `Object.is` for equality checks — if the selector returns a new reference each time, the component re-renders, which triggers another selector call, and so on.
+
+**Example of the problematic pattern:**
+
+```ts
+// BAD — .map() creates a new array on every store update
+export const selectUserDistrictIds = (state: UserState): string[] =>
+  state.userProfile?.districts?.map((d) => d.id) || [];
+```
+
+Every time *any* part of the user store updates, this selector returns a brand-new array (even if the data is identical), causing all consuming components to re-render infinitely.
+
+**Fix: Select the raw stable reference, derive locally with useMemo:**
+
+```tsx
+// GOOD — select the stable reference, derive locally
+const districts = useUserStore((s) => s.userProfile?.districts);
+const userDistrictIds = useMemo(() => districts?.map((d) => d.id) || [], [districts]);
+```
+
+**General rules for Zustand selectors:**
+- Never use `.map()`, `.filter()`, `|| []`, or spread (`{...obj}`) inside selectors — these always create new references
+- Select the most primitive/stable value possible (strings, numbers, booleans, or stable object references)
+- Derive computed values locally with `useMemo` in the component
+- If you must use a derived selector, use Zustand's `useShallow` or a custom equality function
+
+**File fixed:** `src/components/feed/MassEndorseButton.tsx` — replaced `useUserStore(selectUserDistrictIds)` with local `useMemo`.
+
+---
+
+### Unstable useEffect/useMemo Dependencies Causing Unnecessary Refetches
+
+**Symptom:** Data refetches or expensive computations run on every render even when the underlying data hasn't changed. Feed reloads when unrelated user profile fields update.
+
+**Cause:** Using entire objects (e.g., `user`, `issues`) as `useEffect` or `useMemo` dependencies. Object references change on every store update even if the relevant fields are unchanged.
+
+**Fix: Use stable primitive values or specific properties as dependencies:**
+
+```tsx
+// BAD — entire user object changes on every store update
+useEffect(() => { loadFeed(); }, [issues, user]);
+
+// GOOD — only re-run when these specific values change
+const userId = user?.id;
+const issuesReady = issues.length > 0;
+useEffect(() => { loadFeed(); }, [issuesReady, userId]);
+
+// BAD — entire user object in useMemo deps
+const filtered = useMemo(() => { /* filter logic using user.dealbreakers */ }, [feedItems, user]);
+
+// GOOD — specific properties as deps
+const userResponses = user?.questionnaireResponses;
+const userDealbreakers = user?.dealbreakers;
+const filtered = useMemo(() => { /* filter logic */ }, [feedItems, userResponses, userDealbreakers]);
+```
+
+**Also avoid creating new references inside useMemo:** For example, `[...feedItems].sort(() => Math.random() - 0.5)` creates a new array on every call, which defeats memoization and can cascade re-renders to child components. If you don't need to shuffle, just return `feedItems` directly.
+
+**File fixed:** `app/(tabs)/for-you.tsx` — replaced `[issues, user]` deps with `[issuesReady, userId]`, and filter `useMemo` uses specific user properties.
+
+---
+
+### Firestore Seed Data Missing Fields After Schema Migration
+
+**Symptom:** A filter or feature that depends on a new field (e.g., `zone` for location filtering) shows no results or a black screen, even though the code is correct. Existing seed data lacks the new field.
+
+**Cause:** When new fields are added to the data model (e.g., adding `zone` to candidates in Plan 05), existing Firestore documents from earlier seeds don't have those fields.
+
+**Fix: Auto-detect and re-seed when needed:**
+
+```tsx
+useEffect(() => {
+  const loadFeed = async () => {
+    let candidatesData = await getCandidatesForFeed();
+    // Auto-reseed if data predates the schema migration
+    if (candidatesData.length === 0 ||
+        candidatesData.some(({ candidate }) => !candidate.zone)) {
+      await reseedAllData();
+      candidatesData = await getCandidatesForFeed();
+    }
+    // ... process feed items
+  };
+  loadFeed();
+}, [issuesReady, userId]);
+```
+
+This is a one-time migration pattern for development — the reseed only triggers when the field is missing. For production, use a proper Firestore migration script instead.
+
+**File fixed:** `app/(tabs)/for-you.tsx` — auto-reseeds when candidates lack `zone` data.
+
+---
+
 ## Known Runtime Warnings (Non-Blocking)
 
 These warnings appear in the Metro logs but do not affect app functionality:
@@ -666,4 +796,4 @@ This troubleshooting guide was tested with:
 - React Native 0.76.5
 - Firebase 11.11.0
 
-Last updated: February 2026
+Last updated: March 2026

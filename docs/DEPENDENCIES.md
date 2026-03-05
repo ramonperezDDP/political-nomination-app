@@ -61,7 +61,7 @@ This document provides a comprehensive overview of all dependencies used in the 
 | @expo-google-fonts/nunito-sans | latest | AMSP brand typeface | MIT |
 | expo-font | latest | Font loading | MIT |
 | @expo/vector-icons | ^14.0.4 | Icon library | MIT |
-| react-native-svg | 15.8.0 | SVG rendering | MIT |
+| react-native-svg | 15.8.0 | SVG rendering (used for LocationMapModal zone maps) | MIT |
 | react-native-gesture-handler | ~2.20.2 | Gesture handling | MIT |
 | react-native-reanimated | ~3.16.5 | Animations | MIT |
 
@@ -132,7 +132,7 @@ Located in `functions/package.json`:
 
 ### Runtime Requirements
 
-- Node.js 18 (specified in `engines` field)
+- Node.js 18+ (specified in `engines` field; 20.x LTS recommended for the main app)
 
 ---
 
@@ -168,7 +168,7 @@ political-nomination-app
 │   ├── expo-font (font loading)
 │   ├── react-native-gesture-handler (~2.20.2)
 │   ├── react-native-reanimated (~3.16.5)
-│   └── react-native-svg (15.8.0)
+│   └── react-native-svg (15.8.0) ← used for LocationMapModal zone maps
 │
 ├── Forms
 │   ├── react-hook-form (^7.54.0)
@@ -190,7 +190,7 @@ political-nomination-app
 
 | Expo SDK | React Native | React | Node.js |
 |----------|--------------|-------|---------|
-| 52.x | 0.76.x | 18.3.x | 18.x, 20.x |
+| 52.x | 0.76.x | 18.3.x | 20.x LTS (recommended) |
 
 ### Firebase SDK Compatibility
 
