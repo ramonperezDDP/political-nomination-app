@@ -9,23 +9,22 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore, useConfigStore } from '@/stores';
-import { useUserStore, selectCanSeeAlignment } from '@/stores';
+import { useUserStore, selectCanSeeAlignment, selectBrowsingDistrict } from '@/stores';
 import { getCandidatesForFeed, reseedAllData, inferGenderFromName } from '@/services/firebase/firestore';
 import { calculateAlignmentScore } from '@/utils/alignment';
 import FullScreenPSA from '@/components/feed/FullScreenPSA';
 import ExperienceMenu from '@/components/feed/ExperienceMenu';
+import type { ExperienceFilter } from '@/components/feed/ExperienceMenu';
 import QuizPromptCard from '@/components/feed/QuizPromptCard';
 import MassEndorseButton from '@/components/feed/MassEndorseButton';
+import LocationMapModal from '@/components/feed/LocationMapModal';
 import { LoadingScreen } from '@/components/ui';
 import type { FeedItem, Candidate, User } from '@/types';
-
-type ExperienceFilter = 'random' | 'issues' | 'most_important' | 'location';
 
 type DisplayItem =
   | (FeedItem & { type?: 'candidate' })
   | { id: string; type: 'prompt' };
 
-// Generate feed item from candidate data
 const generateFeedItem = (
   candidate: Candidate,
   user: User | null,
@@ -80,6 +79,7 @@ const generateFeedItem = (
         ? Math.round(candidate.topIssues.reduce((sum, i) => sum + i.spectrumPosition, 0) / candidate.topIssues.length)
         : 0,
       district: candidate.district,
+      zone: candidate.zone,
     },
     alignmentScore: score,
     matchedIssues,
@@ -91,11 +91,14 @@ const generateFeedItem = (
 
 export default function ForYouScreen() {
   const insets = useSafeAreaInsets();
-  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
+  const { height: screenHeight } = useWindowDimensions();
 
   const { user } = useAuthStore();
+  const userId = user?.id;
   const { issues } = useConfigStore();
+  const issuesReady = issues.length > 0;
   const canSeeAlignment = useUserStore(selectCanSeeAlignment);
+  const selectedDistrict = useUserStore(selectBrowsingDistrict);
 
   const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -103,6 +106,12 @@ export default function ForYouScreen() {
   const [experienceFilter, setExperienceFilter] = useState<ExperienceFilter>(
     canSeeAlignment ? 'issues' : 'random'
   );
+  const [locationModalVisible, setLocationModalVisible] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
+
+  // Stable user data for filters (avoid depending on entire user object)
+  const userResponses = user?.questionnaireResponses;
+  const userDealbreakers = user?.dealbreakers;
 
   // Auto-switch to 'issues' when user completes quiz
   useEffect(() => {
@@ -111,14 +120,15 @@ export default function ForYouScreen() {
     }
   }, [canSeeAlignment]);
 
-  // Data fetching
   useEffect(() => {
     const loadFeed = async () => {
-      if (issues.length === 0) return;
+      if (!issuesReady) return;
       setIsLoading(true);
       try {
         let candidatesData = await getCandidatesForFeed();
-        if (candidatesData.length === 0) {
+        if (candidatesData.length === 0 ||
+            candidatesData.some(({ candidate }) => !candidate.zone)) {
+          // Reseed if no candidates or if they lack zone data (Plan 05 migration)
           await reseedAllData();
           candidatesData = await getCandidatesForFeed();
         }
@@ -136,22 +146,60 @@ export default function ForYouScreen() {
       setIsLoading(false);
     };
     loadFeed();
-  }, [issues, user]);
+  }, [issuesReady, userId]);
 
-  // Apply experience filter
+  // Apply experience filter — use stable references, not entire user object
   const filteredItems = useMemo(() => {
     switch (experienceFilter) {
       case 'issues':
-        return feedItems.filter((item) => item.matchedIssues.length > 0);
-      case 'most_important':
-        return feedItems.filter((item) => !item.hasDealbreaker);
+        return feedItems.filter((item) => {
+          if (item.matchedIssues.length === 0) return false;
+          const responses = userResponses || [];
+          return item.candidatePositions.some((cp) => {
+            const userResponse = responses.find((r) => r.issueId === cp.issueId);
+            if (!userResponse) return false;
+            const userValue = Number(userResponse.answer);
+            return (userValue >= 0 && cp.spectrumPosition >= 0) ||
+                   (userValue < 0 && cp.spectrumPosition < 0);
+          });
+        });
+
+      case 'most_important': {
+        const dealbreakers = userDealbreakers || [];
+        if (dealbreakers.length === 0) return feedItems;
+        return feedItems.filter((item) => {
+          for (const dealbreakerId of dealbreakers) {
+            const response = (userResponses || []).find(
+              (r) => r.issueId === dealbreakerId
+            );
+            if (!response) continue;
+            const candidatePosition = item.candidatePositions.find(
+              (cp) => cp.issueId === dealbreakerId
+            );
+            if (!candidatePosition) continue;
+            const userValue = Number(response.answer);
+            const candidateValue = candidatePosition.spectrumPosition;
+            if ((userValue >= 0 && candidateValue < 0) ||
+                (userValue < 0 && candidateValue >= 0)) {
+              return false;
+            }
+          }
+          return true;
+        });
+      }
+
       case 'location':
-        return feedItems;
+        if (!selectedLocation) return feedItems;
+        return feedItems.filter((item) =>
+          item.candidate.district === selectedLocation ||
+          item.candidate.zone === selectedLocation
+        );
+
       case 'random':
       default:
-        return [...feedItems].sort(() => Math.random() - 0.5);
+        return feedItems;
     }
-  }, [feedItems, experienceFilter]);
+  }, [feedItems, experienceFilter, selectedLocation, userResponses, userDealbreakers]);
 
   // Item height = full screen minus tab bar
   const TAB_BAR_HEIGHT = Platform.OS === 'ios' ? 49 + insets.bottom : 56;
@@ -176,21 +224,19 @@ export default function ForYouScreen() {
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
 
-      {/* Experience dropdown */}
       <ExperienceMenu
         selectedFilter={experienceFilter}
         onFilterChange={setExperienceFilter}
+        onLocationPress={() => setLocationModalVisible(true)}
         style={{ top: insets.top + 8 }}
       />
 
-      {/* Mass Endorse button */}
       <MassEndorseButton
         filteredItems={filteredItems}
         experienceFilter={experienceFilter}
         style={{ top: insets.top + 48 }}
       />
 
-      {/* Full-screen paging list */}
       <FlatList
         data={displayItems}
         keyExtractor={(item) => item.id}
@@ -210,7 +256,6 @@ export default function ForYouScreen() {
         snapToInterval={itemHeight}
         decelerationRate="fast"
         showsVerticalScrollIndicator={false}
-        horizontal={false}
         onMomentumScrollEnd={(e) => {
           const newIndex = Math.round(
             e.nativeEvent.contentOffset.y / itemHeight
@@ -223,6 +268,18 @@ export default function ForYouScreen() {
           index,
         })}
       />
+
+      {locationModalVisible && (
+        <LocationMapModal
+          visible={locationModalVisible}
+          onDismiss={() => setLocationModalVisible(false)}
+          onLocationSelect={(zoneId) => {
+            setSelectedLocation(zoneId);
+            setExperienceFilter('location');
+          }}
+          district={selectedDistrict}
+        />
+      )}
     </View>
   );
 }

@@ -125,6 +125,8 @@ export const approveCandidate = functions.https.onCall(
         profileViews: 0,
         endorsementCount: 0,
         trendingScore: 0,
+        district: applicationData.district || 'PA-01',
+        zone: applicationData.zone || '',
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });

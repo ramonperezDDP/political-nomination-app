@@ -262,6 +262,7 @@ export interface CandidatePreview {
   endorsementCount: number;
   averageSpectrum: number; // -100 to 100
   district: string;
+  zone?: string;
 }
 
 // Notification Types

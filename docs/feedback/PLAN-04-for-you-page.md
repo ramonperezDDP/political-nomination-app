@@ -1083,3 +1083,14 @@ Vertical swipe only — no horizontal swipe. The `pagingEnabled` prop on FlatLis
 - **Tab bar visible:** Bottom tab bar remains visible for navigation consistency
 - **Photo fallback:** Candidates without video URLs show their photo (or generic avatar) as full-screen background with gradient overlay, avoiding broken/blank video states
 - **Responsive dimensions:** Uses `useWindowDimensions()` hook instead of static `Dimensions.get('window')` for proper handling of rotation and window resizing
+
+---
+
+## Implementation Notes (2026-03-05)
+
+Plan 04 was implemented as designed. All components listed above were created and integrated. The TikTok-style full-screen swipe feed, alignment circles, endorsement gating, and video/photo fallback all work correctly.
+
+**Post-implementation bugs** were discovered during Plan 05 integration (experience filters). These are documented in `PLAN-05-experience-filters.md` under "Implementation Notes" and include:
+- Portal touch-blocking from always-mounted modals (fixed with conditional rendering)
+- Infinite re-render from `selectUserDistrictIds` in MassEndorseButton (fixed with local useMemo)
+- Stable dependency management for useEffect/useMemo in for-you.tsx

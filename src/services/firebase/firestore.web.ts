@@ -1118,9 +1118,19 @@ export const seedCandidates = async (): Promise<void> => {
     },
   ];
 
+  const ZONES: Record<string, string[]> = {
+    'PA-01': ['pa01-north', 'pa01-central', 'pa01-south'],
+    'PA-02': ['pa02-west', 'pa02-center', 'pa02-northeast', 'pa02-south'],
+  };
+  const DISTRICTS = Object.keys(ZONES);
+
   const batch = writeBatch(db);
 
-  for (const candidate of candidates) {
+  for (let i = 0; i < candidates.length; i++) {
+    const candidate = candidates[i];
+    const district = DISTRICTS[i % DISTRICTS.length];
+    const districtZones = ZONES[district];
+    const zone = districtZones[Math.floor(Math.random() * districtZones.length)];
     const avgSpectrum = candidate.topIssues.reduce((sum: number, i: any) => sum + i.spectrumPosition, 0) / candidate.topIssues.length;
     let leaning: 'progressive' | 'moderate_progressive' | 'centrist' | 'moderate_conservative' | 'conservative';
     if (avgSpectrum <= -70) leaning = 'progressive';
@@ -1169,6 +1179,8 @@ export const seedCandidates = async (): Promise<void> => {
       profileViews: Math.floor(Math.random() * 10000) + 500,
       endorsementCount: Math.floor(Math.random() * 5000) + 100,
       trendingScore: Math.floor(Math.random() * 100),
+      district,
+      zone,
       publishedAt: now,
       createdAt: now,
       updatedAt: now,

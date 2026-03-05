@@ -552,7 +552,12 @@ const filteredItems = useMemo(() => {
 ```ts
 // New imports:
 import LocationMapModal from '@/components/feed/LocationMapModal';
+import { ExperienceFilter } from '@/components/feed/ExperienceMenu';
 import { selectBrowsingDistrict } from '@/stores';
+
+// Remove the local duplicate type definition (line 22):
+// - type ExperienceFilter = 'random' | 'issues' | 'most_important' | 'location';
+// + import from ExperienceMenu instead (above)
 
 // New state (add alongside existing state):
 const [locationModalVisible, setLocationModalVisible] = useState(false);
@@ -679,5 +684,79 @@ Users can view candidates in any district by toggling the district selector on t
 
 | File | Status |
 | :---- | :---- |
-| `src/components/feed/MassEndorseButton.tsx` | Fully implemented, no changes needed |
 | `app/_layout.tsx` | subscribeToProfile already wired up |
+
+---
+
+## Implementation Notes (2026-03-05)
+
+### Summary
+
+Plan 05 was implemented with several deviations from the proposed design. All 4 experience filters work correctly, the LocationMapModal displays SVG maps, and the MassEndorseButton shows for filtered results. Key changes from the plan are documented below.
+
+### Deviation 1: Custom Dropdown Instead of Paper Menu
+
+The proposed design used React Native Paper's `<Menu>` component for ExperienceMenu. However, Paper's `<Menu>` renders via `<Portal>`, which mounts at the `<PaperProvider>` root level. This caused the dropdown to **block all touch events on the entire For You page**, including tab bar navigation, because the Portal overlay sits above other content even when the menu is dismissed.
+
+**Actual implementation:** A custom dropdown using `<View>` + `<Pressable>` from react-native. The dropdown renders inline (no Portal) with an absolutely-positioned backdrop for dismiss handling. This avoids all Portal touch-interception issues.
+
+### Deviation 2: MassEndorseButton — Infinite Re-render Fix
+
+The plan stated MassEndorseButton was "fully implemented, no changes needed." In practice, it caused an **infinite re-render loop that froze the entire iOS simulator**, requiring a force quit.
+
+**Root cause:** `selectUserDistrictIds` in `userStore.ts` returns `state.userProfile?.districts?.map((d) => d.id) || []`. The `.map()` creates a **new array reference** on every Zustand store update, which triggers a re-render, which triggers another store read, creating an infinite loop.
+
+**Fix:** Replaced `useUserStore(selectUserDistrictIds)` with:
+```tsx
+const districts = useUserStore((s) => s.userProfile?.districts);
+const userDistrictIds = useMemo(() => districts?.map((d) => d.id) || [], [districts]);
+```
+
+This selects the raw (stable) `districts` array and derives IDs locally via `useMemo`, breaking the re-render cycle.
+
+### Deviation 3: Conditional Portal Rendering
+
+All components using React Native Paper's Portal/Modal (`EndorseLockModal` in FullScreenPSA, `ConfirmModal` in MassEndorseButton, `LocationMapModal` in for-you.tsx) are now **conditionally rendered** — they only mount when their visibility state is true.
+
+```tsx
+// Instead of always-mounted:
+<EndorseLockModal visible={showLockModal} ... />
+
+// Conditionally mounted:
+{showLockModal && <EndorseLockModal visible={showLockModal} ... />}
+```
+
+This prevents Portal components from intercepting touches when they're not visible.
+
+### Deviation 4: Stable useEffect/useMemo Dependencies
+
+The plan's `for-you.tsx` code used `user` and `issues` objects as useEffect dependencies. These cause unnecessary re-renders because object references change on every store update.
+
+**Actual implementation:**
+- `useEffect` depends on `issuesReady` (boolean) and `userId` (string) instead of `issues` and `user` objects
+- Filter `useMemo` depends on `userResponses` and `userDealbreakers` (specific user properties) instead of entire `user` object
+- `random` filter returns `feedItems` directly (no shuffle) to avoid creating new array references in useMemo
+
+### Deviation 5: Auto-Reseed Migration for Zone Data
+
+Existing seed data from Plan 04 lacked `zone` fields. Instead of requiring manual re-seeding, `for-you.tsx` detects this and auto-reseeds:
+
+```tsx
+if (candidatesData.length === 0 ||
+    candidatesData.some(({ candidate }) => !candidate.zone)) {
+  await reseedAllData();
+  candidatesData = await getCandidatesForFeed();
+}
+```
+
+### Bug Investigation Process
+
+The touch-blocking issue required extensive binary-search debugging:
+1. Stripped for-you.tsx to minimal test (buttons worked)
+2. Added components back one at a time (all worked individually)
+3. Full version with all features broke all touches + caused system hang
+4. Isolated MassEndorseButton as the culprit via component removal
+5. System hang clue pointed to infinite re-render (not Portal blocking)
+6. Traced to `selectUserDistrictIds` creating unstable array references
+
+The Portal touch-blocking (EndorseLockModal/ConfirmModal) was a separate but concurrent issue that was fixed with conditional rendering.

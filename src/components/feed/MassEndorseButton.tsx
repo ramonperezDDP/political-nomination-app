@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
 import { Button } from 'react-native-paper';
 import { useAuthStore } from '@/stores';
-import { useUserStore, selectFullyVerified, selectHasAccount, selectUserDistrictIds } from '@/stores';
+import { useUserStore, selectFullyVerified, selectHasAccount } from '@/stores';
 import { ConfirmModal } from '@/components/ui/Modal';
 import type { FeedItem } from '@/types';
 
@@ -23,7 +23,10 @@ export default function MassEndorseButton({
   const userId = useAuthStore((s) => s.user?.id);
   const hasAccount = useUserStore(selectHasAccount);
   const fullyVerified = useUserStore(selectFullyVerified);
-  const userDistrictIds = useUserStore(selectUserDistrictIds);
+  // Select raw districts array (stable reference from store) and derive IDs locally
+  // to avoid selectUserDistrictIds creating a new array on every store update
+  const districts = useUserStore((s) => s.userProfile?.districts);
+  const userDistrictIds = useMemo(() => districts?.map((d) => d.id) || [], [districts]);
   const endorseCandidate = useUserStore((s) => s.endorseCandidate);
   const hasEndorsedCandidate = useUserStore((s) => s.hasEndorsedCandidate);
 
@@ -60,15 +63,18 @@ export default function MassEndorseButton({
         Endorse all {endorsableCandidates.length}
       </Button>
 
-      <ConfirmModal
-        visible={showConfirm}
-        onDismiss={() => setShowConfirm(false)}
-        onConfirm={handleMassEndorse}
-        title="Mass Endorse"
-        message={`Endorse ${endorsableCandidates.length} candidates matching your current filter?`}
-        confirmLabel={isEndorsing ? 'Endorsing...' : 'Confirm'}
-        loading={isEndorsing}
-      />
+      {/* Only mount when needed to avoid Portal blocking tab bar */}
+      {showConfirm && (
+        <ConfirmModal
+          visible={showConfirm}
+          onDismiss={() => setShowConfirm(false)}
+          onConfirm={handleMassEndorse}
+          title="Mass Endorse"
+          message={`Endorse ${endorsableCandidates.length} candidates matching your current filter?`}
+          confirmLabel={isEndorsing ? 'Endorsing...' : 'Confirm'}
+          loading={isEndorsing}
+        />
+      )}
     </View>
   );
 }

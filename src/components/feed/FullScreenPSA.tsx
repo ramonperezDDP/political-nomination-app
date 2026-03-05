@@ -178,15 +178,17 @@ export default function FullScreenPSA({ feedItem, isActive, height }: FullScreen
         )}
       </View>
 
-      {/* Lock modal for endorsement gating */}
-      <EndorseLockModal
-        visible={showLockModal}
-        reason={lockReason}
-        hasAccount={hasAccount}
-        onDismiss={() => setShowLockModal(false)}
-        onSignUp={() => router.push('/(auth)/register')}
-        onVerify={() => router.push('/(auth)/verify-identity' as any)}
-      />
+      {/* Lock modal for endorsement gating — only mount when needed to avoid Portal blocking tab bar */}
+      {showLockModal && (
+        <EndorseLockModal
+          visible={showLockModal}
+          reason={lockReason}
+          hasAccount={hasAccount}
+          onDismiss={() => setShowLockModal(false)}
+          onSignUp={() => router.push('/(auth)/register')}
+          onVerify={() => router.push('/(auth)/verify-identity' as any)}
+        />
+      )}
     </View>
   );
 }
