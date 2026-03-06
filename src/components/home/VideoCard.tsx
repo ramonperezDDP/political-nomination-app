@@ -39,16 +39,28 @@ export default function VideoCard() {
     );
   }
 
-  // On native, embed the Vimeo player via WebView
+  // On native, embed the Vimeo player via WebView using HTML to avoid ATS/SSL issues
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html><head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>*{margin:0;padding:0}body{background:#000}iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:none}</style>
+    </head><body>
+      <iframe src="${VIMEO_EMBED_URL}" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
+    </body></html>
+  `;
+
   return (
     <Card style={styles.card}>
       <View style={styles.embedContainer}>
         <WebView
-          source={{ uri: VIMEO_EMBED_URL }}
+          source={{ html: htmlContent }}
           style={StyleSheet.absoluteFill}
           allowsInlineMediaPlayback
           mediaPlaybackRequiresUserAction={false}
           javaScriptEnabled
+          originWhitelist={['*']}
+          mixedContentMode="compatibility"
         />
       </View>
       <View style={styles.info}>
