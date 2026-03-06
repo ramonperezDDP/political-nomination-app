@@ -63,7 +63,7 @@ export default function VoterHome() {
   return (
     <View style={styles.container}>
       {/* 1. Video — "A Brand New Way" */}
-      <VideoCard videoUrl={partyConfig?.introVideoUrl} />
+      <VideoCard />
 
       {/* 2. Quiz — 7 Issues Graphic */}
       <QuizCard

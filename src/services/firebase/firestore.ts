@@ -170,7 +170,8 @@ export const updateCandidate = async (
 };
 
 export const getApprovedCandidates = async (
-  limit = 50
+  limit = 50,
+  district?: string
 ): Promise<Candidate[]> => {
   try {
     // Fetch all and filter in memory to avoid composite index
@@ -180,6 +181,7 @@ export const getApprovedCandidates = async (
 
     const approved = allCandidates
       .filter((c) => c.status === 'approved')
+      .filter((c) => !district || c.district === district)
       .sort((a, b) => (b.endorsementCount || 0) - (a.endorsementCount || 0))
       .slice(0, limit)
       .map(fillMissingIssuePositions); // Fill in any missing issue positions
@@ -193,9 +195,9 @@ export const getApprovedCandidates = async (
 };
 
 // Get candidates with full data for feed generation
-export const getCandidatesForFeed = async (): Promise<Array<{ candidate: Candidate; user: User | null }>> => {
+export const getCandidatesForFeed = async (district?: string): Promise<Array<{ candidate: Candidate; user: User | null }>> => {
   try {
-    const candidates = await getApprovedCandidates(50);
+    const candidates = await getApprovedCandidates(50, district);
     console.log('getApprovedCandidates returned:', candidates.length, 'candidates');
 
     // Fetch all users in parallel, handling errors individually
@@ -231,7 +233,8 @@ export const incrementCandidateViews = async (
 // Get candidates with user display names for leaderboard
 export const getCandidatesWithUsers = async (
   sortBy: 'endorsements' | 'trending' = 'endorsements',
-  limit = 50
+  limit = 50,
+  district?: string
 ): Promise<LeaderboardEntry[]> => {
   try {
     // Fetch all candidates to avoid composite index requirement
@@ -240,6 +243,7 @@ export const getCandidatesWithUsers = async (
     // Filter and sort in memory
     const candidates = (snapshot?.docs?.map((doc) => doc.data() as Candidate) || [])
       .filter((c) => c.status === 'approved')
+      .filter((c) => !district || c.district === district)
       .sort((a, b) => {
         if (sortBy === 'endorsements') {
           return (b.endorsementCount || 0) - (a.endorsementCount || 0);

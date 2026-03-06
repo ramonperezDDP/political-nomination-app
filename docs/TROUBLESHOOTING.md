@@ -485,6 +485,56 @@ When the CSSStyleDeclaration error persisted through multiple fixes, binary sear
 3. PaperProvider + Slot + full login screen → **FAILS** — narrows to login screen components
 4. PaperProvider + Slot + login with Paper `TextInput`/`Button` directly → **WORKS** — confirms custom components + SafeAreaView are the issue
 
+### Duplicate Tab Header on Leaderboard (Web)
+
+**Symptom:** On web, the Leaderboard screen shows two "Leaderboard" titles — one from the Tabs navigator header and one from the screen's own header.
+
+**Cause:** The Tabs layout had `headerShown` defaulting to `true` for the leaderboard tab, and the screen also renders its own title.
+
+**Fix:** Added `headerShown: false` to the leaderboard tab in `app/(tabs)/_layout.tsx`:
+```tsx
+<Tabs.Screen
+  name="leaderboard"
+  options={{
+    title: 'Leaderboard',
+    headerShown: false,
+    // ...
+  }}
+/>
+```
+
+### Vimeo Video Embed (Web + iOS)
+
+**Symptom:** The home screen "A Brand New Way" video was a placeholder that opened an external browser link on tap (native) or was missing entirely (web).
+
+**Fix:** Embedded the Vimeo player inline on both platforms:
+
+- **Web**: iframe embed via `player.vimeo.com/video/{id}`
+- **Native (iOS)**: `react-native-webview` `WebView` loading the same Vimeo embed URL
+
+The WebView is lazy-loaded behind a `Platform.OS !== 'web'` guard to prevent bundling issues on web:
+```tsx
+const WebView = Platform.OS !== 'web'
+  ? require('react-native-webview').default
+  : null;
+```
+
+**Dependency added:** `react-native-webview` (installed via `npx expo install react-native-webview`). Requires iOS native rebuild (`npx expo run:ios` or `pod install`).
+
+### District Filter Not Applied to Leaderboard/Feed
+
+**Symptom:** Switching districts via the DistrictToggle on the Home screen (e.g., PA-01 → PA-02) did not update the Leaderboard or For You feed — both continued showing candidates from all districts.
+
+**Cause:** `getCandidatesWithUsers()` and `getCandidatesForFeed()` fetched all approved candidates without filtering by the selected district. The leaderboard and feed `useEffect` dependencies also didn't include `selectedDistrict`.
+
+**Fix (cross-platform — affects both web and native):**
+
+1. Added optional `district` parameter to `getApprovedCandidates()`, `getCandidatesForFeed()`, and `getCandidatesWithUsers()` in both `firestore.ts` and `firestore.web.ts`
+2. `leaderboard.tsx` reads `selectedBrowsingDistrict` from the user store and passes it to `getCandidatesWithUsers()`
+3. `for-you.tsx` passes `selectedDistrict` to `getCandidatesForFeed()` and includes it in the `useEffect` dependency array
+
+Now switching districts causes both the Leaderboard and For You feed to re-fetch candidates filtered to that district.
+
 ### Summary of all web-compatibility changes
 
 | Category | Files | Change |
@@ -498,6 +548,9 @@ When the CSSStyleDeclaration error persisted through multiple fixes, binary sear
 | Web back buttons | `quiz.tsx`, `candidate/[id].tsx` | Web-only back header (Slot doesn't render Stack headers) |
 | FullScreenPSA sizing | `FullScreenPSA.tsx`, `for-you.tsx` | `width: '100%'` + `onLayout` height measurement on web |
 | Web back navigation | `candidate/[id].tsx` + 4 callers | `?from=` query param for correct back navigation on web |
+| Duplicate tab header | `_layout.tsx` | `headerShown: false` on leaderboard tab |
+| Vimeo video embed | `VideoCard.tsx` | iframe (web) + WebView (native) for inline playback |
+| District filtering | `firestore.ts`, `firestore.web.ts`, `leaderboard.tsx`, `for-you.tsx` | Filter candidates by selected district |
 
 ---
 

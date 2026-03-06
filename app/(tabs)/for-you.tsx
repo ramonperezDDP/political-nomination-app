@@ -135,12 +135,12 @@ export default function ForYouScreen() {
       if (!issuesReady) return;
       setIsLoading(true);
       try {
-        let candidatesData = await getCandidatesForFeed();
+        let candidatesData = await getCandidatesForFeed(selectedDistrict);
         if (candidatesData.length === 0 ||
             candidatesData.some(({ candidate }) => !candidate.zone)) {
           // Reseed if no candidates or if they lack zone data (Plan 05 migration)
           await reseedAllData();
-          candidatesData = await getCandidatesForFeed();
+          candidatesData = await getCandidatesForFeed(selectedDistrict);
         }
         const userIssues = user?.selectedIssues || [];
         const userDealbreakers = user?.dealbreakers || [];
@@ -156,7 +156,7 @@ export default function ForYouScreen() {
       setIsLoading(false);
     };
     loadFeed();
-  }, [issuesReady, userId]);
+  }, [issuesReady, userId, selectedDistrict]);
 
   // Apply experience filter — use stable references, not entire user object
   const filteredItems = useMemo(() => {

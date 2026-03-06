@@ -11,7 +11,7 @@ import {
   seedCandidates,
   getCandidatesWithUsers,
 } from '@/services/firebase/firestore';
-import { useConfigStore } from '@/stores';
+import { useConfigStore, useUserStore } from '@/stores';
 import { Card, CandidateAvatar, RankBadge, LoadingScreen, EmptyState } from '@/components/ui';
 import type { LeaderboardEntry } from '@/types';
 
@@ -22,6 +22,7 @@ type LeaderboardType = 'endorsements' | 'trending';
 export default function LeaderboardScreen() {
   const theme = useTheme();
   const { partyConfig } = useConfigStore();
+  const selectedDistrict = useUserStore((s) => s.selectedBrowsingDistrict);
   const [leaderboardType, setLeaderboardType] = useState<LeaderboardType>('endorsements');
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -31,13 +32,13 @@ export default function LeaderboardScreen() {
   const fetchLeaderboard = useCallback(async () => {
     setIsLoading(true);
     try {
-      const data = await getCandidatesWithUsers(leaderboardType);
+      const data = await getCandidatesWithUsers(leaderboardType, 50, selectedDistrict);
       setLeaderboard(data);
     } catch (error) {
       console.warn('Error fetching leaderboard:', error);
     }
     setIsLoading(false);
-  }, [leaderboardType]);
+  }, [leaderboardType, selectedDistrict]);
 
   useEffect(() => {
     fetchLeaderboard();

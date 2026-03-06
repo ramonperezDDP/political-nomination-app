@@ -1,35 +1,31 @@
-import React, { useState } from 'react';
-import { StyleSheet, View, Linking, Pressable } from 'react-native';
+import React from 'react';
+import { StyleSheet, View, Platform } from 'react-native';
 import { Text, useTheme } from 'react-native-paper';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { Card } from '@/components/ui';
 
-interface VideoCardProps {
-  videoUrl?: string;
-}
+const VIMEO_EMBED_ID = '1170067252';
+const VIMEO_EMBED_URL = `https://player.vimeo.com/video/${VIMEO_EMBED_ID}?title=0&byline=0&portrait=0`;
 
-export default function VideoCard({ videoUrl }: VideoCardProps) {
+// Lazy-load WebView only on native to avoid web bundle issues
+const WebView = Platform.OS !== 'web'
+  ? require('react-native-webview').default
+  : null;
+
+export default function VideoCard() {
   const theme = useTheme();
 
-  const handlePress = () => {
-    if (videoUrl) {
-      Linking.openURL(videoUrl);
-    }
-  };
-
-  return (
-    <Pressable onPress={handlePress} disabled={!videoUrl}>
+  // On web, embed the Vimeo player inline via iframe
+  if (Platform.OS === 'web') {
+    return (
       <Card style={styles.card}>
-        <View style={[styles.videoPlaceholder, { backgroundColor: theme.colors.surfaceVariant }]}>
-          <MaterialCommunityIcons
-            name="play-circle-outline"
-            size={64}
-            color={theme.colors.primary}
+        <View style={styles.embedContainer}>
+          <iframe
+            src={VIMEO_EMBED_URL}
+            style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' } as any}
+            allow="autoplay; fullscreen; picture-in-picture"
+            allowFullScreen
           />
-          <Text variant="bodyMedium" style={{ color: theme.colors.outline, marginTop: 8 }}>
-            {videoUrl ? 'Tap to watch' : 'Video coming soon'}
-          </Text>
         </View>
         <View style={styles.info}>
           <Text variant="titleMedium" style={styles.title}>
@@ -40,7 +36,30 @@ export default function VideoCard({ videoUrl }: VideoCardProps) {
           </Text>
         </View>
       </Card>
-    </Pressable>
+    );
+  }
+
+  // On native, embed the Vimeo player via WebView
+  return (
+    <Card style={styles.card}>
+      <View style={styles.embedContainer}>
+        <WebView
+          source={{ uri: VIMEO_EMBED_URL }}
+          style={StyleSheet.absoluteFill}
+          allowsInlineMediaPlayback
+          mediaPlaybackRequiresUserAction={false}
+          javaScriptEnabled
+        />
+      </View>
+      <View style={styles.info}>
+        <Text variant="titleMedium" style={styles.title}>
+          A Brand New Way
+        </Text>
+        <Text variant="bodySmall" style={{ color: theme.colors.outline }}>
+          Learn how our democratic nomination process works
+        </Text>
+      </View>
+    </Card>
   );
 }
 
@@ -49,13 +68,14 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     overflow: 'hidden',
   },
-  videoPlaceholder: {
+  embedContainer: {
     aspectRatio: 16 / 9,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 8,
-    margin: 12,
+    position: 'relative' as const,
+    margin: 4,
     marginBottom: 0,
+    borderRadius: 8,
+    overflow: 'hidden',
+    backgroundColor: '#000',
   },
   info: {
     padding: 16,

@@ -68,6 +68,7 @@ export default function TabLayout() {
         name="leaderboard"
         options={{
           title: 'Leaderboard',
+          headerShown: false,
           tabBarIcon: ({ color, focused }) => (
             <MaterialCommunityIcons
               name={focused ? 'trophy' : 'trophy-outline'}

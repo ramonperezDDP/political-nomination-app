@@ -851,8 +851,10 @@ On desktop browsers, the web app renders inside a realistic iPhone mockup with t
 #### Web-Specific Notes
 
 - **Icon fonts**: MaterialCommunityIcons are preloaded via `@font-face` in `app/+html.tsx` and via `useFonts()` in `app/_layout.tsx`. The `firebase.json` ignore pattern must use `node_modules/**` (not `**/node_modules/**`) to avoid excluding bundled font assets from deployment.
-- **Navigation**: Top-level routes outside tabs (`app/candidate/[id].tsx`, `app/quiz.tsx`) include web-only back buttons since the web layout uses `<Slot />` instead of `<Stack>` (see docs/TROUBLESHOOTING.md for context).
+- **Navigation**: Top-level routes outside tabs (`app/candidate/[id].tsx`, `app/quiz.tsx`) include web-only back buttons since the web layout uses `<Slot />` instead of `<Stack>` (see docs/TROUBLESHOOTING.md for context). Back navigation uses `?from=` query params to return to the correct tab.
 - **For You feed sizing**: On web, `useWindowDimensions()` returns browser window dimensions, not the phone frame dimensions. The For You page uses `onLayout` to measure the actual container height, and `FullScreenPSA` uses `width: '100%'` instead of explicit pixel width. All sizing fixes are behind `Platform.OS === 'web'` guards — native code paths are untouched.
+- **Video embed**: The home screen "A Brand New Way" Vimeo video plays inline on both web (iframe) and native (react-native-webview).
+- **District filtering**: Switching districts on the Home screen updates the Leaderboard and For You feed to show only candidates from the selected district.
 
 ### Option 2: Web Only (EC2)
 
