@@ -21,6 +21,7 @@ export default function FullScreenPSA({ feedItem, isActive, height }: FullScreen
   const router = useRouter();
   const { width: screenWidth } = useWindowDimensions();
   const insets = useSafeAreaInsets();
+  const isWeb = Platform.OS === 'web';
   const videoRef = useRef<Video>(null);
   const [isPaused, setIsPaused] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
@@ -53,7 +54,7 @@ export default function FullScreenPSA({ feedItem, isActive, height }: FullScreen
   const hasVideo = psa.videoUrl && psa.videoUrl.length > 0;
 
   return (
-    <View style={[styles.container, { height, width: screenWidth }]}>
+    <View style={[styles.container, { height, width: isWeb ? '100%' as any : screenWidth }]}>
       {/* Full-screen video background (or photo fallback) */}
       <Pressable
         style={StyleSheet.absoluteFill}

@@ -3,6 +3,7 @@ import { StyleSheet, View, ScrollView, Pressable, Platform } from 'react-native'
 import { Text, useTheme, RadioButton } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { SafeAreaView as NativeSafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 
 const SafeAreaView = Platform.OS === 'web' ? View : NativeSafeAreaView;
 
@@ -59,6 +60,7 @@ interface SectionData {
 
 export default function QuizScreen() {
   const theme = useTheme();
+  const router = useRouter();
   const { user } = useAuthStore();
   const { issues: allIssues } = useConfigStore();
 
@@ -198,6 +200,18 @@ export default function QuizScreen() {
       style={[styles.container, { backgroundColor: theme.colors.background }]}
       edges={['bottom']}
     >
+      {/* Web-only back header (Stack header doesn't render on web) */}
+      {Platform.OS === 'web' && (
+        <View style={[styles.webHeader, { borderBottomColor: theme.colors.outlineVariant }]}>
+          <Pressable onPress={() => router.back()} style={styles.webBackButton}>
+            <MaterialCommunityIcons name="arrow-left" size={24} color={theme.colors.onSurface} />
+            <Text variant="titleMedium" style={{ color: theme.colors.onSurface, marginLeft: 8 }}>
+              Policy Quiz
+            </Text>
+          </Pressable>
+        </View>
+      )}
+
       {/* Progress banner */}
       <View style={[styles.progressBanner, { backgroundColor: theme.colors.primaryContainer }]}>
         <MaterialCommunityIcons
@@ -310,6 +324,17 @@ export default function QuizScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  webHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+  },
+  webBackButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   progressBanner: {
     flexDirection: 'row',

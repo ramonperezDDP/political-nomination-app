@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   StyleSheet,
   View,
@@ -7,6 +7,7 @@ import {
   StatusBar,
   useWindowDimensions,
 } from 'react-native';
+import type { LayoutChangeEvent } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore, useConfigStore } from '@/stores';
 import { useUserStore, selectCanSeeAlignment, selectBrowsingDistrict } from '@/stores';
@@ -90,6 +91,7 @@ const generateFeedItem = (
 };
 
 export default function ForYouScreen() {
+  const isWeb = Platform.OS === 'web';
   const insets = useSafeAreaInsets();
   const { height: screenHeight } = useWindowDimensions();
 
@@ -108,6 +110,14 @@ export default function ForYouScreen() {
   );
   const [locationModalVisible, setLocationModalVisible] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
+
+  // On web, useWindowDimensions returns the browser window size, not the phone frame.
+  // Measure the actual container height via onLayout so FlatList items fit correctly.
+  const [measuredHeight, setMeasuredHeight] = useState(0);
+  const onContainerLayout = useCallback((e: LayoutChangeEvent) => {
+    const h = e.nativeEvent.layout.height;
+    if (h > 0 && h !== measuredHeight) setMeasuredHeight(h);
+  }, [measuredHeight]);
 
   // Stable user data for filters (avoid depending on entire user object)
   const userResponses = user?.questionnaireResponses;
@@ -201,9 +211,9 @@ export default function ForYouScreen() {
     }
   }, [feedItems, experienceFilter, selectedLocation, userResponses, userDealbreakers]);
 
-  // Item height = full screen minus tab bar
+  // On native: full screen minus tab bar. On web: measured container height.
   const TAB_BAR_HEIGHT = Platform.OS === 'ios' ? 49 + insets.bottom : 56;
-  const itemHeight = screenHeight - TAB_BAR_HEIGHT;
+  const itemHeight = isWeb ? measuredHeight : screenHeight - TAB_BAR_HEIGHT;
 
   // Prepend quiz prompt if user hasn't completed quiz
   const displayItems: DisplayItem[] = useMemo(() => {
@@ -216,25 +226,30 @@ export default function ForYouScreen() {
     return filteredItems;
   }, [filteredItems, canSeeAlignment]);
 
-  if (isLoading) {
-    return <LoadingScreen message="Loading your feed..." />;
+  // On web, wait for container measurement before rendering the FlatList
+  if (isLoading || (isWeb && measuredHeight === 0)) {
+    return (
+      <View style={styles.container} onLayout={onContainerLayout}>
+        <LoadingScreen message="Loading your feed..." />
+      </View>
+    );
   }
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
+    <View style={styles.container} onLayout={onContainerLayout}>
+      {!isWeb && <StatusBar barStyle="light-content" />}
 
       <ExperienceMenu
         selectedFilter={experienceFilter}
         onFilterChange={setExperienceFilter}
         onLocationPress={() => setLocationModalVisible(true)}
-        style={{ top: insets.top + 8 }}
+        style={{ top: isWeb ? 8 : insets.top + 8 }}
       />
 
       <MassEndorseButton
         filteredItems={filteredItems}
         experienceFilter={experienceFilter}
-        style={{ top: insets.top + 48 }}
+        style={{ top: isWeb ? 48 : insets.top + 48 }}
       />
 
       <FlatList
@@ -262,6 +277,14 @@ export default function ForYouScreen() {
           );
           setActiveIndex(newIndex);
         }}
+        onScroll={isWeb ? (e) => {
+          // On web, onMomentumScrollEnd may not fire reliably.
+          // Track scroll position via onScroll instead.
+          const newIndex = Math.round(
+            e.nativeEvent.contentOffset.y / itemHeight
+          );
+          if (newIndex !== activeIndex) setActiveIndex(newIndex);
+        } : undefined}
         getItemLayout={(_, index) => ({
           length: itemHeight,
           offset: itemHeight * index,

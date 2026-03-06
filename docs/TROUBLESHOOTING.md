@@ -495,6 +495,8 @@ When the CSSStyleDeclaration error persisted through multiple fixes, binary sear
 | KAV removal on web | `register.tsx` | Aliased to `View` on web |
 | Web login form | `login.tsx` | Paper components directly instead of custom wrappers |
 | Error visibility | `_layout.tsx`, `+html.tsx` | ErrorBoundary + global error handlers |
+| Web back buttons | `quiz.tsx`, `candidate/[id].tsx` | Web-only back header (Slot doesn't render Stack headers) |
+| FullScreenPSA sizing | `FullScreenPSA.tsx`, `for-you.tsx` | `width: '100%'` + `onLayout` height measurement on web |
 
 ---
 
@@ -539,6 +541,67 @@ curl -sI "https://party-nomination-app.web.app/assets/node_modules/@expo/vector-
   </Pressable>
 )}
 ```
+
+### No Back Button on Quiz Screen (Web)
+
+**Symptom:** On web, navigating to the quiz screen (`/quiz`) shows no header or back button, leaving the user stuck with no way to return.
+
+**Cause:** Same as the candidate profile issue — the web layout uses `<Slot />` instead of `<Stack>`, so the Stack-configured header (`headerShown: true`, `headerBackTitle: 'Back'`) never renders on web.
+
+**Fix:** Added a web-only back header in `app/quiz.tsx`:
+```tsx
+{Platform.OS === 'web' && (
+  <View style={[styles.webHeader, { borderBottomColor: theme.colors.outlineVariant }]}>
+    <Pressable onPress={() => router.back()} style={styles.webBackButton}>
+      <MaterialCommunityIcons name="arrow-left" size={24} color={theme.colors.onSurface} />
+      <Text variant="titleMedium" style={{ color: theme.colors.onSurface, marginLeft: 8 }}>
+        Policy Quiz
+      </Text>
+    </Pressable>
+  </View>
+)}
+```
+
+**Pattern:** Any top-level route outside the tabs layout (e.g., `quiz.tsx`, `candidate/[id].tsx`) that relies on Stack headers needs a web-only back button since `<Slot />` doesn't render navigation chrome.
+
+### For You Page: Buttons Not Visible on Web (FullScreenPSA Sizing)
+
+**Symptom:** On web, the For You page's endorse, share, and profile buttons (right-side TikTok-style actions) are not visible. The cards appear but action buttons are off-screen.
+
+**Root Cause (two issues):**
+
+1. **Width:** `FullScreenPSA` used `useWindowDimensions().width` for its container width. On web, this returns the browser window width (e.g. 1440px), but the CSS phone frame is only ~351px wide. Absolutely-positioned elements with `right: 12` were placed 12px from the right edge of a 1440px container — far off-screen.
+
+2. **Height:** `for-you.tsx` calculated `itemHeight` using `useWindowDimensions().height - TAB_BAR_HEIGHT`. On web, this returns the browser window height (e.g. 900px), but the phone frame content area is ~700px. FlatList items were oversized, pushing `bottom: 120` positioned elements below the visible area.
+
+**Fix:**
+
+1. **Width** (`src/components/feed/FullScreenPSA.tsx`): Use `width: '100%'` on web instead of `screenWidth`:
+```tsx
+<View style={[styles.container, { height, width: isWeb ? '100%' : screenWidth }]}>
+```
+
+2. **Height** (`app/(tabs)/for-you.tsx`): Measure the actual container height via `onLayout` and use that for item sizing on web:
+```tsx
+const [measuredHeight, setMeasuredHeight] = useState(0);
+const onContainerLayout = useCallback((e: LayoutChangeEvent) => {
+  const h = e.nativeEvent.layout.height;
+  if (h > 0 && h !== measuredHeight) setMeasuredHeight(h);
+}, [measuredHeight]);
+
+const itemHeight = isWeb ? measuredHeight : screenHeight - TAB_BAR_HEIGHT;
+```
+
+Wait for measurement before rendering the FlatList:
+```tsx
+if (isLoading || (isWeb && measuredHeight === 0)) {
+  return <View style={styles.container} onLayout={onContainerLayout}>...</View>;
+}
+```
+
+**Key Lesson:** On web inside the CSS phone frame, `useWindowDimensions()` returns the browser window dimensions, not the phone frame dimensions. Always use `onLayout` measurement for web-specific sizing, and `width: '100%'` instead of explicit pixel widths.
+
+**All changes are behind `Platform.OS === 'web'` guards** — native/iOS code paths are untouched.
 
 ### Phone Frame Notch Overlaps Header Content
 
