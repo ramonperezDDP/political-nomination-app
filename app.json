@@ -18,7 +18,27 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.politicalnomination.app",
-      "googleServicesFile": "./GoogleService-Info.plist"
+      "googleServicesFile": "./GoogleService-Info.plist",
+      "infoPlist": {
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": false,
+          "NSAllowsLocalNetworking": true,
+          "NSExceptionDomains": {
+            "vimeo.com": {
+              "NSIncludesSubdomains": true,
+              "NSAllowsArbitraryLoadsInWebContent": true
+            },
+            "vimeocdn.com": {
+              "NSIncludesSubdomains": true,
+              "NSAllowsArbitraryLoadsInWebContent": true
+            },
+            "akamaized.net": {
+              "NSIncludesSubdomains": true,
+              "NSAllowsArbitraryLoadsInWebContent": true
+            }
+          }
+        }
+      }
     },
     "android": {
       "adaptiveIcon": {

@@ -521,6 +521,13 @@ const WebView = Platform.OS !== 'web'
 
 **Dependency added:** `react-native-webview` (installed via `npx expo install react-native-webview`). Requires iOS native rebuild (`npx expo run:ios` or `pod install`).
 
+**ATS configuration required:** The iOS Simulator (and potentially real devices) blocks the Vimeo embed with "We couldn't verify the security of your connection" because `NSAllowsArbitraryLoads` is `false`. Added ATS exception domains in both `Info.plist` and `app.json` (so it survives `expo prebuild --clean`):
+- `vimeo.com` (player embed)
+- `vimeocdn.com` (video CDN)
+- `akamaized.net` (Akamai CDN used by Vimeo)
+
+Each domain uses `NSAllowsArbitraryLoadsInWebContent: true` with `NSIncludesSubdomains: true`, which only relaxes restrictions for WebView content — not for the app's own network requests.
+
 ### District Filter Not Applied to Leaderboard/Feed
 
 **Symptom:** Switching districts via the DistrictToggle on the Home screen (e.g., PA-01 → PA-02) did not update the Leaderboard or For You feed — both continued showing candidates from all districts.
