@@ -497,6 +497,7 @@ When the CSSStyleDeclaration error persisted through multiple fixes, binary sear
 | Error visibility | `_layout.tsx`, `+html.tsx` | ErrorBoundary + global error handlers |
 | Web back buttons | `quiz.tsx`, `candidate/[id].tsx` | Web-only back header (Slot doesn't render Stack headers) |
 | FullScreenPSA sizing | `FullScreenPSA.tsx`, `for-you.tsx` | `width: '100%'` + `onLayout` height measurement on web |
+| Web back navigation | `candidate/[id].tsx` + 4 callers | `?from=` query param for correct back navigation on web |
 
 ---
 
@@ -602,6 +603,34 @@ if (isLoading || (isWeb && measuredHeight === 0)) {
 **Key Lesson:** On web inside the CSS phone frame, `useWindowDimensions()` returns the browser window dimensions, not the phone frame dimensions. Always use `onLayout` measurement for web-specific sizing, and `width: '100%'` instead of explicit pixel widths.
 
 **All changes are behind `Platform.OS === 'web'` guards** — native/iOS code paths are untouched.
+
+### Back Button Returns to Wrong Tab (Web)
+
+**Symptom:** On web, pressing Back on the candidate profile screen returns to the Home tab instead of the screen the user came from (e.g., For You or Leaderboard).
+
+**Cause:** The web layout uses `<Slot />` instead of `<Stack>`, so there's no navigation stack. `router.back()` uses `window.history.back()`, but expo-router's web routing doesn't always preserve which tab was active — it resolves `(tabs)` to its default route (`index`, i.e., Home).
+
+**Fix:** Pass a `from` query param when navigating to candidate profiles on web. The candidate screen reads this param and uses `router.replace(from)` instead of `router.back()`:
+
+```tsx
+// Caller (web only — native path unchanged):
+router.push(
+  Platform.OS === 'web'
+    ? `/candidate/${id}?from=/(tabs)/for-you`
+    : `/candidate/${id}`
+);
+
+// Candidate screen back button:
+onPress={() => {
+  if (from) {
+    router.replace(from);
+  } else {
+    router.back();
+  }
+}}
+```
+
+**Files modified:** `candidate/[id].tsx` (reads `from` param), `FullScreenPSA.tsx`, `leaderboard.tsx`, `settings/endorsements.tsx` (pass `from` param on web).
 
 ### Phone Frame Notch Overlaps Header Content
 

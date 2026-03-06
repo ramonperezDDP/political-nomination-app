@@ -65,7 +65,11 @@ export default function MyEndorsementsScreen() {
   };
 
   const handleViewCandidate = (candidateId: string) => {
-    router.push(`/candidate/${candidateId}`);
+    router.push(
+      Platform.OS === 'web'
+        ? `/candidate/${candidateId}?from=/settings/endorsements`
+        : `/candidate/${candidateId}`
+    );
   };
 
   const renderEndorsementItem = ({ item }: { item: EndorsedCandidateInfo }) => {

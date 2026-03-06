@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { StyleSheet, View, ScrollView, Dimensions, FlatList, Pressable, Modal, Platform } from 'react-native';
 import { Text, useTheme, SegmentedButtons, Chip, Divider, IconButton, Portal } from 'react-native-paper';
-import { useLocalSearchParams, router } from 'expo-router';
+import { useLocalSearchParams, useGlobalSearchParams, router } from 'expo-router';
 import { SafeAreaView as NativeSafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
@@ -50,6 +50,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export default function CandidateProfileScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { from } = useGlobalSearchParams<{ from?: string }>();
   const theme = useTheme();
   const { user: currentUser } = useAuthStore();
   const { issues } = useConfigStore();
@@ -367,7 +368,13 @@ export default function CandidateProfileScreen() {
         title="Candidate not found"
         message="This candidate profile doesn't exist or has been removed"
         actionLabel="Go Back"
-        onAction={() => router.back()}
+        onAction={() => {
+          if (Platform.OS === 'web' && from) {
+            router.replace(from as any);
+          } else {
+            router.back();
+          }
+        }}
       />
     );
   }
@@ -381,7 +388,13 @@ export default function CandidateProfileScreen() {
         {/* Back button for web (no Stack header) */}
         {Platform.OS === 'web' && (
           <Pressable
-            onPress={() => router.back()}
+            onPress={() => {
+              if (from) {
+                router.replace(from as any);
+              } else {
+                router.back();
+              }
+            }}
             style={styles.webBackButton}
           >
             <MaterialCommunityIcons name="arrow-left" size={20} color="#5a3977" />
