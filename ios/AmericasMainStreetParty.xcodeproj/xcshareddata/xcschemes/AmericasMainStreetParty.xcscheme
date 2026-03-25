@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-               BuildableName = "PoliticalNomination.app"
-               BlueprintName = "PoliticalNomination"
-               ReferencedContainer = "container:PoliticalNomination.xcodeproj">
+               BuildableName = "AmericasMainStreetParty.app"
+               BlueprintName = "AmericasMainStreetParty"
+               ReferencedContainer = "container:AmericasMainStreetParty.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -33,9 +33,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "00E356ED1AD99517003FC87E"
-               BuildableName = "PoliticalNominationTests.xctest"
-               BlueprintName = "PoliticalNominationTests"
-               ReferencedContainer = "container:PoliticalNomination.xcodeproj">
+               BuildableName = "AmericasMainStreetPartyTests.xctest"
+               BlueprintName = "AmericasMainStreetPartyTests"
+               ReferencedContainer = "container:AmericasMainStreetParty.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -55,9 +55,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "PoliticalNomination.app"
-            BlueprintName = "PoliticalNomination"
-            ReferencedContainer = "container:PoliticalNomination.xcodeproj">
+            BuildableName = "AmericasMainStreetParty.app"
+            BlueprintName = "AmericasMainStreetParty"
+            ReferencedContainer = "container:AmericasMainStreetParty.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -72,9 +72,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "PoliticalNomination.app"
-            BlueprintName = "PoliticalNomination"
-            ReferencedContainer = "container:PoliticalNomination.xcodeproj">
+            BuildableName = "AmericasMainStreetParty.app"
+            BlueprintName = "AmericasMainStreetParty"
+            ReferencedContainer = "container:AmericasMainStreetParty.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>
