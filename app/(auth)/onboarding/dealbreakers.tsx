@@ -104,7 +104,7 @@ export default function DealbreakersScreen() {
         state: 'verified',
         role: 'constituent',
       });
-      router.replace('/(tabs)');
+      router.replace('/(main)' as any);
     }
   };
 
@@ -116,7 +116,7 @@ export default function DealbreakersScreen() {
       state: 'verified',
       role: 'constituent',
     });
-    router.replace('/(tabs)');
+    router.replace('/(main)' as any);
   };
 
   return (

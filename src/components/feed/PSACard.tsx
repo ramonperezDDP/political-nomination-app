@@ -130,7 +130,7 @@ export default function PSACard({ feedItem, isActive = true, selectedIssueId, is
   };
 
   const handleViewProfile = () => {
-    router.push(`/candidate/${candidate.id}`);
+    router.push(`/(main)/(feed)/candidate/${candidate.id}` as any);
   };
 
   const formatViews = (views: number) => {

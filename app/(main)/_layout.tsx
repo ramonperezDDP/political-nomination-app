@@ -1,24 +1,15 @@
-import { Tabs, Redirect } from 'expo-router';
+import { Tabs } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Platform } from 'react-native';
 import { useTheme } from 'react-native-paper';
+import { useAuthStore } from '@/stores';
 
-import { useAuthStore, selectIsAuthenticated } from '@/stores';
-
-type TabIconName = 'home' | 'home-outline' | 'cards' | 'cards-outline' | 'trophy' | 'trophy-outline' | 'account' | 'account-outline';
-
-export default function TabLayout() {
+export default function MainLayout() {
   const theme = useTheme();
-  const isAuthenticated = useAuthStore(selectIsAuthenticated);
   const isInitialized = useAuthStore((state) => state.isInitialized);
 
-  // Wait for auth to initialize
   if (!isInitialized) {
     return null;
   }
-
-  // Allow anonymous access — all users (including anonymous) can access tabs
-  // Authentication is only checked at the point of gated actions (endorsing, etc.)
 
   return (
     <Tabs
@@ -29,18 +20,13 @@ export default function TabLayout() {
           backgroundColor: theme.colors.surface,
           borderTopColor: theme.colors.outlineVariant,
         },
-        headerStyle: {
-          backgroundColor: theme.colors.surface,
-        },
-        headerTintColor: theme.colors.onSurface,
-        headerShadowVisible: false,
+        headerShown: false,
       }}
     >
       <Tabs.Screen
-        name="index"
+        name="(home)"
         options={{
           title: 'Home',
-          headerShown: false,
           tabBarIcon: ({ color, focused }) => (
             <MaterialCommunityIcons
               name={focused ? 'home' : 'home-outline'}
@@ -51,10 +37,9 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="for-you"
+        name="(feed)"
         options={{
           title: 'For You',
-          headerShown: false,
           tabBarIcon: ({ color, focused }) => (
             <MaterialCommunityIcons
               name={focused ? 'cards' : 'cards-outline'}
@@ -65,10 +50,9 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="leaderboard"
+        name="(leaderboard)"
         options={{
           title: 'Leaderboard',
-          headerShown: false,
           tabBarIcon: ({ color, focused }) => (
             <MaterialCommunityIcons
               name={focused ? 'trophy' : 'trophy-outline'}
@@ -79,7 +63,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="profile"
+        name="(profile)"
         options={{
           title: 'Profile',
           tabBarIcon: ({ color, focused }) => (
@@ -89,6 +73,12 @@ export default function TabLayout() {
               color={color}
             />
           ),
+        }}
+      />
+      <Tabs.Screen
+        name="quiz"
+        options={{
+          href: null,
         }}
       />
     </Tabs>

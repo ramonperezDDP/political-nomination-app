@@ -46,7 +46,7 @@ export default function VoterHome() {
       <QuizCard
         completedCount={completedIssueCount}
         totalCount={totalIssues}
-        onPress={() => router.push('/quiz' as any)}
+        onPress={() => router.push('/(main)/quiz' as any)}
       />
 
       {/* 3. Character Search */}
@@ -54,7 +54,7 @@ export default function VoterHome() {
         icon="account-search"
         title="Character Search"
         subtitle="Find candidates by name or policy position"
-        onPress={() => router.push('/(tabs)/for-you')}
+        onPress={() => router.push('/(main)/(feed)' as any)}
       />
 
       {/* 4. Verify ID */}
@@ -79,7 +79,7 @@ export default function VoterHome() {
         icon="thumb-up"
         title="Submit / Endorse"
         subtitle="Apply filters and endorse matching candidates"
-        onPress={() => router.push('/(tabs)/for-you')}
+        onPress={() => router.push('/(main)/(feed)' as any)}
       />
 
       {/* 6. About The Contest (includes nomination calendar) */}

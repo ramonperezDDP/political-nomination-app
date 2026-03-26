@@ -67,8 +67,8 @@ export default function MyEndorsementsScreen() {
   const handleViewCandidate = (candidateId: string) => {
     router.push(
       Platform.OS === 'web'
-        ? `/candidate/${candidateId}?from=/settings/endorsements`
-        : `/candidate/${candidateId}`
+        ? `/(main)/(feed)/candidate/${candidateId}`
+        : `/(main)/(feed)/candidate/${candidateId}`
     );
   };
 
@@ -150,7 +150,7 @@ export default function MyEndorsementsScreen() {
           title="No endorsements yet"
           message="Browse candidates and endorse the ones you support"
           actionLabel="Browse Candidates"
-          onAction={() => router.push('/(tabs)/for-you')}
+          onAction={() => router.push('/(main)/(feed)' as any)}
         />
       ) : (
         <FlatList

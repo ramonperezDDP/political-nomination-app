@@ -116,8 +116,8 @@ export default function FullScreenPSA({ feedItem, isActive, height }: FullScreen
         <Pressable
           onPress={() => router.push(
             Platform.OS === 'web'
-              ? `/candidate/${candidate.id}?from=/(tabs)/for-you`
-              : `/candidate/${candidate.id}`
+              ? `/(main)/(feed)/candidate/${candidate.id}`
+              : `/(main)/(feed)/candidate/${candidate.id}`
           )}
           style={styles.actionButton}
         >

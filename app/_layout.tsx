@@ -128,27 +128,9 @@ export default function RootLayout() {
       headerShown: false,
       ...(Platform.OS === 'web' ? { animation: 'none' } : {}),
     }}>
-      <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="(main)" />
       <Stack.Screen name="(auth)" />
       <Stack.Screen name="(candidate)" />
-      <Stack.Screen
-        name="candidate/[id]"
-        options={{
-          headerShown: true,
-          headerTitle: 'Candidate Profile',
-          headerBackTitle: 'Back',
-          ...(Platform.OS === 'web' ? { animation: 'none' } : {}),
-        }}
-      />
-      <Stack.Screen
-        name="quiz"
-        options={{
-          headerShown: true,
-          headerTitle: 'Policy Quiz',
-          headerBackTitle: 'Back',
-          ...(Platform.OS === 'web' ? { animation: 'none' } : {}),
-        }}
-      />
     </Stack>
   );
 

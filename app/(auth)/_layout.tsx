@@ -19,7 +19,7 @@ export default function AuthLayout() {
   // Anonymous users can also access tabs (handled by tabs layout)
   // but they should be able to reach auth screens to register/login
   if (isAuthenticated && user && !user.isAnonymous) {
-    return <Redirect href="/(tabs)" />;
+    return <Redirect href="/(main)" />;
   }
 
   // On web, use Slot to avoid react-native-screens animated style issues

@@ -51,7 +51,7 @@ export default function LoginScreen() {
     clearError();
     const success = await signIn(data.email, data.password);
     if (success) {
-      router.replace('/(tabs)');
+      router.replace('/(main)' as any);
     }
   };
 

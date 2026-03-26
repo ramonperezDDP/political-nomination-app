@@ -8,6 +8,7 @@ const SafeAreaView = Platform.OS === 'web' ? View : NativeSafeAreaView;
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { useAuthStore } from '@/stores';
+import { goBack } from '@/utils/navigation';
 import {
   PrimaryButton,
   SecondaryButton,
@@ -67,11 +68,11 @@ export default function VerifyIdentityScreen() {
   };
 
   const handleContinue = () => {
-    router.replace('/(auth)/onboarding/issues');
+    goBack('/(main)/(home)');
   };
 
   const handleSkip = () => {
-    router.replace('/(auth)/onboarding/issues');
+    goBack('/(main)/(home)');
   };
 
   const renderIntroStep = () => (

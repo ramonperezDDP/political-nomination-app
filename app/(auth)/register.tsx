@@ -81,7 +81,7 @@ export default function RegisterScreen() {
     );
     if (success) {
       // Stay on tabs — UID unchanged, all data preserved
-      router.replace('/(tabs)');
+      router.replace('/(main)' as any);
     }
   };
 

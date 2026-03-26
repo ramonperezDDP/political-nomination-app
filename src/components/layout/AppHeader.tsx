@@ -1,0 +1,99 @@
+import React, { useState } from 'react';
+import { StyleSheet, View, Image, Pressable } from 'react-native';
+import { Text, useTheme, Menu } from 'react-native-paper';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useConfigStore, selectCurrentRoundLabel } from '@/stores';
+import { useUserStore } from '@/stores';
+
+const DISTRICT_COLORS: Record<string, string> = {
+  'PA-01': '#FFB6C1',
+  'PA-02': '#ADD8E6',
+};
+
+const AVAILABLE_DISTRICTS = ['PA-01', 'PA-02'];
+
+export default function AppHeader() {
+  const theme = useTheme();
+  const roundLabel = useConfigStore(selectCurrentRoundLabel);
+  const selectedDistrict = useUserStore((s) => s.selectedBrowsingDistrict) || 'PA-01';
+  const setDistrict = useUserStore((s) => s.setSelectedBrowsingDistrict);
+  const [menuVisible, setMenuVisible] = useState(false);
+
+  return (
+    <View style={[styles.container, { backgroundColor: theme.colors.surface, borderBottomColor: theme.colors.outlineVariant }]}>
+      <Image
+        source={require('../../../assets/amsp-logo.png')}
+        style={styles.logo}
+        resizeMode="contain"
+      />
+
+      <View style={styles.roundContainer}>
+        <Text variant="labelSmall" style={{ color: theme.colors.outline }}>
+          {roundLabel}
+        </Text>
+      </View>
+
+      <Menu
+        visible={menuVisible}
+        onDismiss={() => setMenuVisible(false)}
+        anchor={
+          <Pressable
+            onPress={() => setMenuVisible(true)}
+            style={[
+              styles.districtButton,
+              { backgroundColor: DISTRICT_COLORS[selectedDistrict] || '#E0E0E0' },
+            ]}
+          >
+            <MaterialCommunityIcons name="map-marker" size={14} color="#333" />
+            <Text variant="labelMedium" style={styles.districtText}>
+              {selectedDistrict}
+            </Text>
+            <MaterialCommunityIcons name="chevron-down" size={14} color="#333" />
+          </Pressable>
+        }
+      >
+        {AVAILABLE_DISTRICTS.map((district) => (
+          <Menu.Item
+            key={district}
+            onPress={() => {
+              setDistrict(district);
+              setMenuVisible(false);
+            }}
+            title={district}
+            leadingIcon={selectedDistrict === district ? 'check' : undefined}
+          />
+        ))}
+      </Menu>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+  },
+  logo: {
+    width: 120,
+    height: 36,
+  },
+  roundContainer: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  districtButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 16,
+    gap: 4,
+  },
+  districtText: {
+    fontWeight: '600',
+  },
+});

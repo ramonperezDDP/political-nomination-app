@@ -94,8 +94,8 @@ export default function LeaderboardScreen() {
         <Pressable
           onPress={() => router.push(
             Platform.OS === 'web'
-              ? `/candidate/${item.candidateId}?from=/(tabs)/leaderboard`
-              : `/candidate/${item.candidateId}`
+              ? `/(main)/(leaderboard)/candidate/${item.candidateId}`
+              : `/(main)/(leaderboard)/candidate/${item.candidateId}`
           )}
           style={({ pressed }) => [{ opacity: pressed ? 0.8 : 1 }]}
         >

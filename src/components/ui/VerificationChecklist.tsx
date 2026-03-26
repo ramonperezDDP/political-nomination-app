@@ -43,7 +43,7 @@ export default function VerificationChecklist() {
       label: 'Policy Quiz',
       icon: 'clipboard-check' as const,
       status: user.onboarding?.questionnaire || 'incomplete',
-      route: '/quiz',
+      route: '/(main)/quiz',
       description: 'Answer at least 1 policy question to see your matches',
     },
     {
@@ -51,7 +51,7 @@ export default function VerificationChecklist() {
       label: 'Dealbreakers',
       icon: 'alert-circle' as const,
       status: user.onboarding?.dealbreakers || 'incomplete',
-      route: '/settings/dealbreakers',
+      route: '/(main)/(profile)/dealbreakers',
       description: 'Set your non-negotiable policy positions',
     },
   ];

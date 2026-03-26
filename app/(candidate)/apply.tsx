@@ -354,7 +354,7 @@ export default function ApplyScreen() {
       Alert.alert(
         'Application Submitted',
         'Your application has been submitted successfully. We will review it and notify you of the outcome.',
-        [{ text: 'OK', onPress: () => router.replace('/(tabs)/profile') }]
+        [{ text: 'OK', onPress: () => router.replace('/(main)/(profile)' as any) }]
       );
     } catch (error: any) {
       console.error('Error submitting application:', error);

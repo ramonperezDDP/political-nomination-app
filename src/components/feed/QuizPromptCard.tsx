@@ -45,7 +45,7 @@ export default function QuizPromptCard({ height }: QuizPromptCardProps) {
 
         <Button
           mode="contained"
-          onPress={() => router.push('/quiz')}
+          onPress={() => router.push('/(main)/quiz' as any)}
           style={styles.ctaButton}
           contentStyle={styles.ctaButtonContent}
           labelStyle={styles.ctaButtonLabel}
