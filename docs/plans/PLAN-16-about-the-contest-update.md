@@ -64,7 +64,7 @@ const currentRoundId = useConfigStore(
 );
 ```
 
-`selectContestTimeline` is defined in PLAN-00 and returns all `ContestRound` objects sorted by `order`. Each round has `id`, `label`, `shortLabel`, `votingMethod`, `isEndorsementRound`, `isActive`, `isComplete`, `candidatesEntering`, `candidatesAdvancing`.
+`selectContestTimeline` is defined in PLAN-00 and returns all `ContestRound` objects sorted by `order`. Each round has `id`, `label`, `shortLabel`, `votingMethod`, `isEndorsementRound`, `candidatesEntering`, `candidatesAdvancing`. Round status (`past`/`current`/`future`) is derived via `selectRoundStatus(roundId)` — there are NO stored `isActive`/`isComplete` fields.
 
 ### 2\. Voting method labels
 
@@ -99,8 +99,10 @@ Replace the current Resources section (lines 114-150) with a dynamic contest ove
   {contestRounds
     .filter(round => round.id !== 'post_election') // Hide post-election from timeline
     .map((round, index, arr) => {
+      // Derive status from currentRoundId + order (PLAN-00 principle: no stored booleans)
+      const currentOrder = contestRounds.find(r => r.id === currentRoundId)?.order ?? 0;
       const isActive = round.id === currentRoundId;
-      const isPast = round.isComplete;
+      const isPast = round.order < currentOrder;
 
       return (
         <View key={round.id} style={styles.timelineItem}>
@@ -207,9 +209,10 @@ votingMethodRow: {
 ### Key details
 
 - The "Endorsement" voting method badge (`variant: 'info'`) appears on the first three rounds where `isEndorsementRound: true`. The Virtual Town Hall and Debate rounds show their own voting method badges (`variant: 'warning'` to visually distinguish them).
-- Round data comes from Firestore, not hardcoded constants. This means the admin can adjust round labels, candidate counts, or descriptions without a code deploy.
-- The `isComplete` and `isActive` fields on each `ContestRound` document (set by the cron or admin transition function from PLAN-00) drive the past/current/future visual treatment.
+- Round config is fetched once from Firestore on app init. `currentRoundId` updates in real-time via the partyConfig subscription. Round labels and candidate counts are static metadata that only change between contest cycles.
+- Past/current/future status is **derived** from `currentRoundId` + `round.order` (per PLAN-00: no stored `isActive`/`isComplete` booleans). Use `selectRoundStatus(roundId)` or inline derivation.
 - Voting method labels prepare users for the UI change in later rounds — even before ranked-choice or pick-one voting is implemented (Phase 3 of PLAN-00), users can see what's coming.
+- `post_election` is filtered from display. If additional rounds should be hidden, use a display whitelist rather than inline special cases.
 
 ## Testing
 

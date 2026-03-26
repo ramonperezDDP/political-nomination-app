@@ -38,7 +38,15 @@ Before implementing, a product-level decision is needed: are dealbreakers being 
 
 **Execution:** Phase 4 — last to implement after all other plans are stable.
 
-## Summary
+> **⚠️ EVERYTHING BELOW THIS LINE IS FROM THE ORIGINAL PLAN AND IS STALE.**
+> The implementation details reference the old onboarding quiz, not the standalone `app/quiz.tsx`.
+> Route paths, file references, and architectural assumptions are outdated.
+> This plan must be rewritten from scratch as 3 separate plans before any implementation.
+> Kept below for historical context only.
+
+---
+
+## Summary (STALE — do not implement)
 
 - Keep the existing auto-save behavior (saves immediately when user selects a policy option) — no separate save button needed
 - Remove the extra navigation screen between the quiz modal on the home screen and the policy-choice popup. Users should tap the quiz modal and immediately see the popup where they choose their policy options
