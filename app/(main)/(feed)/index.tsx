@@ -211,9 +211,11 @@ export default function ForYouScreen() {
     }
   }, [feedItems, experienceFilter, selectedLocation, userResponses, userDealbreakers]);
 
-  // On native: full screen minus tab bar. On web: measured container height.
+  // On native: full screen minus tab bar minus AppHeader.
+  // AppHeader height ≈ safeAreaTop + paddingTop(8) + content(36) + paddingBottom(8) + border(1) = insets.top + 53
   const TAB_BAR_HEIGHT = Platform.OS === 'ios' ? 49 + insets.bottom : 56;
-  const itemHeight = isWeb ? measuredHeight : screenHeight - TAB_BAR_HEIGHT;
+  const APP_HEADER_HEIGHT = insets.top + 53;
+  const itemHeight = isWeb ? measuredHeight : screenHeight - TAB_BAR_HEIGHT - APP_HEADER_HEIGHT;
 
   // Prepend quiz prompt if user hasn't completed quiz
   const displayItems: DisplayItem[] = useMemo(() => {
@@ -243,13 +245,13 @@ export default function ForYouScreen() {
         selectedFilter={experienceFilter}
         onFilterChange={setExperienceFilter}
         onLocationPress={() => setLocationModalVisible(true)}
-        style={{ top: isWeb ? 8 : insets.top + 8 }}
+        style={{ top: 8 }}
       />
 
       <MassEndorseButton
         filteredItems={filteredItems}
         experienceFilter={experienceFilter}
-        style={{ top: isWeb ? 48 : insets.top + 48 }}
+        style={{ top: 48 }}
       />
 
       <FlatList
