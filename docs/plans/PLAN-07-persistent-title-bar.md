@@ -1,8 +1,6 @@
-# PLAN: Persistent Title Bar with Logo and District — NEEDS REDESIGN
+# PLAN: Persistent Title Bar with Logo and District — SUPERSEDED
 
-> **Updated 2026-03-25:** Status reset after branch reset. AppHeader component does not exist in current codebase. PLAN-00 Phase 1 selectors (`selectCurrentRoundLabel`) are now available for use.
-
-> **BLOCKED:** Do NOT implement independently. Must be designed together with PLAN-08 (footer/tabs) and PLAN-15 (back button) as a single app-shell/navigation plan. See review notes below.
+> **SUPERSEDED by [PLAN-17: Unified App Shell](./PLAN-17-unified-app-shell.md)** which combines PLAN-07, PLAN-08, and PLAN-15 into one coordinated navigation restructure. Do not implement this plan independently.
 
 > **Related:** [PLAN-00: Contest Round Architecture](./PLAN-00-contest-round-architecture.md) — the round indicator in the title bar uses `selectCurrentRoundLabel` from PLAN-00.
 

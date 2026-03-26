@@ -1,8 +1,6 @@
-# PLAN: Persistent Footer/Tab Bar on All Screens — NEEDS REDESIGN
+# PLAN: Persistent Footer/Tab Bar on All Screens — SUPERSEDED
 
-> **Updated 2026-03-25:** Status reset after branch reset. Settings screens remain at `app/settings/`, not nested under tabs.
-
-> **BLOCKED:** Do NOT implement independently. Must be designed together with PLAN-07 (title bar) and PLAN-15 (back button) as a single app-shell/navigation plan. See review notes below.
+> **SUPERSEDED by [PLAN-17: Unified App Shell](./PLAN-17-unified-app-shell.md)** which combines PLAN-07, PLAN-08, and PLAN-15 into one coordinated navigation restructure. Do not implement this plan independently.
 
 ### Review Notes (Mar 25 feedback)
 

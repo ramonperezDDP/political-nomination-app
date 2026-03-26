@@ -1,6 +1,6 @@
-# PLAN: Fix Back/Cancel Button Navigation — NEEDS REDESIGN WITH SHELL PLAN
+# PLAN: Fix Back/Cancel Button Navigation — SUPERSEDED
 
-> **Updated 2026-03-25:** Status reset after branch reset. verify-identity.tsx still uses `router.replace()`. **Must be designed together with PLAN-07 and PLAN-08.**
+> **SUPERSEDED by [PLAN-17: Unified App Shell](./PLAN-17-unified-app-shell.md)** which combines PLAN-07, PLAN-08, and PLAN-15 into one coordinated navigation restructure. Do not implement this plan independently.
 
 ### Review Notes (Mar 25 feedback)
 

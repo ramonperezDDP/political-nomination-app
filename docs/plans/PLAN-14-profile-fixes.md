@@ -1,6 +1,6 @@
 # PLAN: Profile Page Fixes — BLOCKED ON DEPENDENCIES
 
-> **Updated 2026-03-25:** Status reset after branch reset. Run for Office CTA visible, no profile fixes applied. **Blocked on PLAN-12 (bookmarks) and PLAN-08 (route restructure).**
+> **Updated 2026-03-25:** Status reset after branch reset. Run for Office CTA visible, no profile fixes applied. **Blocked on PLAN-12 (bookmarks) and [PLAN-17](./PLAN-17-unified-app-shell.md) (route restructure, supersedes PLAN-08).**
 
 ### Review Notes (Mar 25 feedback)
 
