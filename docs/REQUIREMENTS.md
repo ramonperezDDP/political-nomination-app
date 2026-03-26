@@ -34,7 +34,7 @@ This document outlines the system requirements for deploying the America's Main 
 
 | Software | Version | Purpose |
 |----------|---------|---------|
-| Node.js | 20.x LTS (recommended) | JavaScript runtime |
+| Node.js | 20.x LTS (required — Node 25+ has compatibility issues) | JavaScript runtime |
 | npm | 9.x+ | Package manager |
 | Git | 2.40+ | Version control |
 

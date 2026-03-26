@@ -935,17 +935,74 @@ xcrun simctl launch booted com.politicalnomination.app
 
 ---
 
+## Element Inspector Blocking All Touch Events
+
+**Symptom:** The app renders correctly and scrolling works, but NO button taps register — tab bar, Pressable, Paper Button, nothing responds. A dark toolbar reading "Tap something to inspect it" with tabs (Inspect, Perf, Network, Touchables) is visible at the bottom of the screen.
+
+**Cause:** The React Native Element Inspector is toggled ON. It intercepts all touch events to display component information instead of letting them through to the actual handlers. The state is persisted in UserDefaults (`RCTDevMenu.showInspector`) and survives app restarts.
+
+**Fix (Option A — Dev Menu):**
+1. Open the dev menu: press `Ctrl+Cmd+Z` in the simulator (shake gesture)
+2. Tap "Toggle element inspector" to turn it off
+
+**Fix (Option B — Preferences):**
+If you can't interact with the dev menu, set the preference directly:
+```bash
+# Terminate the app first
+xcrun simctl terminate booted com.politicalnomination.app
+
+# Disable the inspector via simctl defaults
+xcrun simctl spawn booted defaults write com.politicalnomination.app "RCTDevMenu" -dict \
+  "hotLoadingEnabled" -bool true \
+  "shakeToShow" -bool true \
+  "showInspector" -bool false
+
+# Flush preference cache
+xcrun simctl spawn booted killall cfprefsd
+
+# Relaunch
+xcrun simctl launch booted com.politicalnomination.app
+```
+
+**Fix (Option C — Nuclear):**
+If the preference won't stick, uninstall and reinstall the app to clear all persisted state:
+```bash
+xcrun simctl terminate booted com.politicalnomination.app
+xcrun simctl uninstall booted com.politicalnomination.app
+
+# Pre-seed inspector OFF before installing
+xcrun simctl spawn booted defaults write com.politicalnomination.app "RCTDevMenu" -dict \
+  "hotLoadingEnabled" -bool true "shakeToShow" -bool true "showInspector" -bool false
+xcrun simctl spawn booted defaults write com.politicalnomination.app "EXDevMenuIsOnboardingFinished" -bool true
+xcrun simctl spawn booted killall cfprefsd
+
+# Reinstall and launch
+xcrun simctl install booted <path-to-app.app>
+xcrun simctl launch booted com.politicalnomination.app \
+  --url "exp+political-nomination-app://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081"
+```
+
+**Key lesson:** The Element Inspector is the #1 cause of "scroll works but buttons don't" in Expo Dev Client. Always check the bottom of the screen for the inspector toolbar before debugging touch handlers.
+
+**Preference key reference:**
+| Key | Location | Controls |
+|-----|----------|----------|
+| `RCTDevMenu.showInspector` | App UserDefaults | Element Inspector on/off |
+| `EXDevMenuIsOnboardingFinished` | App UserDefaults | Dev client welcome dialog |
+
+---
+
 ## Environment Information
 
 This troubleshooting guide was tested with:
-- macOS 26 (Darwin 25.2.0)
-- Xcode 26.2
+- macOS 26 (Darwin 25.3.0)
+- Xcode 26.2+
 - Node.js 20.20.0 (via Homebrew node@20)
 - npm 10.8.2
 - CocoaPods 1.16.2 (via Homebrew)
 - watchman 2026.01.12.00
 - Expo SDK 52
-- React Native 0.76.5
-- Firebase 11.11.0
+- React Native 0.76.9
+- Firebase 12.9.0
 
-Last updated: March 2026
+Last updated: March 25, 2026

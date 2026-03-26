@@ -81,6 +81,7 @@ This document provides a comprehensive overview of all dependencies used in the 
 | expo-image-picker | ~16.0.3 | Image selection | MIT |
 | expo-document-picker | ~13.0.1 | Document selection | MIT |
 | expo-notifications | ~0.29.11 | Push notifications | MIT |
+| react-native-webview | 13.12.5 | WebView for Vimeo video embed (iOS native) | MIT |
 
 ### Utilities
 
@@ -175,11 +176,14 @@ political-nomination-app
 │   ├── @hookform/resolvers (^3.9.1)
 │   └── zod (^3.24.1)
 │
-└── Media/Device
-    ├── expo-av (~15.0.1)
-    ├── expo-image-picker (~16.0.3)
-    ├── expo-document-picker (~13.0.1)
-    └── expo-notifications (~0.29.11)
+├── Media/Device
+│   ├── expo-av (~15.0.1)
+│   ├── expo-image-picker (~16.0.3)
+│   ├── expo-document-picker (~13.0.1)
+│   └── expo-notifications (~0.29.11)
+│
+└── Embeds
+    └── react-native-webview (13.12.5) ← Vimeo video embed on iOS
 ```
 
 ---
