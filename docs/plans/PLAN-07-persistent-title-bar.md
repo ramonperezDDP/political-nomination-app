@@ -1,6 +1,10 @@
-# PLAN: Persistent Title Bar with Logo and District ✅ IMPLEMENTED
+# PLAN: Persistent Title Bar with Logo and District — NOT YET IMPLEMENTED
+
+> **Updated 2026-03-25:** Status reset after branch reset. AppHeader component does not exist in current codebase. PLAN-00 Phase 1 selectors (`selectCurrentRoundLabel`) are now available for use.
 
 > **Related:** [PLAN-00: Contest Round Architecture](./PLAN-00-contest-round-architecture.md) — the round indicator in the title bar uses `selectCurrentRoundLabel` from PLAN-00.
+
+> **WARNING:** The previous implementation wrapped `<Tabs>` in a `<View>` which broke touch handling. Do NOT wrap navigators in extra View components. Use `headerShown: false` on individual tabs and render AppHeader INSIDE each screen's SafeAreaView, or use the Tabs `screenOptions.header` prop.
 
 ## Summary
 

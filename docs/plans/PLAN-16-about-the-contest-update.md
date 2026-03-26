@@ -1,4 +1,6 @@
-# PLAN: Update "About the Contest" Section ✅ IMPLEMENTED
+# PLAN: Update "About the Contest" Section — PARTIALLY IMPLEMENTED
+
+> **Updated 2026-03-25:** Status reset after branch reset. AboutContestCard exists with a HARDCODED static timeline. Needs to be converted to dynamic Firestore-driven timeline using `selectContestTimeline` and `selectRoundStatus` from PLAN-00 (now available).
 
 > **Depends on:** [PLAN-00: Contest Round Architecture](./PLAN-00-contest-round-architecture.md) — uses `ContestRoundId`, `ContestRound`, `contestRounds` collection, and `selectContestTimeline` / `selectRoundStatus` selectors defined there.
 

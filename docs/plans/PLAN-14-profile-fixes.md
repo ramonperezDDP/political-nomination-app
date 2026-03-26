@@ -1,6 +1,6 @@
-# PLAN: Profile Page Fixes ✅ PARTIALLY IMPLEMENTED
+# PLAN: Profile Page Fixes — NOT YET IMPLEMENTED
 
-> **Status:** Profile header updated ("Your Name" default, "Unverified" label). Run for Office CTA hidden. Endorsements page redesigned with simplified list. Remaining: bookmarked candidates section (depends on PLAN-12 bookmark system), back button fix (depends on PLAN-08 routing restructure).
+> **Updated 2026-03-25:** Status reset after branch reset. Run for Office CTA is still visible (not hidden). Profile header does not show "Your Name" default or "Unverified" label. Endorsements page not redesigned. Full implementation needed.
 
 ## Summary
 

@@ -1046,9 +1046,9 @@ const CONTEST_ROUNDS: ContestRound[] = [
 
 ## Migration Path
 
-### Phase 1 (Current sprint — content only) ✅ IMPLEMENTED
+### Phase 1 (Content only) ✅ RE-IMPLEMENTED 2026-03-25
 
-All Phase 1 items are complete. Files implemented:
+Re-implemented after branch reset (original implementation was on abandoned branch). All Phase 1 items are complete. Files implemented:
 
 **Types:** `src/types/index.ts`, `src/types/index.web.ts`
 - Added `ContestRoundId`, `ContestRound`, `VotingMethod`, `ContestMode`, `TransitionType`, `TieBreakPolicy`, `ContestTransition` types

@@ -1,4 +1,6 @@
-# PLAN: Persistent Footer/Tab Bar on All Screens
+# PLAN: Persistent Footer/Tab Bar on All Screens — NOT YET IMPLEMENTED
+
+> **Updated 2026-03-25:** Status reset after branch reset. Settings screens remain at `app/settings/`, not nested under tabs.
 
 ## Summary
 

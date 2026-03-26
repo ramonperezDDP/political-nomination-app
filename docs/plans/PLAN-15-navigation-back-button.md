@@ -1,4 +1,6 @@
-# PLAN: Fix Back/Cancel Button Navigation ✅ IMPLEMENTED
+# PLAN: Fix Back/Cancel Button Navigation — NOT YET IMPLEMENTED
+
+> **Updated 2026-03-25:** Status reset after branch reset. verify-identity.tsx still uses `router.replace()` instead of `router.back()`. Full audit needed.
 
 ## Summary
 

@@ -1,6 +1,6 @@
-# PLAN: For You Page Improvements ✅ PARTIALLY IMPLEMENTED
+# PLAN: For You Page Improvements — NOT YET IMPLEMENTED
 
-> **Status:** Alignment explainer modal created and integrated into PSACard. Share button gated behind verification. Remaining: bookmarking system (store state, bookmark banner, post-verification flow).
+> **Updated 2026-03-25:** Status reset after branch reset. AlignmentExplainerModal does not exist in current codebase. Share gating and bookmarking system also not present. Full implementation needed.
 
 > **Depends on:** [PLAN-00: Contest Round Architecture](./PLAN-00-contest-round-architecture.md) — Phase 2 will require hiding eliminated candidates from the feed and scoping endorsements to the current round. Phase 3 will replace the endorse button with round-appropriate voting UI (ranked choice, pick one).
 

@@ -1,6 +1,6 @@
-# PLAN: Quiz Improvements ✅ PARTIALLY IMPLEMENTED
+# PLAN: Quiz Improvements — PARTIALLY IMPLEMENTED
 
-> **Status:** Dealbreaker removal complete. Quiz deselect capability added. Remaining: direct quiz launch from home (skip issues screen), Global/National/Local grouping.
+> **Updated 2026-03-25:** Status reset after branch reset. Quiz deselect capability exists. Dealbreakers still exist in codebase (`app/(auth)/onboarding/dealbreakers.tsx` and `app/settings/dealbreakers.tsx`). Remaining: dealbreaker removal, direct quiz launch from home, Global/National/Local grouping.
 
 ## Summary
 

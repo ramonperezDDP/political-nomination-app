@@ -1,6 +1,6 @@
 # PLAN: Dynamic FAQs Based on Contest Round ✅ IMPLEMENTED
 
-> **Status:** Implemented as part of PLAN-00 Phase 1. See `src/constants/faqs.ts` and `src/components/home/VoterHome.tsx`.
+> **Updated 2026-03-25:** Re-implemented as part of PLAN-00 Phase 1 on current branch. See `src/constants/faqs.ts` and `src/components/home/VoterHome.tsx`.
 
 > **Depends on:** [PLAN-00: Contest Round Architecture](./PLAN-00-contest-round-architecture.md) — uses `ContestRoundId`, `ContestRound`, `currentRoundId`, and the `contestRounds` collection defined there.
 

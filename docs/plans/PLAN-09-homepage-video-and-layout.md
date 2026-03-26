@@ -1,5 +1,7 @@
 # PLAN: Homepage Video Window and Section Reorder ✅ IMPLEMENTED
 
+> **Updated 2026-03-25:** Confirmed implemented on current branch. VideoCard, QuizCard, ContentCard, AboutContestCard all exist and render in VoterHome.
+
 > **Related:** [PLAN-00: Contest Round Architecture](./PLAN-00-contest-round-architecture.md) — the "About the Contest" section in the new homepage order uses the contest round timeline from PLAN-00/PLAN-16.
 
 ## Summary

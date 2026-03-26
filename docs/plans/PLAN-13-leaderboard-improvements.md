@@ -1,4 +1,6 @@
-# PLAN: Leaderboard Improvements ✅ IMPLEMENTED
+# PLAN: Leaderboard Improvements — NOT YET IMPLEMENTED
+
+> **Updated 2026-03-25:** Status reset after branch reset. Current leaderboard has no issue filter pills, no mass-endorse, and cutoff line logic uses legacy `endorsementCutoffs`. Full implementation needed.
 
 > **Depends on:** [PLAN-00: Contest Round Architecture](./PLAN-00-contest-round-architecture.md) — Phase 2 will require round-scoped endorsement counts, candidate elimination filtering, and voting-method-aware display.
 
