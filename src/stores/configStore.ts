@@ -1,11 +1,13 @@
 import { create } from 'zustand';
-import { getPartyConfig, subscribeToPartyConfig, getIssues, ensureQuestionsExist, seedIssues } from '@/services/firebase/firestore';
-import type { PartyConfig, Issue, ContestStage } from '@/types';
+import { getPartyConfig, subscribeToPartyConfig, getIssues, ensureQuestionsExist, seedIssues, getContestRounds, seedContestRounds } from '@/services/firebase/firestore';
+import type { PartyConfig, Issue, ContestStage, ContestRound, ContestRoundId, VotingMethod, ContestMode } from '@/types';
 
 interface ConfigState {
   // State
   partyConfig: PartyConfig | null;
   issues: Issue[];
+  contestRounds: ContestRound[];
+  currentRound: ContestRound | null;
   isLoading: boolean;
   error: string | null;
 
@@ -13,13 +15,23 @@ interface ConfigState {
   initialize: () => () => void;
   fetchConfig: () => Promise<void>;
   fetchIssues: () => Promise<void>;
+  fetchContestRounds: () => Promise<void>;
   setError: (error: string | null) => void;
+}
+
+// Helper: derive currentRound from partyConfig and contestRounds
+function deriveCurrentRound(config: PartyConfig | null, rounds: ContestRound[]): ContestRound | null {
+  if (!config || rounds.length === 0) return null;
+  const roundId = config.currentRoundId || config.contestStage || 'pre_nomination';
+  return rounds.find((r) => r.id === roundId) || rounds[0];
 }
 
 export const useConfigStore = create<ConfigState>((set, get) => ({
   // Initial state
   partyConfig: null,
   issues: [],
+  contestRounds: [],
+  currentRound: null,
   isLoading: true,
   error: null,
 
@@ -30,12 +42,20 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
     // Fetch issues once
     get().fetchIssues().catch((err) => console.warn('Error fetching issues:', err));
 
+    // Fetch contest rounds once
+    get().fetchContestRounds().catch((err) => console.warn('Error fetching contest rounds:', err));
+
     // Ensure questions are seeded (runs in background)
     ensureQuestionsExist().catch((err) => console.warn('Error ensuring questions:', err));
 
     // Subscribe to party config changes
     const unsubscribe = subscribeToPartyConfig((config) => {
-      set({ partyConfig: config, isLoading: false });
+      const rounds = get().contestRounds;
+      set({
+        partyConfig: config,
+        currentRound: deriveCurrentRound(config, rounds),
+        isLoading: false,
+      });
     });
 
     return unsubscribe;
@@ -47,7 +67,12 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
 
     try {
       const config = await getPartyConfig();
-      set({ partyConfig: config, isLoading: false });
+      const rounds = get().contestRounds;
+      set({
+        partyConfig: config,
+        currentRound: deriveCurrentRound(config, rounds),
+        isLoading: false,
+      });
     } catch (error: any) {
       set({ error: error.message, isLoading: false });
     }
@@ -76,6 +101,32 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
     }
   },
 
+  // Fetch contest rounds - auto-seeds if none exist
+  fetchContestRounds: async () => {
+    try {
+      let rounds = await getContestRounds();
+
+      if (rounds.length === 0) {
+        console.log('No contest rounds found - auto-seeding...');
+        try {
+          await seedContestRounds();
+          rounds = await getContestRounds();
+          console.log('After seeding, fetched contest rounds:', rounds.length);
+        } catch (seedError) {
+          console.warn('Error auto-seeding contest rounds:', seedError);
+        }
+      }
+
+      const config = get().partyConfig;
+      set({
+        contestRounds: rounds,
+        currentRound: deriveCurrentRound(config, rounds),
+      });
+    } catch (error: any) {
+      console.warn('Error fetching contest rounds:', error);
+    }
+  },
+
   // Set error
   setError: (error: string | null) => {
     set({ error });
@@ -83,8 +134,50 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
 }));
 
 // Selectors
+
+/** @deprecated Use selectCurrentRoundId instead */
 export const selectContestStage = (state: ConfigState): ContestStage =>
-  state.partyConfig?.contestStage || 'pre_nomination';
+  (state.partyConfig?.currentRoundId || state.partyConfig?.contestStage || 'pre_nomination') as ContestStage;
+
+export const selectCurrentRoundId = (state: ConfigState): ContestRoundId =>
+  (state.partyConfig?.currentRoundId || state.partyConfig?.contestStage || 'pre_nomination') as ContestRoundId;
+
+export const selectVotingMethod = (state: ConfigState): VotingMethod =>
+  state.currentRound?.votingMethod || 'none';
+
+export const selectCanVote = (state: ConfigState): boolean => {
+  const round = state.currentRound;
+  if (!round) return false;
+  if (round.votingMethod === 'none') return false;
+  const now = new Date();
+  if (round.startDate && now < round.startDate.toDate()) return false;
+  if (round.endDate && now > round.endDate.toDate()) return false;
+  return true;
+};
+
+export const selectIsEndorsementRound = (state: ConfigState): boolean =>
+  state.currentRound?.isEndorsementRound || false;
+
+export const selectCurrentRoundLabel = (state: ConfigState): string =>
+  state.currentRound?.label || 'Pre-Nomination';
+
+export const selectContestTimeline = (state: ConfigState): ContestRound[] =>
+  [...state.contestRounds].sort((a, b) => a.order - b.order);
+
+export const selectRoundStatus = (roundId: ContestRoundId) =>
+  (state: ConfigState): 'past' | 'current' | 'future' => {
+    const currentRound = state.contestRounds.find(
+      (r) => r.id === (state.partyConfig?.currentRoundId || state.partyConfig?.contestStage)
+    );
+    const targetRound = state.contestRounds.find((r) => r.id === roundId);
+    if (!currentRound || !targetRound) return 'future';
+    if (targetRound.order < currentRound.order) return 'past';
+    if (targetRound.order === currentRound.order) return 'current';
+    return 'future';
+  };
+
+export const selectContestMode = (state: ConfigState): ContestMode =>
+  state.partyConfig?.contestMode || 'beta_demo';
 
 export const selectPrimaryColor = (state: ConfigState): string =>
   state.partyConfig?.primaryColor || '#5a3977';
@@ -121,5 +214,7 @@ export const defaultPartyConfig: PartyConfig = {
   logoUrl: '',
   tagline: 'Your voice matters',
   contestStage: 'pre_nomination',
+  currentRoundId: 'pre_nomination',
+  contestMode: 'beta_demo',
   endorsementCutoffs: [],
 };

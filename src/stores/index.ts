@@ -31,5 +31,24 @@ export {
   // Plan 02: Browsing district
   selectBrowsingDistrict,
 } from './userStore';
-export { useConfigStore, selectContestStage, selectPrimaryColor, selectSecondaryColor, selectPartyName, selectIssuesByCategory, selectIssueById, selectEndorsementCutoffs, defaultPartyConfig } from './configStore';
+export {
+  useConfigStore,
+  selectContestStage,
+  selectPrimaryColor,
+  selectSecondaryColor,
+  selectPartyName,
+  selectIssuesByCategory,
+  selectIssueById,
+  selectEndorsementCutoffs,
+  defaultPartyConfig,
+  // PLAN-00 Phase 1: Contest round selectors
+  selectCurrentRoundId,
+  selectVotingMethod,
+  selectCanVote,
+  selectIsEndorsementRound,
+  selectCurrentRoundLabel,
+  selectContestTimeline,
+  selectRoundStatus,
+  selectContestMode,
+} from './configStore';
 export { useCandidateStore, selectIsApprovedCandidate, selectHasPendingApplication, selectPublishedPSAs, selectDraftPSAs } from './candidateStore';
