@@ -4,7 +4,7 @@
 
 ## PLAN-14A: Profile Header + Beta CTA Hiding ✅ READY TO SHIP
 
-> **Sequence:** Phase 3 — implement after PLAN-17 and PLAN-16.
+> **Sequence:** Implement after PLAN-17 (hard dependency — file paths changed). No dependency on PLAN-16 (independent work).
 
 ### 1. Update profile header defaults
 

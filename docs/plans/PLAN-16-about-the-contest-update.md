@@ -55,13 +55,24 @@ The timeline also displays the voting method for each round (approval voting, ra
 Instead of hardcoding the round list in the component, read it from the `contestRounds` collection via the configStore. This way, round labels, descriptions, and voting methods can be updated in Firestore without a code change.
 
 ```tsx
-import { useConfigStore, selectContestTimeline } from '@/stores';
+import { useConfigStore, selectContestTimeline, selectCurrentRoundId } from '@/stores';
 
-// Inside component:
+// Inside component — all hooks at top level (never inside loops):
 const contestRounds = useConfigStore(selectContestTimeline); // Sorted by order
-const currentRoundId = useConfigStore(
-  (state) => state.partyConfig?.currentRoundId || 'pre_nomination'
+const currentRoundId = useConfigStore(selectCurrentRoundId);
+
+// Precompute status map once (not per-item):
+const currentOrder = useMemo(
+  () => contestRounds.find(r => r.id === currentRoundId)?.order ?? 0,
+  [contestRounds, currentRoundId]
 );
+
+// Helper used inside .map() — pure function, no hooks:
+const getRoundStatus = (round: ContestRound): 'past' | 'current' | 'future' => {
+  if (round.order < currentOrder) return 'past';
+  if (round.order === currentOrder) return 'current';
+  return 'future';
+};
 ```
 
 `selectContestTimeline` is defined in PLAN-00 and returns all `ContestRound` objects sorted by `order`. Each round has `id`, `label`, `shortLabel`, `votingMethod`, `isEndorsementRound`, `candidatesEntering`, `candidatesAdvancing`. Round status (`past`/`current`/`future`) is derived via `selectRoundStatus(roundId)` — there are NO stored `isActive`/`isComplete` fields.
@@ -99,9 +110,8 @@ Replace the current Resources section (lines 114-150) with a dynamic contest ove
   {contestRounds
     .filter(round => round.id !== 'post_election') // Temporary special case until display whitelist is added
     .map((round, index, arr) => {
-      // Use the selector — single source of truth for round status derivation.
-      // configStore owns round metadata load + partyConfig subscription; this component is selector-only.
-      const status = useConfigStore(selectRoundStatus(round.id)); // 'past' | 'current' | 'future'
+      // Uses getRoundStatus() helper defined above — no hooks inside .map()
+      const status = getRoundStatus(round);
       const isActive = status === 'current';
       const isPast = status === 'past';
 
@@ -144,7 +154,7 @@ Replace the current Resources section (lines 114-150) with a dynamic contest ove
             </View>
 
             {/* Candidate count: e.g., "100 → 20" */}
-            {round.candidatesEntering && round.candidatesAdvancing && (
+            {round.candidatesEntering != null && round.candidatesAdvancing != null && (
               <Text variant="bodySmall" style={{ color: theme.colors.outline }}>
                 {round.candidatesEntering} candidates → {round.candidatesAdvancing} advance
               </Text>

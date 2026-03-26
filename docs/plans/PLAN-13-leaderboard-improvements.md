@@ -39,7 +39,7 @@ style={(!isAboveCutoff && leaderboardType === 'endorsements')
 1. Build a `batchEndorse` callable Cloud Function that validates eligibility server-side
 2. Decide issue filter source: user's quiz issues, all available issues, or both
 3. PLAN-00 Phase 2 must land (round-scoped endorsement counts, `contestStatus` filtering)
-4. Mass-endorse must flow through `selectCanEndorseCandidate` for every candidate
+4. Mass-endorse eligibility: `selectCanEndorseCandidate` is the **client-side mirror** of the rule (for UX gating). The **server-side `batchEndorse` Cloud Function** is the source of truth — it must independently validate eligibility for every candidate in the batch. The client selector is not sufficient validation for the batch action.
 
 **Data enrichment will be required:** Candidate issue metadata is needed for filtering, but the exact shape depends on the final filter model decision (user quiz issues, all issues, both, or precomputed match data). Do not assume `topIssueIds: string[]` until the product decision is final.
 
