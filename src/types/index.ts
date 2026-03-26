@@ -285,6 +285,75 @@ export interface Notification {
   createdAt: Timestamp;
 }
 
+// Contest Round Types
+export type ContestRoundId =
+  | 'pre_nomination'
+  | 'round_1_endorsement'
+  | 'round_2_endorsement'
+  | 'round_3_endorsement'
+  | 'virtual_town_hall'
+  | 'debate'
+  | 'final_results'
+  | 'post_election';
+
+/** @deprecated Use ContestRoundId. Kept as alias for backward compatibility. */
+export type ContestStage = ContestRoundId;
+
+export type VotingMethod = 'none' | 'approval' | 'ranked_choice' | 'pick_one';
+export type ContestMode = 'beta_demo' | 'production';
+export type TransitionType = 'forward' | 'reopen' | 'manual_override';
+export type TieBreakPolicy = 'advance_all_tied' | 'trending_score' | 'admin_decision';
+
+export type CandidateContestStatus =
+  | 'active'
+  | 'eliminated'
+  | 'withdrawn'
+  | 'disqualified'
+  | 'winner';
+
+export interface ContestRound {
+  id: ContestRoundId;
+  label: string;
+  shortLabel: string;
+  order: number;
+  votingMethod: VotingMethod;
+  isEndorsementRound: boolean;
+  candidatesEntering: number | null;
+  candidatesAdvancing: number | null;
+  startDate: Timestamp | null;
+  endDate: Timestamp | null;
+  tieBreakPolicy: TieBreakPolicy;
+}
+
+export interface ContestTransition {
+  operationId: string;
+  transitionType: TransitionType;
+  fromRoundId: ContestRoundId;
+  toRoundId: ContestRoundId;
+  transitionedAt: Timestamp;
+  triggeredBy: 'admin' | 'beta_cron';
+  actorId: string | null;
+  contestMode: ContestMode;
+  eliminationApplied: boolean;
+  tallySnapshot: Record<string, number> | null;
+  advancedCandidateIds: string[];
+  eliminatedCandidateIds: string[];
+  tieOccurred: boolean;
+  tieBreakMethod: TieBreakPolicy | null;
+  tieBreakDetails: string | null;
+  notes: string | null;
+}
+
+export interface Vote {
+  id: string;
+  odid: string;
+  roundId: ContestRoundId;
+  votingMethod: VotingMethod;
+  rankings?: string[];
+  candidateId?: string;
+  createdAt: Timestamp;
+}
+
 // Config Types
 export interface PartyConfig {
   id: string;
@@ -295,10 +364,10 @@ export interface PartyConfig {
   tagline: string;
   introVideoUrl?: string;
   contestStage: ContestStage;
+  currentRoundId?: ContestRoundId;
+  contestMode?: ContestMode;
   endorsementCutoffs: EndorsementCutoff[];
 }
-
-export type ContestStage = 'pre_nomination' | 'nomination' | 'voting' | 'post_election';
 
 export interface EndorsementCutoff {
   stage: number;
