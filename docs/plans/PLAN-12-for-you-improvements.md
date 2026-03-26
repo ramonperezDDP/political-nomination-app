@@ -22,6 +22,8 @@
 
 ### Bookmark Domain Spec (prerequisite — write this first)
 
+**Core principle:** Bookmarks are round-aware endorsement intent records, but remain user-visible as historical saves after they become non-convertible.
+
 The original plan proposed `{ id, odid, candidateId, createdAt }`. That is insufficient for round-aware pre-endorsements. A dedicated spec must define:
 
 **Data model:**
@@ -29,6 +31,8 @@ The original plan proposed `{ id, odid, candidateId, createdAt }`. That is insuf
 - `status`: `'active' | 'endorsed' | 'invalidated'`
 - `invalidatedReason?`: `'candidate_eliminated' | 'round_changed' | 'district_mismatch'`
 - `endorsedAt?`, `endorsementId?`
+
+**`browsingDistrict` semantics:** This field is **informational only** — it records which district the user was browsing when they bookmarked. It is NOT used in conversion validation (verified district eligibility is checked at endorsement time, not bookmark time). It exists for audit/analytics and for user messaging ("you bookmarked this candidate while browsing PA-02").
 
 **Firestore collection:** `bookmarks` (user-scoped subcollection or top-level with userId index)
 
@@ -46,8 +50,9 @@ The original plan proposed `{ id, odid, candidateId, createdAt }`. That is insuf
 ### Alignment Explainer Refactor
 
 Before extracting the alignment modal for reuse:
-- Remove all dealbreaker references from the modal content
-- Source file: `app/candidate/[id].tsx` lines 479-569
+- **Hard dependency:** PLAN-10 dealbreaker migration must remove dealbreaker content from the explainer FIRST
+- Then PLAN-12 can extract and reuse the cleaned modal
+- Source file: `src/screens/CandidateDetailScreen.tsx` (post-PLAN-17 location, was `app/candidate/[id].tsx`)
 - Target: `src/components/feed/AlignmentExplainerModal.tsx`
 
 ## Original Implementation Details

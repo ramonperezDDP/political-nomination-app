@@ -97,12 +97,13 @@ Replace the current Resources section (lines 114-150) with a dynamic contest ove
 </Text>
 <Card style={styles.contestCard}>
   {contestRounds
-    .filter(round => round.id !== 'post_election') // Hide post-election from timeline
+    .filter(round => round.id !== 'post_election') // Temporary special case until display whitelist is added
     .map((round, index, arr) => {
-      // Derive status from currentRoundId + order (PLAN-00 principle: no stored booleans)
-      const currentOrder = contestRounds.find(r => r.id === currentRoundId)?.order ?? 0;
-      const isActive = round.id === currentRoundId;
-      const isPast = round.order < currentOrder;
+      // Use the selector — single source of truth for round status derivation.
+      // configStore owns round metadata load + partyConfig subscription; this component is selector-only.
+      const status = useConfigStore(selectRoundStatus(round.id)); // 'past' | 'current' | 'future'
+      const isActive = status === 'current';
+      const isPast = status === 'past';
 
       return (
         <View key={round.id} style={styles.timelineItem}>
@@ -209,10 +210,10 @@ votingMethodRow: {
 ### Key details
 
 - The "Endorsement" voting method badge (`variant: 'info'`) appears on the first three rounds where `isEndorsementRound: true`. The Virtual Town Hall and Debate rounds show their own voting method badges (`variant: 'warning'` to visually distinguish them).
-- Round config is fetched once from Firestore on app init. `currentRoundId` updates in real-time via the partyConfig subscription. Round labels and candidate counts are static metadata that only change between contest cycles.
-- Past/current/future status is **derived** from `currentRoundId` + `round.order` (per PLAN-00: no stored `isActive`/`isComplete` booleans). Use `selectRoundStatus(roundId)` or inline derivation.
+- **State ownership:** `configStore` owns both round metadata (fetched once on app init via `fetchContestRounds()`) and the `partyConfig` subscription (real-time `currentRoundId` updates). This component is **selector-only** — it reads `selectContestTimeline` and `selectRoundStatus(roundId)`, never fetches directly.
+- **Round status derivation:** Always use `selectRoundStatus(roundId)` → `'past' | 'current' | 'future'`. Do NOT derive status inline from `currentOrder` comparisons — that creates duplicate truth sources across screens.
 - Voting method labels prepare users for the UI change in later rounds — even before ranked-choice or pick-one voting is implemented (Phase 3 of PLAN-00), users can see what's coming.
-- `post_election` is filtered from display. If additional rounds should be hidden, use a display whitelist rather than inline special cases.
+- `post_election` is filtered from display. This is a **temporary special case** — must be replaced with a display whitelist (e.g., `round.showInTimeline !== false`) before additional non-display rounds are added.
 
 ## Testing
 

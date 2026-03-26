@@ -1,212 +1,71 @@
-# PLAN: Quiz Improvements — 🔴 DO NOT IMPLEMENT — NEEDS FULL REWRITE
+# PLAN-10: Quiz Improvements — 🔴 REPLACED BY SUCCESSOR PLANS
 
-> **Updated 2026-03-25:** Status reset after branch reset. Quiz deselect capability exists. Dealbreakers still exist in codebase. **This plan will break the app if implemented as written.**
+> **Updated 2026-03-26:** Original plan archived. Replaced with 3 successor plan stubs below. Quiz deselect capability already exists (not part of remaining work).
 >
-> **Product decision (confirmed):** Dealbreakers will be removed entirely from the product. Quiz is standalone (`app/quiz.tsx`), NOT onboarding.
->
-> **Sequence:** Last to implement (Phase 4). Must be fully rewritten first.
+> **Product decisions (confirmed):** Dealbreakers removed entirely. Quiz is standalone (`app/(main)/quiz.tsx`), NOT onboarding.
 
-### Review Notes (Mar 25 feedback)
+## Successor Plans
 
-**Conflicts with current quiz architecture:** This plan assumes the quiz lives in the onboarding flow and routes to `/(auth)/onboarding/questionnaire`. But PLAN-03 already created a standalone `app/quiz.tsx` screen accessible from Home, For You prompt, and Settings. Implementing PLAN-10 literally would regress PLAN-03.
+### PLAN-10A: Dealbreaker Removal Migration
 
-**Dealbreaker removal is a system-wide product decision, not a code cleanup:**
-- PLAN-01 includes dealbreaker completion as an onboarding axis
-- PLAN-05 uses dealbreakers for "Most Important" filter gating
-- PLAN-06 sits on top of the same capability model
-- PLAN-12's alignment explainer references dealbreaker warnings
-- PLAN-14 inherits bookmark/endorsement flows that interact with dealbreaker filtering
+**Status:** Not yet written. Prerequisite for PLAN-12 (alignment explainer reuse).
 
-Before implementing, a product-level decision is needed: are dealbreakers being removed from the product, removed from one surface, or renamed?
+**Scope:** Cross-system migration removing all dealbreaker references from the product.
 
-**Scope mismatch:** PLAN-10 describes grouping issues into Global/National/Local "on the home screen quiz modal," but PLAN-03's standalone quiz already organizes district issues into sections.
+**Impact analysis required:**
+- Types: remove `dealbreakers` field from User type
+- Stores: remove `updateDealbreakers()`, `selectUserDealbreakers`, `selectDealbreakersComplete`
+- Alignment: remove `hasDealbreaker` from `calculateAlignmentScore()` in `src/utils/alignment.ts`
+- Feed: remove `no-dealbreakers` filter from `app/(main)/(feed)/index.tsx`
+- PSACard: remove dealbreaker badge display
+- Candidate detail: remove dealbreaker warnings from alignment explainer in `src/screens/CandidateDetailScreen.tsx`
+- Onboarding: remove `app/(auth)/onboarding/dealbreakers.tsx` and navigation to it
+- Profile: remove "Manage Dealbreakers" menu item from `app/(main)/(profile)/index.tsx`
+- Verification checklist: remove dealbreaker route from `src/components/ui/VerificationChecklist.tsx`
+- PLAN-01/05/06 capability selectors: audit for dealbreaker dependencies
 
-**Recommendation:** Do not implement until rewritten against the actual current quiz architecture (PLAN-03). As written, too likely to regress PLAN-03 and destabilize PLAN-01/05.
-
-### Review Notes (Mar 25 round 2 feedback)
-
-**Confirmed: this plan will break the app.** Three reasons:
-
-1. **Completely outdated architecture.** Assumes onboarding quiz, ignores standalone quiz (PLAN-03). The quiz is now a tool, not a gate.
-
-2. **Removing dealbreakers is a product-level migration, not a feature tweak.** Affects: alignment engine, filters, onboarding, UI copy, PLANs 01/05/06/12/14. Must be treated as a cross-system migration with explicit impact analysis.
-
-3. **Scope explosion.** Plan mixes navigation changes, data model changes, UX grouping, and feature removal. Should be split into 3-4 separate plans:
-   - Dealbreaker removal (cross-system migration)
-   - Quiz UX improvements (against standalone quiz architecture)
-   - Issue scope grouping (Global/National/Local)
-
-**Execution:** Phase 4 — last to implement after all other plans are stable.
-
-> **⚠️ EVERYTHING BELOW THIS LINE IS FROM THE ORIGINAL PLAN AND IS STALE.**
-> The implementation details reference the old onboarding quiz, not the standalone `app/quiz.tsx`.
-> Route paths, file references, and architectural assumptions are outdated.
-> This plan must be rewritten from scratch as 3 separate plans before any implementation.
-> Kept below for historical context only.
+**Migration considerations:**
+- Existing user data with `dealbreakers` field: leave in Firestore (no harm), remove from reads
+- Alignment calculations must degrade gracefully for clients that haven't updated
+- `DEALBREAKER_MAP` in `src/utils/alignment.ts` can be deleted entirely
+- Rollout: single deploy, no phased rollout needed (field simply stops being read)
 
 ---
 
-## Summary (STALE — do not implement)
+### PLAN-10B: Standalone Quiz UX Cleanup
 
-- Keep the existing auto-save behavior (saves immediately when user selects a policy option) — no separate save button needed
-- Remove the extra navigation screen between the quiz modal on the home screen and the policy-choice popup. Users should tap the quiz modal and immediately see the popup where they choose their policy options
-- Allow users to deselect a previously chosen option so it returns to unfilled/blank
-- Organize the policy sections in the home screen quiz modal into three groups: **Global**, **National**, and **Local**
-- **Remove the dealbreakers concept entirely** from the quiz flow and the app — remove all filters, popups, screens, and references to dealbreakers
-- "Take the Quiz" label toggles to "Change the Quiz" once completed
+**Status:** Not yet written. Low priority — quiz already works.
 
-## Current State
+**Scope:** UX improvements to the standalone quiz (`app/(main)/quiz.tsx`).
 
-- Quiz lives in `app/(auth)/onboarding/questionnaire.tsx` (365 lines) — multi-step flow: issues selection → questionnaire → dealbreakers
-- There is an intermediate issues selection screen (`app/(auth)/onboarding/issues.tsx`) that stands between the home screen and the actual quiz popup — this extra step needs to be removed
-- Questions loaded from Firestore based on selected issues (lines 31-63)
-- Responses auto-saved via `useUserStore().updateQuestionnaireResponses()` (line 104) — this behavior is correct and should be kept
-- Dealbreakers screen at `app/(auth)/onboarding/dealbreakers.tsx` with 12 hardcoded options (max 3 per user) — this entire concept is being removed
-- Dealbreakers settings at `app/settings/dealbreakers.tsx` — also being removed
-- Dealbreaker filtering exists in For You page (`app/(tabs)/for-you.tsx`) as a `no-dealbreakers` filter option
-- Alignment calculation in `src/utils/alignment.ts` checks `hasDealbreaker` based on spectrum position > 80
-- Quiz label on homepage is hardcoded "Policy Preferences" in `VoterHome.tsx:28`
+**Potential items (to be confirmed):**
+- Direct quiz launch from home (currently already routes to `/quiz`)
+- Quiz completion progress indicator improvements
+- Better empty state when no issues selected
 
-## Files to Modify
+**Note:** Quiz deselect capability already exists — do not re-implement.
 
-- `app/(auth)/onboarding/questionnaire.tsx` — remove navigation to dealbreakers, add deselect capability
-- `src/components/home/VoterHome.tsx` — toggle quiz label, launch quiz popup directly (skip issues screen), organize policy sections by Global/National/Local
-- `app/(tabs)/for-you.tsx` — remove the `no-dealbreakers` filter option
-- `src/utils/alignment.ts` — remove `hasDealbreaker` from alignment calculation
-- `src/stores/userStore.ts` — remove `updateDealbreakers()` method and `dealbreakers` field usage
-- `src/types/index.ts` — remove dealbreaker-related type fields from User type
-- `app/settings/_layout.tsx` — remove dealbreakers route
-- `app/(tabs)/profile.tsx` — remove "Manage Dealbreakers" menu item
-- `src/components/feed/PSACard.tsx` — remove dealbreaker badge display
-- `app/candidate/[id].tsx` — remove dealbreaker warning from alignment explainer modal
+---
 
-## Files to Delete
+### PLAN-10C: Issue Scope Taxonomy (Global / National / Local)
 
-- `app/(auth)/onboarding/dealbreakers.tsx` — entire dealbreakers onboarding screen
-- `app/settings/dealbreakers.tsx` — entire dealbreakers settings screen
+**Status:** Not yet written. Requires content team input.
 
-## Implementation Details
+**Scope:** Add `scope: 'global' | 'national' | 'local'` to the Issue type and organize quiz sections under scope headers.
 
-### 1\. Remove dealbreakers throughout the codebase
+**Requirements:**
+- Add `scope` field to `Issue` type in `src/types/index.ts` and `index.web.ts`
+- Update issue seed data with scope assignments (needs content team confirmation)
+- Update quiz UI to group issues under Global/National/Local section headers
+- Update Firestore seed function to include scope
 
-**Remove from types (`src/types/index.ts`):**
-- Remove `dealbreakers: string[]` from User interface
-- Remove any DealbreakersOption type definitions
+**Scope mapping (tentative — needs confirmation):**
+- Global: Climate/Environment, Immigration
+- National: Economy, Healthcare, Education, Gun Policy
+- Local: Infrastructure, Housing, Public Safety
 
-**Remove from userStore (`src/stores/userStore.ts`):**
-- Remove `updateDealbreakers()` method
-- Remove any dealbreaker validation logic (max 3 validation, etc.)
+---
 
-**Remove from alignment calculation (`src/utils/alignment.ts`):**
-- Remove `userDealbreakers` parameter from `calculateAlignmentScore()`
-- Remove `hasDealbreaker` from the return object
-- Remove the spectrum position > 80 check
+## Archived Original Plan
 
-**Remove from For You feed (`app/(tabs)/for-you.tsx`):**
-- Remove `no-dealbreakers` from the filter menu options
-- Remove any dealbreaker-related filtering logic
-
-**Remove from PSACard (`src/components/feed/PSACard.tsx`):**
-- Remove dealbreaker badge/icon display on candidate cards
-
-**Remove from candidate detail (`app/candidate/[id].tsx`):**
-- Remove dealbreaker warning section from alignment explainer modal (lines 548-559)
-- Remove `userDealbreakers` from the alignment calculation call
-
-**Remove from navigation:**
-- `app/settings/_layout.tsx` — remove the `dealbreakers` Screen entry
-- `app/(tabs)/profile.tsx` — remove "Manage Dealbreakers" menu item and navigation
-- `app/(auth)/onboarding/questionnaire.tsx` — remove navigation to dealbreakers screen at end of quiz
-
-### 2\. Direct quiz launch from home screen (skip intermediate screen)
-
-Currently the home screen quiz button navigates to the issues selection screen first. Change this so tapping "Take the Quiz" / "Change the Quiz" on the home screen opens the policy choices popup directly.
-
-In `src/components/home/VoterHome.tsx`:
-
-```ts
-// Instead of routing to the issues selection screen:
-// router.push('/settings/issues')
-
-// Route directly to the questionnaire:
-router.push('/(auth)/onboarding/questionnaire')
-```
-
-If the user has no selected issues yet, the questionnaire screen should handle this gracefully — either show all available issues or prompt inline.
-
-### 3\. Add deselect capability to questionnaire
-
-In `app/(auth)/onboarding/questionnaire.tsx`, modify the answer handler so that tapping an already-selected option deselects it:
-
-```ts
-const handleAnswer = (questionId: string, answer: any) => {
-  const existing = responses.get(questionId);
-
-  // If the same answer is selected again, deselect it (remove the response)
-  if (existing && existing.answer === answer) {
-    const updated = new Map(responses);
-    updated.delete(questionId);
-    setResponses(updated);
-    // Auto-save the removal
-    updateQuestionnaireResponses(userId, Array.from(updated.values()));
-    return;
-  }
-
-  // Otherwise, set/update the response as normal
-  const updated = new Map(responses);
-  updated.set(questionId, { questionId, issueId, answer, answeredAt: new Date() });
-  setResponses(updated);
-  // Auto-save (existing behavior)
-  updateQuestionnaireResponses(userId, Array.from(updated.values()));
-};
-```
-
-### 4\. Organize policy sections by scope (Global, National, Local)
-
-On the home screen quiz modal, group the policy sections into three categories. This requires either:
-- Adding a `scope` field to the Issue type (`'global' | 'national' | 'local'`)
-- Or mapping existing issue categories to scope groupings
-
-In the quiz popup, render sections with headers:
-
-```
-{/* Global Issues */}
-<Text variant="titleSmall" style={styles.scopeHeader}>Global</Text>
-{globalIssues.map(issue => <IssueCard key={issue.id} ... />)}
-
-{/* National Issues */}
-<Text variant="titleSmall" style={styles.scopeHeader}>National</Text>
-{nationalIssues.map(issue => <IssueCard key={issue.id} ... />)}
-
-{/* Local Issues */}
-<Text variant="titleSmall" style={styles.scopeHeader}>Local</Text>
-{localIssues.map(issue => <IssueCard key={issue.id} ... />)}
-```
-
-**Scope mapping** (to be confirmed with content team):
-- **Global:** Climate/Environment, Immigration, Foreign Policy
-- **National:** Economy, Healthcare, Education, Gun Policy, Civil Rights
-- **Local:** Infrastructure, Housing, Public Safety, Zoning
-
-Add `scope: 'global' | 'national' | 'local'` to the Issue type in `src/types/index.ts` and populate in Firestore seed data.
-
-### 5\. Update VoterHome quiz label
-
-```ts
-const hasCompletedQuiz = userProfile?.questionnaireResponses?.length > 0;
-
-// In render:
-<Text variant="titleMedium">
-  {hasCompletedQuiz ? 'Change the Quiz' : 'Take the Quiz'}
-</Text>
-```
-
-## Testing
-
-- Tapping quiz modal on home screen goes directly to policy choices (no intermediate screen)
-- Auto-save works: selecting an option immediately persists the response
-- Deselecting a previously chosen option clears it and saves the removal
-- Policy sections are grouped under Global, National, and Local headers
-- All dealbreaker references are removed: no dealbreaker screen in onboarding, no dealbreaker settings, no dealbreaker filter on For You, no dealbreaker badge on candidate cards, no dealbreaker warning in alignment explainer
-- Alignment scores no longer factor in dealbreakers
-- Homepage label toggles between "Take the Quiz" / "Change the Quiz"
+The original PLAN-10 body has been archived to `docs/plans/archive/PLAN-10-original.md`. It contained outdated implementation details referencing the old onboarding quiz flow, stale route paths (`app/(tabs)/`, `app/settings/`), and mixed concerns. Do not reference it for implementation — use the successor plans above.

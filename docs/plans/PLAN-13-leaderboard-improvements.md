@@ -4,7 +4,7 @@
 
 ## PLAN-13A: Hide Cutoff Line on Trending Tab ✅ READY TO SHIP
 
-**File:** `app/(tabs)/leaderboard.tsx`
+**File:** `app/(main)/(leaderboard)/index.tsx` (post-PLAN-17 location)
 
 The endorsement threshold cutoff line currently shows on BOTH the Endorsements and Trending tabs. It should only show on Endorsements.
 
@@ -41,6 +41,6 @@ style={(!isAboveCutoff && leaderboardType === 'endorsements')
 3. PLAN-00 Phase 2 must land (round-scoped endorsement counts, `contestStatus` filtering)
 4. Mass-endorse must flow through `selectCanEndorseCandidate` for every candidate
 
-**Data enrichment still needed:** Add `topIssueIds: string[]` to `LeaderboardEntry` type, populated from candidate `topIssues` in `getCandidatesWithUsers()`.
+**Data enrichment will be required:** Candidate issue metadata is needed for filtering, but the exact shape depends on the final filter model decision (user quiz issues, all issues, both, or precomputed match data). Do not assume `topIssueIds: string[]` until the product decision is final.
 
 > **Depends on:** [PLAN-00 Phase 2](./PLAN-00-contest-round-architecture.md), backend batch endpoint, filter model product decision

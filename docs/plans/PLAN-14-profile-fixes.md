@@ -8,7 +8,7 @@
 
 ### 1. Update profile header defaults
 
-**File:** `app/(tabs)/profile.tsx`
+**File:** `app/(main)/(profile)/index.tsx` (post-PLAN-17 location)
 
 - Default display name: `'Your Name'` (shows "YN" initials in UserAvatar)
 - Add verification label under name using **capability selectors** (NOT legacy `verificationStatus`):
@@ -25,11 +25,11 @@ const isFullyVerified = useUserStore(selectFullyVerified);
 
 ### 2. Hide Run for Office CTA during beta
 
-**Files:** `app/(tabs)/profile.tsx`, `src/components/home/VoterHome.tsx`
+**Files:** `app/(main)/(profile)/index.tsx`, `src/components/home/VoterHome.tsx`
 
 Use `{false && ...}` guard. **Do NOT delete the code or styles** — will be re-enabled post-beta.
 
-Longer-term: replace with a feature flag from `partyConfig` (e.g., `partyConfig.features?.runForOffice`) for auditable beta/production behavior.
+**Must be replaced** with `partyConfig.features?.runForOffice` before beta exits. This is a migration requirement, not a nice-to-have — `{false && ...}` is not an acceptable long-term feature control.
 
 ### Testing
 
