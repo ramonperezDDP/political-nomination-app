@@ -1,6 +1,9 @@
-# PLAN: Profile Page Fixes — BLOCKED ON DEPENDENCIES
+# PLAN: Profile Page Fixes — 🟡 PARTIALLY IMPLEMENTABLE
 
-> **Updated 2026-03-25:** Status reset after branch reset. Run for Office CTA visible, no profile fixes applied. **Blocked on PLAN-12 (bookmarks) and [PLAN-17](./PLAN-17-unified-app-shell.md) (route restructure, supersedes PLAN-08).**
+> **Updated 2026-03-25:** Status reset after branch reset. Run for Office CTA visible, no profile fixes applied.
+>
+> **Safe to implement now:** Profile header fixes (name default, initials, verification label using capability selectors).
+> **Defer:** Endorsements page redesign (blocked on PLAN-12 bookmarks), navigation (solved by PLAN-17).
 
 ### Review Notes (Mar 25 feedback)
 
@@ -14,7 +17,17 @@
 
 **Back navigation is a PLAN-08/15 concern:** Don't solve locally inside profile screens — wait for the unified shell plan.
 
-**Recommendation:** Implement profile header fixes (name default, verification label) independently. Defer endorsements redesign and back navigation until PLAN-08/12/15 are resolved.
+**Recommendation:** Implement profile header fixes (name default, verification label) independently. Defer endorsements redesign and back navigation until PLAN-17/12 are resolved.
+
+### Review Notes (Mar 25 round 2 feedback)
+
+**Confirmed partially implementable.** Safe now: header fixes (name/initials). Defer: endorsements redesign.
+
+1. **Verification model must use capability selectors** (`selectFullyVerified`, `selectMissingVerifications`), NOT legacy `verificationStatus === 'verified'`. The system now has multi-axis verification.
+
+2. **Endorsements page should be round-scoped** (per PLAN-00). Not just flat endorsed/bookmarked — must distinguish current-round endorsements from all-time history.
+
+3. **Navigation is solved by PLAN-17.** Don't add local back-button fixes.
 
 ## Summary
 

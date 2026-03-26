@@ -1,6 +1,8 @@
-# PLAN: Update "About the Contest" Section — CLOSEST TO IMPLEMENTABLE
+# PLAN: Update "About the Contest" Section — IMPLEMENT AFTER PLAN-17
 
 > **Updated 2026-03-25:** Status reset after branch reset. AboutContestCard exists with a HARDCODED static timeline. Needs conversion to dynamic Firestore-driven timeline. PLAN-00 selectors (`selectContestTimeline`, `selectRoundStatus`) are now available.
+>
+> **Sequence:** Implement after PLAN-17 (app shell). Second in the execution order.
 
 > **Depends on:** [PLAN-00: Contest Round Architecture](./PLAN-00-contest-round-architecture.md) — uses `ContestRoundId`, `ContestRound`, `contestRounds` collection, and `selectContestTimeline` / `selectRoundStatus` selectors defined there.
 
@@ -16,6 +18,16 @@
 - Or use a presentation map in code (simpler for now)
 
 **Recommendation:** Implementable after small rewrite to use PLAN-00 selectors instead of stored booleans. Closest to ready of all unimplemented plans.
+
+### Review Notes (Mar 25 round 2 feedback)
+
+**Confirmed second to implement after PLAN-17.** Two fixes required:
+
+1. **`isActive`/`isComplete` is a hard blocker, not minor:** Must use `selectRoundStatus(roundId)` — the plan's rendering logic needs to be rewritten around `'past' | 'current' | 'future'` states.
+
+2. **Presentation data gap is bigger than flagged:** Need labels, voting method descriptions, AND candidate counts for the timeline. Current `ContestRound` has `label`, `shortLabel`, `votingMethod`, `candidatesEntering`, `candidatesAdvancing` — these cover most needs. For human-readable voting method descriptions, use a **static presentation map in code** (simpler than adding Firestore fields). Example: `{ approval: 'Approval Voting', ranked_choice: 'Ranked Choice', pick_one: 'Pick One' }`.
+
+3. **Real-time stability:** If configStore subscription flickers, timeline will flash incorrect states. Ensure `contestRounds` are fetched once (not subscribed) and only `currentRoundId` updates in real-time.
 
 ## Summary
 

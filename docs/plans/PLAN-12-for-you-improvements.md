@@ -1,6 +1,8 @@
-# PLAN: For You Page Improvements — NEEDS BUSINESS-RULE CLARIFICATION
+# PLAN: For You Page Improvements — 🔴 BLOCKED UNTIL PRODUCT DECISIONS MADE
 
-> **Updated 2026-03-25:** Status reset after branch reset. AlignmentExplainerModal does not exist. Share gating and bookmarking system not present. **Needs business-rule decisions before implementation.**
+> **Updated 2026-03-25:** Status reset after branch reset. AlignmentExplainerModal does not exist. Share gating and bookmarking system not present. **This is not an implementation plan yet — it's a spec draft.**
+>
+> **Blocked on:** Bookmark data model spec, share gating product decision, dealbreaker removal (PLAN-10).
 
 ### Review Notes (Mar 25 feedback)
 
@@ -17,6 +19,18 @@
 **Bookmark persistence:** Plan adds bookmark state to userStore (in-memory), but cross-session persistence and post-verification workflows need a real persisted Firestore model with fetch/subscription strategy.
 
 **Recommendation:** Resolve dealbreaker product decision and bookmark scoping rules before implementation.
+
+### Review Notes (Mar 25 round 2 feedback)
+
+**Confirmed: block until product decisions made.** Four hard issues:
+
+1. **Bookmark system is core domain logic, not UI detail.** Bookmarks are round-aware pre-endorsements (confirmed by product). Must define: what happens when bookmarked candidate is eliminated? Persisted in Firestore (not just userStore memory). Need fetch/subscription strategy.
+
+2. **Share gating contradicts product model.** PLAN-01 gates binding political actions (endorse, run for office) — sharing is discovery/advocacy. Requiring verification to share will reduce virality and feel arbitrary. **Product decision: remove share gating requirement.**
+
+3. **Dealbreaker dependency is a direct contradiction with PLAN-10** (which removes dealbreakers). The alignment explainer references dealbreaker content that won't exist after PLAN-10.
+
+4. **Store-only bookmarks will fail** across sessions, devices, and after verification. Must be Firestore-persisted with real collection and subscription.
 
 > **Depends on:** [PLAN-00: Contest Round Architecture](./PLAN-00-contest-round-architecture.md) — Phase 2 will require hiding eliminated candidates from the feed and scoping endorsements to the current round. Phase 3 will replace the endorse button with round-appropriate voting UI (ranked choice, pick one).
 

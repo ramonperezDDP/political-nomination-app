@@ -1,6 +1,10 @@
-# PLAN: Quiz Improvements — NEEDS MAJOR REWRITE
+# PLAN: Quiz Improvements — 🔴 DO NOT IMPLEMENT — NEEDS FULL REWRITE
 
-> **Updated 2026-03-25:** Status reset after branch reset. Quiz deselect capability exists. Dealbreakers still exist in codebase. **This is the most stale and risky plan in the set — do NOT implement as written.**
+> **Updated 2026-03-25:** Status reset after branch reset. Quiz deselect capability exists. Dealbreakers still exist in codebase. **This plan will break the app if implemented as written.**
+>
+> **Product decision (confirmed):** Dealbreakers will be removed entirely from the product. Quiz is standalone (`app/quiz.tsx`), NOT onboarding.
+>
+> **Sequence:** Last to implement (Phase 4). Must be fully rewritten first.
 
 ### Review Notes (Mar 25 feedback)
 
@@ -18,6 +22,21 @@ Before implementing, a product-level decision is needed: are dealbreakers being 
 **Scope mismatch:** PLAN-10 describes grouping issues into Global/National/Local "on the home screen quiz modal," but PLAN-03's standalone quiz already organizes district issues into sections.
 
 **Recommendation:** Do not implement until rewritten against the actual current quiz architecture (PLAN-03). As written, too likely to regress PLAN-03 and destabilize PLAN-01/05.
+
+### Review Notes (Mar 25 round 2 feedback)
+
+**Confirmed: this plan will break the app.** Three reasons:
+
+1. **Completely outdated architecture.** Assumes onboarding quiz, ignores standalone quiz (PLAN-03). The quiz is now a tool, not a gate.
+
+2. **Removing dealbreakers is a product-level migration, not a feature tweak.** Affects: alignment engine, filters, onboarding, UI copy, PLANs 01/05/06/12/14. Must be treated as a cross-system migration with explicit impact analysis.
+
+3. **Scope explosion.** Plan mixes navigation changes, data model changes, UX grouping, and feature removal. Should be split into 3-4 separate plans:
+   - Dealbreaker removal (cross-system migration)
+   - Quiz UX improvements (against standalone quiz architecture)
+   - Issue scope grouping (Global/National/Local)
+
+**Execution:** Phase 4 — last to implement after all other plans are stable.
 
 ## Summary
 

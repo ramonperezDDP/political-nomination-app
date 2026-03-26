@@ -1,6 +1,8 @@
-# PLAN: Leaderboard Improvements — NEEDS BUSINESS-RULE HARDENING
+# PLAN: Leaderboard Improvements — 🔴 DO NOT IMPLEMENT YET
 
-> **Updated 2026-03-25:** Status reset after branch reset. Current leaderboard has no issue filter pills, no mass-endorse, and cutoff line logic uses legacy `endorsementCutoffs`. **Needs business-rule fixes before implementation.**
+> **Updated 2026-03-25:** Status reset after branch reset. Current leaderboard has no issue filter pills, no mass-endorse, and cutoff line logic uses legacy `endorsementCutoffs`.
+>
+> **Blocked on:** Backend batch endpoint for mass-endorse, finalized filtering model, round-aware endorsement logic (PLAN-00 Phase 2).
 
 > **Depends on:** [PLAN-00: Contest Round Architecture](./PLAN-00-contest-round-architecture.md) — Phase 2 will require round-scoped endorsement counts, candidate elimination filtering, and voting-method-aware display.
 
@@ -15,6 +17,16 @@
 **Issue filter source ambiguity:** PLAN-13 copies user-selected issue pills from For You, but PLAN-09 introduced "Apply Filters" on Home as a broader system-wide policy filter. Decide whether leaderboard filtering is based on user's quiz issues, all issues, or both.
 
 **Recommendation:** Fix authorization model for mass-endorse, move to server-side batch, update elimination references to `contestStatus`.
+
+### Review Notes (Mar 25 round 2 feedback)
+
+**Confirmed: do NOT implement yet.** Three hard blockers:
+
+1. **Mass-endorse must be a backend operation.** Client-side `for (...) await endorseCandidate()` will partially succeed, create race conditions, and corrupt state. Needs a callable Cloud Function.
+
+2. **Authorization model must unify under `selectCanEndorseCandidate`.** Currently mixing biometric auth, verification rules, and endorsement eligibility as separate checks. All must flow through the existing eligibility selectors.
+
+3. **Issue filter product decision unresolved:** For You uses quiz-selected issues, PLAN-09 introduced broader policy filters on Home. Leaderboard filtering source needs an explicit decision before implementation.
 
 ## Summary
 

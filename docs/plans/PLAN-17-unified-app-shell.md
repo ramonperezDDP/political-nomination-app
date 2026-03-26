@@ -2,9 +2,21 @@
 
 > **Replaces:** PLAN-07 (title bar), PLAN-08 (footer persistence), PLAN-15 (back button)
 >
-> **Status:** Ready for implementation
+> **Status:** ✅ Ready for implementation — SHIP FIRST, everything else depends on it
 >
 > **Depends on:** [PLAN-00](./PLAN-00-contest-round-architecture.md) Phase 1 (complete) — uses `selectCurrentRoundLabel`, `selectBrowsingDistrict`
+
+### Review Notes (Mar 25 round 2 feedback)
+
+**Confirmed ready to ship.** Reviewer called this "solid, senior-level navigation architecture." Three gaps to address during implementation:
+
+1. **Route duplication drift risk:** `(feed)/candidate/[id]` and `(leaderboard)/candidate/[id]` are the same screen in two locations. **Fix:** Extract shared screen to `src/screens/CandidateDetailScreen.tsx`, both routes import it.
+
+2. **Deep link ambiguity:** Plan doesn't define which tab becomes active on deep link to candidate detail. **Fix:** Default to `(feed)` tab for unknown/deep-linked candidate detail. If an explicit `from` param is present, use it.
+
+3. **AppHeader performance:** Pulling `selectedBrowsingDistrict` and `currentRoundLabel` without memoization or loading state could cause excessive re-renders. **Fix:** Use primitive selectors (strings, not objects) and handle loading state in AppHeader.
+
+**Quiz decision (locked):** Quiz is standalone (`app/quiz.tsx`), NOT part of onboarding. Treat as a tool, not a gate. This resolves the PLAN-10 conflict.
 
 ## Summary
 
