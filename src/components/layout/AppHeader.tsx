@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { StyleSheet, View, Image, Pressable } from 'react-native';
 import { Text, useTheme, Menu } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useConfigStore, selectCurrentRoundLabel } from '@/stores';
 import { useUserStore } from '@/stores';
 
@@ -14,13 +15,14 @@ const AVAILABLE_DISTRICTS = ['PA-01', 'PA-02'];
 
 export default function AppHeader() {
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
   const roundLabel = useConfigStore(selectCurrentRoundLabel);
   const selectedDistrict = useUserStore((s) => s.selectedBrowsingDistrict) || 'PA-01';
   const setDistrict = useUserStore((s) => s.setSelectedBrowsingDistrict);
   const [menuVisible, setMenuVisible] = useState(false);
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.surface, borderBottomColor: theme.colors.outlineVariant }]}>
+    <View style={[styles.container, { paddingTop: insets.top + 8, backgroundColor: theme.colors.surface, borderBottomColor: theme.colors.outlineVariant }]}>
       <Image
         source={require('../../../assets/amsp-logo.png')}
         style={styles.logo}
