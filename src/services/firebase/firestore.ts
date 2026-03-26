@@ -18,6 +18,8 @@ import type {
   ProfileMetrics,
   LeaderboardEntry,
   FeedItem,
+  ContestRound,
+  ContestRoundId,
 } from '@/types';
 
 type Timestamp = FirebaseFirestoreTypes.Timestamp;
@@ -1983,4 +1985,42 @@ export const getProfileMetrics = async (
     .orderBy('date', 'asc')
     .get();
   return snapshot.docs.map((doc) => doc.data() as ProfileMetrics);
+};
+
+// ---- Contest Round Functions (PLAN-00 Phase 1) ----
+
+export const getContestRounds = async (): Promise<ContestRound[]> => {
+  try {
+    const snapshot = await getCollection<ContestRound>(Collections.CONTEST_ROUNDS)
+      .orderBy('order')
+      .get();
+    return snapshot.docs.map((doc) => doc.data() as ContestRound);
+  } catch (error) {
+    console.warn('Error fetching contest rounds:', error);
+    return [];
+  }
+};
+
+const CONTEST_ROUNDS_SEED: Omit<ContestRound, 'startDate' | 'endDate'>[] = [
+  { id: 'pre_nomination', label: 'Pre-Nomination', shortLabel: 'Pre-Nom', order: 0, votingMethod: 'none', isEndorsementRound: false, candidatesEntering: null, candidatesAdvancing: null, tieBreakPolicy: 'advance_all_tied' },
+  { id: 'round_1_endorsement', label: 'First Round: Endorsement', shortLabel: 'Round 1', order: 1, votingMethod: 'approval', isEndorsementRound: true, candidatesEntering: 100, candidatesAdvancing: 20, tieBreakPolicy: 'advance_all_tied' },
+  { id: 'round_2_endorsement', label: 'Second Round: Endorsement', shortLabel: 'Round 2', order: 2, votingMethod: 'approval', isEndorsementRound: true, candidatesEntering: 20, candidatesAdvancing: 10, tieBreakPolicy: 'trending_score' },
+  { id: 'round_3_endorsement', label: 'Third Round: Endorsement', shortLabel: 'Round 3', order: 3, votingMethod: 'approval', isEndorsementRound: true, candidatesEntering: 10, candidatesAdvancing: 4, tieBreakPolicy: 'trending_score' },
+  { id: 'virtual_town_hall', label: 'Virtual Town Hall', shortLabel: 'Town Hall', order: 4, votingMethod: 'ranked_choice', isEndorsementRound: false, candidatesEntering: 4, candidatesAdvancing: 2, tieBreakPolicy: 'admin_decision' },
+  { id: 'debate', label: 'Debate', shortLabel: 'Debate', order: 5, votingMethod: 'pick_one', isEndorsementRound: false, candidatesEntering: 2, candidatesAdvancing: 1, tieBreakPolicy: 'admin_decision' },
+  { id: 'final_results', label: 'Final Results', shortLabel: 'Results', order: 6, votingMethod: 'none', isEndorsementRound: false, candidatesEntering: 1, candidatesAdvancing: null, tieBreakPolicy: 'advance_all_tied' },
+  { id: 'post_election', label: 'Post-Election', shortLabel: 'Archive', order: 7, votingMethod: 'none', isEndorsementRound: false, candidatesEntering: null, candidatesAdvancing: null, tieBreakPolicy: 'advance_all_tied' },
+];
+
+export const seedContestRounds = async (): Promise<void> => {
+  const db = firestore();
+  const batch = db.batch();
+
+  for (const round of CONTEST_ROUNDS_SEED) {
+    const ref = db.collection(Collections.CONTEST_ROUNDS).doc(round.id);
+    batch.set(ref, { ...round, startDate: null, endDate: null });
+  }
+
+  await batch.commit();
+  console.log('Contest rounds seeded successfully');
 };

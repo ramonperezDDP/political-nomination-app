@@ -32,6 +32,9 @@ export const Collections = {
   PARTY_CONFIG: 'partyConfig',
   PROFILE_METRICS: 'profileMetrics',
   AUDIT_LOG: 'auditLog',
+  CONTEST_ROUNDS: 'contestRounds',
+  CONTEST_TRANSITIONS: 'contestTransitions',
+  VOTES: 'votes',
 } as const;
 
 // Storage paths
