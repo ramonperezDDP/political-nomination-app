@@ -4,7 +4,8 @@ import { Text, useTheme, List } from 'react-native-paper';
 import { router } from 'expo-router';
 
 import { Card } from '@/components/ui';
-import { useAuthStore, useConfigStore, useUserStore, selectHasAccount } from '@/stores';
+import { useAuthStore, useConfigStore, useUserStore, selectHasAccount, selectCurrentRoundId } from '@/stores';
+import { getFaqsForRound } from '@/constants/faqs';
 import VideoCard from './VideoCard';
 import QuizCard from './QuizCard';
 import ContentCard from './ContentCard';
@@ -33,32 +34,8 @@ export default function VoterHome() {
   }, [user?.questionnaireResponses]);
   const totalIssues = 7;
 
-  const faqs = [
-    {
-      id: 'endorsement',
-      question: 'How do endorsements work?',
-      answer:
-        'Endorsements are your way of showing support for candidates. You can endorse multiple candidates, and your endorsements help determine who advances in the nomination process. Endorsements are anonymous to candidates.',
-    },
-    {
-      id: 'alignment',
-      question: 'What is the alignment score?',
-      answer:
-        'The alignment score shows how closely a candidate\'s positions match your preferences based on the questionnaire you completed. A higher score means better alignment with your values.',
-    },
-    {
-      id: 'dealbreakers',
-      question: 'Can I change my dealbreakers?',
-      answer:
-        'Yes! You can update your dealbreakers anytime in your profile settings. Candidates with dealbreaker positions will be clearly marked in your feed.',
-    },
-    {
-      id: 'voting',
-      question: 'When can I vote?',
-      answer:
-        'Voting opens after the endorsement phase ends. You\'ll be notified when voting begins. Only candidates who meet the endorsement threshold will appear on the ballot.',
-    },
-  ];
+  const currentRoundId = useConfigStore(selectCurrentRoundId);
+  const faqs = useMemo(() => getFaqsForRound(currentRoundId), [currentRoundId]);
 
   return (
     <View style={styles.container}>
