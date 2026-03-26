@@ -1,151 +1,149 @@
-import React, { useState } from 'react';
-import { StyleSheet, View, Pressable } from 'react-native';
+import React, { useMemo } from 'react';
+import { StyleSheet, View } from 'react-native';
 import { Text, useTheme } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { Card } from '@/components/ui';
+import { useConfigStore, selectContestTimeline, selectCurrentRoundId } from '@/stores';
+import type { ContestRound } from '@/types';
 
-const STAGES = [
-  { label: 'Entire Field', flex: 2 },
-  { label: '20', flex: 1 },
-  { label: '10', flex: 1 },
-  { label: '4', flex: 1.5, sub: 'Virtual\nTown Hall' },
-  { label: '2', flex: 1.5, sub: 'Final\nDebate' },
-  { label: 'Nominee', flex: 2, highlight: true },
-];
+const VOTING_METHOD_LABELS: Record<string, string> = {
+  approval: 'Approval Voting',
+  ranked_choice: 'Ranked Choice',
+  pick_one: 'Pick One',
+  none: '',
+};
 
 export default function AboutContestCard() {
   const theme = useTheme();
-  const [expanded, setExpanded] = useState(false);
+
+  // All hooks at top level — configStore owns fetch/subscription, this component is selector-only
+  const contestRounds = useConfigStore(selectContestTimeline);
+  const currentRoundId = useConfigStore(selectCurrentRoundId);
+
+  // Precompute current order once (not per-item)
+  const currentOrder = useMemo(
+    () => contestRounds.find((r) => r.id === currentRoundId)?.order ?? 0,
+    [contestRounds, currentRoundId]
+  );
+
+  // Pure function used inside .map() — no hooks
+  const getRoundStatus = (round: ContestRound): 'past' | 'current' | 'future' => {
+    if (round.order < currentOrder) return 'past';
+    if (round.order === currentOrder) return 'current';
+    return 'future';
+  };
+
+  const displayRounds = contestRounds.filter((round) => round.id !== 'post_election');
+
+  if (displayRounds.length === 0) return null;
 
   return (
-    <Card style={styles.card}>
-      <Pressable
-        onPress={() => setExpanded(!expanded)}
-        style={styles.header}
-      >
-        <MaterialCommunityIcons
-          name="information"
-          size={24}
-          color={theme.colors.primary}
-        />
-        <Text variant="titleMedium" style={styles.title}>
-          About The Contest
-        </Text>
-        <MaterialCommunityIcons
-          name={expanded ? 'chevron-up' : 'chevron-down'}
-          size={24}
-          color={theme.colors.outline}
-        />
-      </Pressable>
+    <View>
+      <Text variant="titleMedium" style={styles.sectionTitle}>About the Contest</Text>
+      <Card style={styles.contestCard}>
+        {displayRounds.map((round, index, arr) => {
+          const status = getRoundStatus(round);
+          const isActive = status === 'current';
+          const isPast = status === 'past';
 
-      {expanded && (
-        <View style={styles.content}>
-          <Text variant="bodyMedium" style={[styles.text, { color: theme.colors.onSurface }]}>
-            The AMSP nomination process narrows the field over one week through
-            endorsement rounds. Each day represents one week of the actual process.
-          </Text>
+          return (
+            <View key={round.id} style={styles.timelineItem}>
+              {/* Timeline dot and connecting line */}
+              <View style={styles.timelineDot}>
+                <MaterialCommunityIcons
+                  name={isPast ? 'check-circle' : isActive ? 'circle-double' : 'circle-outline'}
+                  size={24}
+                  color={
+                    isActive ? theme.colors.primary
+                    : isPast ? theme.colors.outline
+                    : theme.colors.outlineVariant
+                  }
+                />
+                {index < arr.length - 1 && (
+                  <View
+                    style={[
+                      styles.timelineLine,
+                      { backgroundColor: isPast ? theme.colors.outline : theme.colors.outlineVariant },
+                    ]}
+                  />
+                )}
+              </View>
 
-          {/* Nomination Timeline */}
-          <View style={[styles.timelineRow, { borderColor: theme.colors.outlineVariant }]}>
-            {STAGES.map((stage, i) => (
-              <View
-                key={i}
-                style={[
-                  styles.timelineCell,
-                  { flex: stage.flex },
-                  i < STAGES.length - 1 && {
-                    borderRightWidth: 1,
-                    borderRightColor: theme.colors.outlineVariant,
-                  },
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.stageLabel,
-                    { color: stage.highlight ? theme.colors.primary : theme.colors.onSurface },
-                  ]}
-                >
-                  {stage.label}
-                </Text>
-                {stage.sub && (
-                  <Text style={[styles.stageSub, { color: theme.colors.outline }]}>
-                    {stage.sub}
+              {/* Round content */}
+              <View style={styles.timelineContent}>
+                <View style={styles.timelineLabelRow}>
+                  <Text
+                    variant="titleSmall"
+                    style={{
+                      fontWeight: isActive ? 'bold' : '500',
+                      color: isActive ? theme.colors.primary : theme.colors.onSurface,
+                      flex: 1,
+                    }}
+                  >
+                    {round.label}
+                  </Text>
+                  {isActive && (
+                    <Text variant="labelSmall" style={{ color: theme.colors.primary, fontWeight: 'bold' }}>
+                      Current
+                    </Text>
+                  )}
+                </View>
+
+                {/* Candidate count: e.g., "100 candidates → 20 advance" */}
+                {round.candidatesEntering != null && round.candidatesAdvancing != null && (
+                  <Text variant="bodySmall" style={{ color: theme.colors.outline }}>
+                    {round.candidatesEntering} candidates → {round.candidatesAdvancing} advance
+                  </Text>
+                )}
+
+                {/* Voting method label */}
+                {round.votingMethod !== 'none' && VOTING_METHOD_LABELS[round.votingMethod] && (
+                  <Text variant="labelSmall" style={{ color: theme.colors.outline, marginTop: 2 }}>
+                    {VOTING_METHOD_LABELS[round.votingMethod]}
                   </Text>
                 )}
               </View>
-            ))}
-          </View>
-
-          <View style={[styles.endorsementBar, { backgroundColor: theme.colors.primaryContainer }]}>
-            <Text variant="labelSmall" style={{ color: theme.colors.primary, fontWeight: '600' }}>
-              Endorsement Round
-            </Text>
-          </View>
-
-          <Text variant="bodyMedium" style={[styles.text, { color: theme.colors.onSurface }]}>
-            Voters endorse candidates whose positions align with their values.
-            Candidates who don't meet the endorsement threshold at each stage
-            are eliminated. The final nominee represents the party.
-          </Text>
-        </View>
-      )}
-    </Card>
+            </View>
+          );
+        })}
+      </Card>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
+  sectionTitle: {
+    fontWeight: 'bold',
     marginBottom: 12,
-    overflow: 'hidden',
+    marginTop: 8,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  contestCard: {
+    marginBottom: 24,
     padding: 16,
   },
-  title: {
-    flex: 1,
-    fontWeight: '600',
-    marginLeft: 12,
+  timelineItem: {
+    flexDirection: 'row',
+    marginBottom: 4,
   },
-  content: {
-    paddingHorizontal: 16,
+  timelineDot: {
+    alignItems: 'center',
+    width: 32,
+  },
+  timelineLine: {
+    width: 2,
+    flex: 1,
+    marginVertical: 4,
+  },
+  timelineContent: {
+    flex: 1,
+    marginLeft: 12,
     paddingBottom: 16,
   },
-  text: {
-    lineHeight: 22,
-    marginBottom: 16,
-  },
-  timelineRow: {
+  timelineLabelRow: {
     flexDirection: 'row',
-    borderWidth: 1,
-    borderRadius: 8,
-    overflow: 'hidden',
-    marginBottom: 8,
-  },
-  timelineCell: {
-    paddingVertical: 12,
-    paddingHorizontal: 2,
     alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-  },
-  stageLabel: {
-    textAlign: 'center',
-    fontWeight: 'bold',
-    fontSize: 11,
-  },
-  stageSub: {
-    textAlign: 'center',
-    marginTop: 4,
-    fontSize: 9,
-  },
-  endorsementBar: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 4,
-    alignItems: 'center',
-    marginBottom: 16,
+    gap: 8,
+    marginBottom: 4,
   },
 });
