@@ -1,8 +1,21 @@
-# PLAN: Update "About the Contest" Section — PARTIALLY IMPLEMENTED
+# PLAN: Update "About the Contest" Section — CLOSEST TO IMPLEMENTABLE
 
-> **Updated 2026-03-25:** Status reset after branch reset. AboutContestCard exists with a HARDCODED static timeline. Needs to be converted to dynamic Firestore-driven timeline using `selectContestTimeline` and `selectRoundStatus` from PLAN-00 (now available).
+> **Updated 2026-03-25:** Status reset after branch reset. AboutContestCard exists with a HARDCODED static timeline. Needs conversion to dynamic Firestore-driven timeline. PLAN-00 selectors (`selectContestTimeline`, `selectRoundStatus`) are now available.
 
 > **Depends on:** [PLAN-00: Contest Round Architecture](./PLAN-00-contest-round-architecture.md) — uses `ContestRoundId`, `ContestRound`, `contestRounds` collection, and `selectContestTimeline` / `selectRoundStatus` selectors defined there.
+
+### Review Notes (Mar 25 feedback)
+
+**Plan text uses stale round-state model:** References `isActive` and `isComplete` booleans on round objects, but PLAN-00 explicitly rejected stored booleans. Must use:
+- `selectRoundStatus(roundId)` → `'past' | 'current' | 'future'` (derives from `currentRoundId` + `order`)
+- `selectContestTimeline` → ordered `ContestRound[]`
+- NO `round.isComplete` or `round.isActive` properties
+
+**Data shape gap:** Plan expects admin-editable descriptions on timeline entries, but `ContestRound` only has `label` and `shortLabel`. If richer timeline text is needed, either:
+- Add timeline description fields to `ContestRound`
+- Or use a presentation map in code (simpler for now)
+
+**Recommendation:** Implementable after small rewrite to use PLAN-00 selectors instead of stored booleans. Closest to ready of all unimplemented plans.
 
 ## Summary
 

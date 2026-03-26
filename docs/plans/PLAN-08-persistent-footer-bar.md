@@ -1,6 +1,22 @@
-# PLAN: Persistent Footer/Tab Bar on All Screens — NOT YET IMPLEMENTED
+# PLAN: Persistent Footer/Tab Bar on All Screens — NEEDS REDESIGN
 
 > **Updated 2026-03-25:** Status reset after branch reset. Settings screens remain at `app/settings/`, not nested under tabs.
+
+> **BLOCKED:** Do NOT implement independently. Must be designed together with PLAN-07 (title bar) and PLAN-15 (back button) as a single app-shell/navigation plan. See review notes below.
+
+### Review Notes (Mar 25 feedback)
+
+**Stale dealbreakers reference:** Plan still moves `dealbreakers.tsx` into the Profile tab, but PLAN-10 proposes removing dealbreakers entirely. These two plans conflict.
+
+**Bigger than it looks:** Moving `app/settings/*` and `app/candidate/[id].tsx` into the tab context changes route paths, every `router.push()` target, deep-link behavior, stack history, and back-button semantics. This is a navigation migration, not a file-move.
+
+**Before implementation, requires:**
+- Full route inventory (current → proposed path mapping)
+- Decision on where candidate detail lives (only under For You? reachable from Leaderboard, Home, Endorsements?)
+- Deep-link expectations
+- Clarity on which anonymous-access screens live inside vs outside tabs (app is no longer purely authenticated — anonymous access is core)
+
+**Recommendation:** Rewrite PLAN-07, PLAN-08, and PLAN-15 as one unified app-shell/navigation plan.
 
 ## Summary
 

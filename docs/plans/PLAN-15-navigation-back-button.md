@@ -1,6 +1,16 @@
-# PLAN: Fix Back/Cancel Button Navigation — NOT YET IMPLEMENTED
+# PLAN: Fix Back/Cancel Button Navigation — NEEDS REDESIGN WITH SHELL PLAN
 
-> **Updated 2026-03-25:** Status reset after branch reset. verify-identity.tsx still uses `router.replace()` instead of `router.back()`. Full audit needed.
+> **Updated 2026-03-25:** Status reset after branch reset. verify-identity.tsx still uses `router.replace()`. **Must be designed together with PLAN-07 and PLAN-08.**
+
+### Review Notes (Mar 25 feedback)
+
+**`router.back()` is not always sufficient:** When a screen is entered directly (deep link, cold start, push from nonexistent history), `router.back()` may do nothing. Need a shared navigation helper:
+- If back stack exists → `router.back()`
+- Otherwise → fall back to an intentional route per screen
+
+**Depends on route nesting:** If PLAN-08 changes route structure, the list of "offending" screens and correct back behavior changes. This audit belongs after the navigation shell is finalized.
+
+**Recommendation:** Rewrite as part of unified PLAN-07/08/15 app-shell plan. Do not implement independently.
 
 ## Summary
 

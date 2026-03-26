@@ -1,6 +1,22 @@
-# PLAN: For You Page Improvements — NOT YET IMPLEMENTED
+# PLAN: For You Page Improvements — NEEDS BUSINESS-RULE CLARIFICATION
 
-> **Updated 2026-03-25:** Status reset after branch reset. AlignmentExplainerModal does not exist in current codebase. Share gating and bookmarking system also not present. Full implementation needed.
+> **Updated 2026-03-25:** Status reset after branch reset. AlignmentExplainerModal does not exist. Share gating and bookmarking system not present. **Needs business-rule decisions before implementation.**
+
+### Review Notes (Mar 25 feedback)
+
+**Bookmark type is under-specified:** The proposed `Bookmark` only has `odid`, `candidateId`, `createdAt`. Not enough in a round-scoped contest system. Must decide:
+- Are bookmarks round-specific or portable across rounds?
+- Are bookmarks district-specific?
+- What happens to bookmarks for eliminated candidates?
+- What happens to bookmarks when the user verifies in a different district?
+
+**Alignment explainer and dealbreakers conflict:** The alignment modal source references dealbreaker warnings, while PLAN-10 wants dealbreakers removed. These plans pull in opposite directions.
+
+**Share gating rationale unclear:** Requiring ID verification before sharing is higher friction than the rest of the product model (PLAN-01 gates binding political actions, not discovery/advocacy). Needs explicit product rationale or it will feel arbitrary and hurt organic spread.
+
+**Bookmark persistence:** Plan adds bookmark state to userStore (in-memory), but cross-session persistence and post-verification workflows need a real persisted Firestore model with fetch/subscription strategy.
+
+**Recommendation:** Resolve dealbreaker product decision and bookmark scoping rules before implementation.
 
 > **Depends on:** [PLAN-00: Contest Round Architecture](./PLAN-00-contest-round-architecture.md) — Phase 2 will require hiding eliminated candidates from the feed and scoping endorsements to the current round. Phase 3 will replace the endorse button with round-appropriate voting UI (ranked choice, pick one).
 

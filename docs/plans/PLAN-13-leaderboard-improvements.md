@@ -1,8 +1,20 @@
-# PLAN: Leaderboard Improvements — NOT YET IMPLEMENTED
+# PLAN: Leaderboard Improvements — NEEDS BUSINESS-RULE HARDENING
 
-> **Updated 2026-03-25:** Status reset after branch reset. Current leaderboard has no issue filter pills, no mass-endorse, and cutoff line logic uses legacy `endorsementCutoffs`. Full implementation needed.
+> **Updated 2026-03-25:** Status reset after branch reset. Current leaderboard has no issue filter pills, no mass-endorse, and cutoff line logic uses legacy `endorsementCutoffs`. **Needs business-rule fixes before implementation.**
 
 > **Depends on:** [PLAN-00: Contest Round Architecture](./PLAN-00-contest-round-architecture.md) — Phase 2 will require round-scoped endorsement counts, candidate elimination filtering, and voting-method-aware display.
+
+### Review Notes (Mar 25 feedback)
+
+**Mass-endorse authorization is too naive:** Plan uses biometric auth as the main gate, but the actual endorsement rules require: upgraded account, email verified, voter registration verified, photo ID verified, AND district match. Local biometrics can be a confirmation layer, but must reuse the exact same eligibility checks (`selectCanEndorseCandidate`) as single-candidate endorsement.
+
+**Client-side sequential endorsement is fragile:** Looping `endorseCandidate()` one-by-one on the client creates partial success, retry confusion, and network fragility. Should be a server-side batch operation (callable Cloud Function) with a single source of truth about what got endorsed.
+
+**Stale elimination references:** Plan uses `isEliminated` but the current architecture uses `contestStatus`. Future-phase section needs rewriting.
+
+**Issue filter source ambiguity:** PLAN-13 copies user-selected issue pills from For You, but PLAN-09 introduced "Apply Filters" on Home as a broader system-wide policy filter. Decide whether leaderboard filtering is based on user's quiz issues, all issues, or both.
+
+**Recommendation:** Fix authorization model for mass-endorse, move to server-side batch, update elimination references to `contestStatus`.
 
 ## Summary
 

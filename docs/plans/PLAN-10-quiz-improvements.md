@@ -1,6 +1,23 @@
-# PLAN: Quiz Improvements — PARTIALLY IMPLEMENTED
+# PLAN: Quiz Improvements — NEEDS MAJOR REWRITE
 
-> **Updated 2026-03-25:** Status reset after branch reset. Quiz deselect capability exists. Dealbreakers still exist in codebase (`app/(auth)/onboarding/dealbreakers.tsx` and `app/settings/dealbreakers.tsx`). Remaining: dealbreaker removal, direct quiz launch from home, Global/National/Local grouping.
+> **Updated 2026-03-25:** Status reset after branch reset. Quiz deselect capability exists. Dealbreakers still exist in codebase. **This is the most stale and risky plan in the set — do NOT implement as written.**
+
+### Review Notes (Mar 25 feedback)
+
+**Conflicts with current quiz architecture:** This plan assumes the quiz lives in the onboarding flow and routes to `/(auth)/onboarding/questionnaire`. But PLAN-03 already created a standalone `app/quiz.tsx` screen accessible from Home, For You prompt, and Settings. Implementing PLAN-10 literally would regress PLAN-03.
+
+**Dealbreaker removal is a system-wide product decision, not a code cleanup:**
+- PLAN-01 includes dealbreaker completion as an onboarding axis
+- PLAN-05 uses dealbreakers for "Most Important" filter gating
+- PLAN-06 sits on top of the same capability model
+- PLAN-12's alignment explainer references dealbreaker warnings
+- PLAN-14 inherits bookmark/endorsement flows that interact with dealbreaker filtering
+
+Before implementing, a product-level decision is needed: are dealbreakers being removed from the product, removed from one surface, or renamed?
+
+**Scope mismatch:** PLAN-10 describes grouping issues into Global/National/Local "on the home screen quiz modal," but PLAN-03's standalone quiz already organizes district issues into sections.
+
+**Recommendation:** Do not implement until rewritten against the actual current quiz architecture (PLAN-03). As written, too likely to regress PLAN-03 and destabilize PLAN-01/05.
 
 ## Summary
 

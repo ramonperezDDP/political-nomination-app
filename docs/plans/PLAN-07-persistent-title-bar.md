@@ -1,10 +1,25 @@
-# PLAN: Persistent Title Bar with Logo and District — NOT YET IMPLEMENTED
+# PLAN: Persistent Title Bar with Logo and District — NEEDS REDESIGN
 
 > **Updated 2026-03-25:** Status reset after branch reset. AppHeader component does not exist in current codebase. PLAN-00 Phase 1 selectors (`selectCurrentRoundLabel`) are now available for use.
+
+> **BLOCKED:** Do NOT implement independently. Must be designed together with PLAN-08 (footer/tabs) and PLAN-15 (back button) as a single app-shell/navigation plan. See review notes below.
 
 > **Related:** [PLAN-00: Contest Round Architecture](./PLAN-00-contest-round-architecture.md) — the round indicator in the title bar uses `selectCurrentRoundLabel` from PLAN-00.
 
 > **WARNING:** The previous implementation wrapped `<Tabs>` in a `<View>` which broke touch handling. Do NOT wrap navigators in extra View components. Use `headerShown: false` on individual tabs and render AppHeader INSIDE each screen's SafeAreaView, or use the Tabs `screenOptions.header` prop.
+
+### Review Notes (Mar 25 feedback)
+
+**Self-contradiction:** This plan warns not to wrap `<Tabs>` in a `<View>`, then shows an implementation that does exactly that. The rendering approach must be redesigned — either use `screenOptions.header` on the Tabs navigator, or render AppHeader inside each screen.
+
+**District selector uses wrong state:** The plan writes to `userProfile.district`, but Plan 02 already established `selectedBrowsingDistrict` in the user store for content browsing. The header district selector must:
+- Read and write `selectedBrowsingDistrict` (not `userProfile.district`)
+- Work for anonymous users (who have no verified districts)
+- Never mutate verification-derived district identity
+
+**Stale text:** References to "no district concept in the UI" are outdated — the district toggle and browsing district concept are already established in Plan 02.
+
+**Recommendation:** Rewrite PLAN-07, PLAN-08, and PLAN-15 as one unified app-shell/navigation plan before implementation.
 
 ## Summary
 

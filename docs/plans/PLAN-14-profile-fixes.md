@@ -1,6 +1,20 @@
-# PLAN: Profile Page Fixes — NOT YET IMPLEMENTED
+# PLAN: Profile Page Fixes — BLOCKED ON DEPENDENCIES
 
-> **Updated 2026-03-25:** Status reset after branch reset. Run for Office CTA is still visible (not hidden). Profile header does not show "Your Name" default or "Unverified" label. Endorsements page not redesigned. Full implementation needed.
+> **Updated 2026-03-25:** Status reset after branch reset. Run for Office CTA visible, no profile fixes applied. **Blocked on PLAN-12 (bookmarks) and PLAN-08 (route restructure).**
+
+### Review Notes (Mar 25 feedback)
+
+**Verification state is stale:** Plan uses `userProfile?.verificationStatus === 'verified'`, but the current model splits verification into email, voter registration, and photo ID. Should use capability selectors (`selectFullyVerified`, `selectMissingVerifications`) instead of a legacy single-field status.
+
+**Endorsements page depends on PLAN-12 bookmarks:** The redesigned page assumes bookmarks exist. Not independently implementable.
+
+**Endorsements should be round-scoped:** The page design should account for round-specific endorsement history from PLAN-00, not just flat endorsed/bookmarked. "All-time totals" and "current round" are separate concepts.
+
+**Feature flagging for Run for Office:** `{false && ...}` is a quick fix but not a good long-term control point. Should be driven by a config value or feature flag for auditable beta/production behavior.
+
+**Back navigation is a PLAN-08/15 concern:** Don't solve locally inside profile screens — wait for the unified shell plan.
+
+**Recommendation:** Implement profile header fixes (name default, verification label) independently. Defer endorsements redesign and back navigation until PLAN-08/12/15 are resolved.
 
 ## Summary
 
