@@ -6,23 +6,11 @@
 
 **File:** `app/(main)/(leaderboard)/index.tsx` (post-PLAN-17 location)
 
-The endorsement threshold cutoff line currently shows on BOTH the Endorsements and Trending tabs. It should only show on Endorsements.
+The endorsement threshold cutoff line was showing on BOTH the Endorsements and Trending tabs. Fixed to only show on Endorsements.
 
-**Change:** In `renderCandidateTile`, add a tab check to the cutoff line render condition:
+**Change:** Added `leaderboardType === 'endorsements'` guard to `showCutoffLine` in `renderCandidateTile`. The below-cutoff dim styling was already correctly gated.
 
-```tsx
-const showCutoffLine = index === cutoffIndex && leaderboardType === 'endorsements';
-```
-
-Also gate the below-cutoff dim styling:
-
-```tsx
-style={(!isAboveCutoff && leaderboardType === 'endorsements')
-  ? [styles.candidateTile, styles.belowCutoff]
-  : styles.candidateTile}
-```
-
-**Testing:** Switch to Trending → cutoff line gone. Switch to Endorsements → cutoff line present.
+**Testing:** Verified 2026-03-27 — Endorsements tab shows cutoff line + dimmed candidates; Trending tab shows no cutoff line, no dimming.
 
 ---
 
