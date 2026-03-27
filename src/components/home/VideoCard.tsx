@@ -61,6 +61,7 @@ export default function VideoCard() {
           javaScriptEnabled
           originWhitelist={['*']}
           mixedContentMode="compatibility"
+          scrollEnabled={false}
         />
       </View>
       <View style={styles.info}>

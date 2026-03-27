@@ -117,6 +117,9 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
         }
       }
 
+      // Sort by order at store time so selectors return stable references
+      rounds.sort((a, b) => a.order - b.order);
+
       const config = get().partyConfig;
       set({
         contestRounds: rounds,
@@ -162,7 +165,7 @@ export const selectCurrentRoundLabel = (state: ConfigState): string =>
   state.currentRound?.label || 'Pre-Nomination';
 
 export const selectContestTimeline = (state: ConfigState): ContestRound[] =>
-  [...state.contestRounds].sort((a, b) => a.order - b.order);
+  state.contestRounds;
 
 export const selectRoundStatus = (roundId: ContestRoundId) =>
   (state: ConfigState): 'past' | 'current' | 'future' => {
