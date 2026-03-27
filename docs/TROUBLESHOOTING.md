@@ -935,6 +935,20 @@ xcrun simctl launch booted com.politicalnomination.app
 
 ---
 
+## Zustand Selector Creating New References (Touch Unresponsiveness)
+
+**Symptom:** Buttons on the Home tab are unresponsive — scrolling works but no taps register. Other tabs (For You, Leaderboard, Profile) work fine.
+
+**Cause:** A Zustand selector (`selectContestTimeline`) created a new array on every call via `[...state.contestRounds].sort(...)`. Zustand uses `Object.is` to compare selector results, so a new array reference always triggers a re-render. Combined with the Firestore realtime listener updating the store, this caused `AboutContestCard` to re-render continuously, blocking the JS thread from processing touch events.
+
+**Fix (applied 2026-03-27):** Sort `contestRounds` once at store time (in `fetchContestRounds`) and return the stable `state.contestRounds` reference from the selector.
+
+**General rule:** Zustand selectors must NEVER create new objects or arrays — no `[...spread]`, `.map()`, `.filter()`, or `.sort()` in selectors. Return stable references from the store, or use `useShallow` / custom equality functions.
+
+**Diagnosis method:** Binary search by commenting out components one at a time. Used a `DEBUG_LEVEL` constant in `VoterHome` to add components incrementally (0=bare button, 1=+VideoCard, 2=+QuizCard, etc.). Level 4 (+AboutContestCard) broke touches.
+
+---
+
 ## Element Inspector Blocking All Touch Events
 
 **Symptom:** The app renders correctly and scrolling works, but NO button taps register — tab bar, Pressable, Paper Button, nothing responds. A dark toolbar reading "Tap something to inspect it" with tabs (Inspect, Perf, Network, Touchables) is visible at the bottom of the screen.

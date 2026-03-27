@@ -1,5 +1,7 @@
-# PLAN: Update "About the Contest" Section — IMPLEMENT AFTER PLAN-17
+# PLAN: Update "About the Contest" Section — COMPLETE
 
+> **Completed 2026-03-27.** Dynamic contest timeline implemented and all 10 test items verified.
+>
 > **Updated 2026-03-25:** Status reset after branch reset. AboutContestCard exists with a HARDCODED static timeline. Needs conversion to dynamic Firestore-driven timeline. PLAN-00 selectors (`selectContestTimeline`, `selectRoundStatus`) are now available.
 >
 > **Sequence:** Implement after PLAN-17 (app shell). Second in the execution order.
@@ -227,14 +229,22 @@ votingMethodRow: {
 
 ## Testing
 
-- Contest timeline renders with all 7 display rounds (pre_nomination through final_results, post_election hidden)
-- "Approval Voting" badge appears on endorsement rounds 1-3
-- "Ranked Choice" badge appears on Virtual Town Hall
-- "Pick One" badge appears on Debate
-- Current round is highlighted in primary color with "Current" chip
-- Past rounds show filled checkmark icons
-- Future rounds show outline icons in muted color
-- Candidate count ("100 → 20") displayed for rounds with entering/advancing counts
-- Timeline lines connect the rounds visually
-- Changing `currentRoundId` in Firestore updates the timeline in real-time
-- Round data loads from `contestRounds` collection (not hardcoded)
+- [x] Contest timeline renders with all 7 display rounds (pre_nomination through final_results, post_election hidden)
+- [x] "Approval Voting" badge appears on endorsement rounds 1-3
+- [x] "Ranked Choice" badge appears on Virtual Town Hall
+- [x] "Pick One" badge appears on Debate
+- [x] Current round is highlighted in primary color with "Current" chip
+- [x] Past rounds show filled checkmark icons
+- [x] Future rounds show outline icons in muted color
+- [x] Candidate count ("100 → 20") displayed for rounds with entering/advancing counts
+- [x] Timeline lines connect the rounds visually
+- [x] Changing `currentRoundId` in Firestore updates the timeline in real-time
+- [x] Round data loads from `contestRounds` collection (not hardcoded)
+
+All tests verified 2026-03-27 via automated store-level round cycling through all 7 rounds (pre_nomination through final_results). Each round correctly shows past/current/future status, voting method labels, and candidate counts.
+
+### Post-implementation fix: Zustand selector stability (2026-03-27)
+
+The original `selectContestTimeline` selector created a new array on every call via `[...state.contestRounds].sort(...)`. This caused infinite re-renders of `AboutContestCard` (Zustand's `Object.is` comparison always saw a "change"), which blocked the JS thread from processing touch events on the Home tab.
+
+**Fix:** Sort `contestRounds` once at fetch time in `fetchContestRounds()`, and have the selector return the stable `state.contestRounds` reference directly. This addressed the review note (Mar 25 round 2, item 3) about real-time stability.
