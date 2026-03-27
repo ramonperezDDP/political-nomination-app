@@ -1,4 +1,9 @@
-# Plan 01: Registration Simplification & Progressive Access Model
+# Plan 01: Registration Simplification & Progressive Access Model — ~90% COMPLETE
+
+> **Updated 2026-03-27.** Core implementation complete: anonymous Firebase auth, account upgrade via `linkWithCredential`, progressive capability selectors (5-dimensional user model), quiz access without account, session metadata tracking, email verification sync. Remaining items are Phase 2 polish:
+> - **Missing:** Verification UI flows (voter registration, photo ID upload screens)
+> - **Missing:** Abandonment cleanup Cloud Function (90-day inactive anonymous accounts)
+> - **Missing:** Upgrade prompt UX (gating selectors exist but no UI prompts when anonymous users hit gated features)
 
 **Feedback:** Only require First Name, Last Name, and Email for new users, then go directly to the home page. Build a progressive verification/onboarding system where users unlock capabilities as they complete verification steps. Introduce an anonymous mode so users can enter the app and take the quiz without creating an account.
 
