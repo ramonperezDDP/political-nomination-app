@@ -2,7 +2,7 @@
 
 > **Updated 2026-03-25:** Split per round 3 review. Original plan bundled a safe quick fix with blocked features.
 
-## PLAN-13A: Hide Cutoff Line on Trending Tab ✅ READY TO SHIP
+## PLAN-13A: Hide Cutoff Line on Trending Tab ✅ COMPLETE (2026-03-27)
 
 **File:** `app/(main)/(leaderboard)/index.tsx` (post-PLAN-17 location)
 

@@ -78,7 +78,7 @@ export default function LeaderboardScreen() {
 
   const renderCandidateTile = ({ item, index }: { item: LeaderboardEntry; index: number }) => {
     const isAboveCutoff = cutoffIndex === -1 || index < cutoffIndex;
-    const showCutoffLine = index === cutoffIndex;
+    const showCutoffLine = index === cutoffIndex && leaderboardType === 'endorsements';
 
     return (
       <>
