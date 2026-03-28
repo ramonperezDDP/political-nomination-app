@@ -1,6 +1,6 @@
 # PLAN-10E: Eliminate Priority Issues — Pure Quiz-Based Matching
 
-> **Status:** Approved with revisions (feedback round 5). All 6 reviewer items addressed.
+> **Status: ✅ COMPLETE (Step 1, 2026-03-28).** Priority issues removed from matching. Pure quiz-based scoring live. Step 2 (POSITION_TEMPLATES deletion) pending.
 >
 > **Depends on:** PLAN-10C (complete), PLAN-10D (complete)
 
