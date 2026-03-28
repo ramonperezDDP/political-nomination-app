@@ -112,13 +112,34 @@ The current quiz uses a **spectrum slider** (Progressive ↔ Conservative) for e
    - Ensure the For You feed filters (Issues, Top Picks) work against the new question-based matching, not just the old spectrum positions
    - Real candidates will answer these questions as part of their campaign profile setup
 10. **Feed integration:** The Experience Menu filters ("My Issues", "Top Picks") must support filtering candidates by match on the new multiple-choice questions — a user who picks "Free Trade" should see candidates who also picked "Free Trade" ranked higher
+11. **Adaptive question system:** Questions must be rotatable without code deploys as campaigns evolve and news cycles shift. This requires:
+    - **Move `DISTRICT_ISSUES` mapping to Firestore.** Currently hardcoded in `quiz.tsx` — this is the main bottleneck for adaptability. Create a `quizConfig` collection keyed by district that lists active question/issue IDs.
+    - **Add `isActive` flag to questions.** Old questions can be deactivated without deletion so existing user responses remain valid. New questions are added and activated via Firestore.
+    - **Add `addedAt` / `retiredAt` timestamps to questions.** Tracks when questions entered/left rotation for analytics and user experience (e.g., "3 new questions since your last visit").
+    - **Versioned question sets.** Consider a `questionSetVersion` on the quiz config so the app can detect when new questions are available and prompt users to revisit the quiz.
+    - **Graceful handling of retired questions.** If a user answered a question that's been retired, their response is preserved for historical matching but the question no longer appears in the quiz. Alignment scoring should handle responses to questions that no longer exist in the active set.
+
+#### Current System Capabilities (Reference)
+
+The existing architecture is already partially adaptive:
+- **Questions** are Firestore-driven (`questions` collection), auto-seeded on first load
+- **Issues** are Firestore-driven (`issues` collection), auto-seeded on first load
+- **Candidate positions** are generated from 5 political leaning templates with per-issue spectrum values (-100 to +100)
+- **Alignment scoring** (`src/utils/alignment.ts`) compares user spectrum answers to candidate spectrum positions
+- **Question types** already support `single_choice`, `multiple_choice`, `slider`, and `ranking`
+
+What's **NOT** adaptive today:
+- `DISTRICT_ISSUES` mapping in `quiz.tsx` is hardcoded (must move to Firestore)
+- No `isActive`/retirement concept for questions — all seeded questions are always shown
+- No mechanism to notify users of new questions
+- Alignment scoring only handles spectrum values, not exact-match multiple-choice
 
 #### Open Questions
 
 - How do multiple-choice answers map to alignment scoring? The current spectrum model uses a -1 to 1 range. Multiple-choice = exact match (1.0) vs mismatch (0.0)? Or weighted partial matches?
 - Should the 7 existing spectrum questions be removed, kept alongside, or migrated to multiple-choice?
-- Are these questions fixed in code or Firestore-driven (like the current issues)?
 - How should candidate answer diversity be distributed in seed data? (e.g., random, correlated with existing spectrum positions, or manually curated per avatar)
+- What's the cadence for question rotation? Per-round? Event-driven? Admin-triggered?
 
 #### References
 
