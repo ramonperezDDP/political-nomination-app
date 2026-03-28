@@ -62,17 +62,16 @@ export default function FullScreenPSA({ feedItem, isActive, height }: FullScreen
 
     const matches: { issueId: string; name: string; closeness: number }[] = [];
     for (const cp of candidatePositions) {
-      // Only compare on issues relevant to the current district
+      // Only compare on issues relevant to the candidate's district
       if (!districtIssueIds.has(cp.issueId)) continue;
       const userResp = responses.find((r) => r.issueId === cp.issueId);
       if (!userResp) continue;
       const userVal = Number(userResp.answer);
       if (isNaN(userVal)) continue;
-      // Match if same direction (both positive or both negative/zero)
-      const sameDirection = (userVal >= 0 && cp.spectrumPosition >= 0) ||
-                            (userVal < 0 && cp.spectrumPosition < 0);
-      if (sameDirection) {
-        const closeness = 1 - Math.abs(userVal - cp.spectrumPosition) / 200;
+      // Spectrum-mapped closeness: 1 - (|userVal - candidatePos| / 200)
+      // Consistent with calculateAlignmentScore in alignment.ts
+      const closeness = 1 - Math.abs(userVal - cp.spectrumPosition) / 200;
+      if (closeness >= 0.5) {
         const issue = issues.find((i) => i.id === cp.issueId);
         if (issue) matches.push({ issueId: cp.issueId, name: issue.name, closeness });
       }
