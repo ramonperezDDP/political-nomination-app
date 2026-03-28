@@ -28,23 +28,24 @@ type DisplayItem =
 
 const generateFeedItem = (
   candidate: Candidate,
-  user: User | null,
-  userIssues: string[],
+  candidateUser: User | null,
   issues: Array<{ id: string; name: string }>,
-  userResponses: Array<{ issueId: string; answer: string | number | string[] }> = []
+  currentUserResponses: Array<{ questionId: string; issueId: string; answer: number }> = []
 ): FeedItem => {
-  const candidatePriorityIssues = (candidate.topIssues || [])
-    .filter((ti) => ti.priority <= 5)
-    .sort((a, b) => a.priority - b.priority);
-  const candidateIssueIds = candidatePriorityIssues.map((ti) => ti.issueId);
-  const allPositions = candidate.topIssues || [];
-  const { score, matchedIssues } = calculateAlignmentScore({
-    candidateIssues: candidateIssueIds,
-    userIssues,
-    candidatePositions: candidatePriorityIssues,
-    allCandidatePositions: allPositions,
-    userResponses,
+  // Normalize candidate's quiz responses to numeric answers
+  const candidateResponses = (candidateUser?.questionnaireResponses || [])
+    .map((r) => ({ questionId: r.questionId, issueId: r.issueId, answer: Number(r.answer) }))
+    .filter((r) => !isNaN(r.answer));
+
+  const { score, sharedCount, alignedQuestionIds } = calculateAlignmentScore({
+    candidateResponses,
+    userResponses: currentUserResponses,
   });
+
+  const candidateIssueIds = (candidate.topIssues || [])
+    .filter((ti) => ti.priority <= 5)
+    .sort((a, b) => a.priority - b.priority)
+    .map((ti) => ti.issueId);
 
   return {
     id: candidate.id,
@@ -67,9 +68,9 @@ const generateFeedItem = (
     },
     candidate: {
       id: candidate.id,
-      displayName: user?.displayName || 'Candidate',
-      photoUrl: user?.photoUrl,
-      gender: user?.gender || inferGenderFromName(user?.displayName || ''),
+      displayName: candidateUser?.displayName || 'Candidate',
+      photoUrl: candidateUser?.photoUrl,
+      gender: candidateUser?.gender || inferGenderFromName(candidateUser?.displayName || ''),
       topIssues: candidateIssueIds.slice(0, 3).map(
         (id) => issues.find((i) => i.id === id)?.name || id
       ),
@@ -81,8 +82,9 @@ const generateFeedItem = (
       zone: candidate.zone,
     },
     alignmentScore: score,
-    matchedIssues,
-    candidatePositions: candidate.topIssues || [],
+    candidateResponses,
+    sharedCount,
+    alignedQuestionIds,
   };
 };
 
@@ -142,10 +144,12 @@ export default function ForYouScreen() {
           await reseedAllData();
           candidatesData = await getCandidatesForFeed(selectedDistrict);
         }
-        const userIssues = user?.selectedIssues || [];
-        const userResponses = user?.questionnaireResponses || [];
+        // Normalize current user's quiz responses to numeric answers for alignment
+        const normalizedUserResponses = (user?.questionnaireResponses || [])
+          .map((r) => ({ questionId: r.questionId, issueId: r.issueId, answer: Number(r.answer) }))
+          .filter((r) => !isNaN(r.answer));
         const items = candidatesData.map(({ candidate, user: candidateUser }) =>
-          generateFeedItem(candidate, candidateUser, userIssues, issues, userResponses)
+          generateFeedItem(candidate, candidateUser, issues, normalizedUserResponses)
         );
         setFeedItems(items);
       } catch (error) {

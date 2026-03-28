@@ -2,97 +2,67 @@
  * Shared alignment score calculation.
  *
  * This is the single source of truth for computing how well a candidate
- * matches a voter's priorities. Used by the For You feed AND the candidate
- * profile page so the numbers are always consistent.
+ * matches a voter based on quiz answer spectrum closeness.
+ * Used by the For You feed AND the candidate profile page so the numbers
+ * are always consistent.
+ *
+ * PLAN-10E: Pure quiz-based matching. No priority issues, no overlap ratio,
+ * no priority bonus, no base points.
  */
 
 export interface AlignmentInput {
-  candidateIssues: string[];
-  userIssues: string[];
-  candidatePositions: Array<{ issueId: string; spectrumPosition: number; priority: number }>;
-  /** All candidate positions for spectrum comparison */
-  allCandidatePositions?: Array<{ issueId: string; spectrumPosition: number; priority: number }>;
-  /** User's quiz responses — used to compare spectrum positions with candidates */
-  userResponses?: Array<{ issueId: string; answer: string | number | string[] }>;
+  candidateResponses: Array<{ questionId: string; issueId: string; answer: number }>;
+  userResponses: Array<{ questionId: string; issueId: string; answer: number }>;
 }
 
 export interface AlignmentResult {
-  score: number | null;
-  matchedIssues: string[];
+  score: number | null;       // 0-100, null if no shared answers
+  sharedCount: number;        // how many questions both answered
+  alignedQuestionIds: string[]; // questionIds where closeness >= 0.75
 }
 
 export function calculateAlignmentScore({
-  candidateIssues = [],
-  userIssues = [],
-  candidatePositions = [],
-  allCandidatePositions,
+  candidateResponses = [],
   userResponses = [],
 }: AlignmentInput): AlignmentResult {
-  // Find issues that both user and candidate prioritize
-  const matchedIssues = candidateIssues.filter((id) => userIssues.includes(id));
-
-  // If user has no selected issues, score is unknown
-  if (userIssues.length === 0) {
-    return { score: null, matchedIssues: [] };
+  // Build lookup from questionId -> numeric answer for the candidate
+  const candidateMap = new Map<string, number>();
+  for (const r of candidateResponses) {
+    const val = Number(r.answer);
+    if (!isNaN(val)) candidateMap.set(r.questionId, val);
   }
 
-  // If candidate has no priority issues, return low score
-  if (candidateIssues.length === 0) {
-    return { score: 30, matchedIssues: [] };
-  }
+  // Compare each user response against the candidate's answer for the same questionId
+  let closenessTotal = 0;
+  let sharedCount = 0;
+  const alignedQuestionIds: string[] = [];
 
-  // 1. Issue overlap ratio (what % of user's issues does candidate prioritize)
-  const overlapRatio = matchedIssues.length / userIssues.length;
+  for (const ur of userResponses) {
+    const userVal = Number(ur.answer);
+    if (isNaN(userVal)) continue;
 
-  // 2. Spectrum alignment — compare user's quiz answers with candidate positions
-  //    For each matched issue where the user has an answer, compute closeness (0–1).
-  //    Distance is |userAnswer - candidatePosition| on a -100..100 scale (max 200).
-  let spectrumTotal = 0;
-  let spectrumCount = 0;
-  if (userResponses.length > 0) {
-    const responseMap = new Map<string, number>();
-    for (const r of userResponses) {
-      const val = Number(r.answer);
-      if (!isNaN(val)) responseMap.set(r.issueId, val);
-    }
+    const candidateVal = candidateMap.get(ur.questionId);
+    if (candidateVal === undefined) continue;
 
-    // Compare against ALL candidate positions (not just matched issues)
-    const allPositions = allCandidatePositions || candidatePositions;
-    for (const pos of allPositions) {
-      const userVal = responseMap.get(pos.issueId);
-      if (userVal === undefined) continue;
-      const distance = Math.abs(userVal - pos.spectrumPosition) / 200; // 0–1
-      spectrumTotal += 1 - distance; // closeness: 1 = identical, 0 = opposite
-      spectrumCount++;
+    // Both answered this question
+    const closeness = 1 - Math.abs(userVal - candidateVal) / 200;
+    closenessTotal += closeness;
+    sharedCount++;
+
+    if (closeness >= 0.75) {
+      alignedQuestionIds.push(ur.questionId);
     }
   }
-  const spectrumAlignment = spectrumCount > 0 ? spectrumTotal / spectrumCount : 0.5;
 
-  // 3. Priority alignment (are matched issues high priority for candidate?)
-  let priorityBonus = 0;
-  matchedIssues.forEach((issueId) => {
-    const candidatePosition = candidatePositions.find((p) => p.issueId === issueId);
-    if (candidatePosition) {
-      if (candidatePosition.priority <= 3) {
-        priorityBonus += 10;
-      } else if (candidatePosition.priority <= 5) {
-        priorityBonus += 5;
-      }
-    }
-  });
+  if (sharedCount === 0) {
+    return { score: null, sharedCount: 0, alignedQuestionIds: [] };
+  }
 
-  // Score calculation:
-  // - 10 base points
-  // - Up to 30 points for issue overlap
-  // - Up to 40 points for spectrum alignment (policy position closeness)
-  // - Up to 20 points from priority bonus (capped)
-  const overlapScore = overlapRatio * 30;
-  const spectrumScore = spectrumAlignment * 40;
-  const cappedPriorityBonus = Math.min(priorityBonus, 20);
-  const baseScore = Math.round(10 + overlapScore + spectrumScore + cappedPriorityBonus);
+  const score = Math.round((closenessTotal / sharedCount) * 100);
 
   return {
-    score: Math.min(100, Math.max(0, baseScore)),
-    matchedIssues,
+    score: Math.min(100, Math.max(0, score)),
+    sharedCount,
+    alignedQuestionIds,
   };
 }

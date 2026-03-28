@@ -29,7 +29,7 @@ import {
   LoadingScreen,
   EmptyState,
 } from '@/components/ui';
-import type { Candidate, PSA, User, TopIssue } from '@/types';
+import type { Candidate, PSA, User } from '@/types';
 
 const SafeAreaView = Platform.OS === 'web' ? View : NativeSafeAreaView;
 
@@ -60,54 +60,43 @@ export default function CandidateProfileScreen() {
   const hasEndorsed = id ? hasEndorsedCandidate(id) : false;
 
   // Calculate alignment score and matching details (same algorithm as For You feed)
-  // District-scoped quiz issue IDs for shared policy matching
-  const QUIZ_ISSUE_IDS: Record<string, Set<string>> = {
-    'PA-01': new Set(['trade', 'iran', 'inflation', 'borders', 'welfare', 'pa01-infrastructure', 'pa01-housing']),
-    'PA-02': new Set(['trade', 'iran', 'inflation', 'borders', 'welfare', 'pa02-budget', 'pa02-transit']),
-  };
-
+  // PLAN-10E: Pure quiz-based matching using questionnaireResponses
   const alignmentDetails = useMemo(() => {
     if (!candidate || !currentUser) {
-      return { score: null, sharedPolicies: [], totalQuizIssues: 0 };
+      return { score: null, sharedPolicies: [], sharedCount: 0 };
     }
 
-    const userIssues = currentUser.selectedIssues || [];
-    const userResponses = currentUser.questionnaireResponses || [];
-    const candidateDistrict = candidate.district || selectedDistrict;
-    const quizIssueIds = QUIZ_ISSUE_IDS[candidateDistrict] || QUIZ_ISSUE_IDS['PA-01'];
+    const userResponses = (currentUser.questionnaireResponses || [])
+      .map((r) => ({ questionId: r.questionId, issueId: r.issueId, answer: Number(r.answer) }))
+      .filter((r) => !isNaN(r.answer));
 
-    // Use only priority issues (≤ 5), same as the For You feed
-    const candidatePriorityIssues = (candidate.topIssues || [])
-      .filter((ti) => ti.priority <= 5)
-      .sort((a, b) => a.priority - b.priority);
-    const candidateIssueIds = candidatePriorityIssues.map((ti) => ti.issueId);
+    const candidateResponses = (candidateUser?.questionnaireResponses || [])
+      .map((r) => ({ questionId: r.questionId, issueId: r.issueId, answer: Number(r.answer) }))
+      .filter((r) => !isNaN(r.answer));
 
-    const { score } = calculateAlignmentScore({
-      candidateIssues: candidateIssueIds,
-      userIssues,
-      candidatePositions: candidatePriorityIssues,
-      allCandidatePositions: candidate.topIssues || [],
+    const { score, sharedCount, alignedQuestionIds } = calculateAlignmentScore({
+      candidateResponses,
       userResponses,
     });
 
-    // Compute shared policies using spectrum closeness (consistent with For You chips)
-    const allPositions = candidate.topIssues || [];
-    const sharedPolicies: { issueId: string; name: string }[] = [];
-    for (const cp of allPositions) {
-      if (!quizIssueIds.has(cp.issueId)) continue;
-      const userResp = userResponses.find((r) => r.issueId === cp.issueId);
-      if (!userResp) continue;
-      const userVal = Number(userResp.answer);
-      if (isNaN(userVal)) continue;
-      const closeness = 1 - Math.abs(userVal - cp.spectrumPosition) / 200;
-      if (closeness >= 0.5) {
-        const issue = issues.find((i) => i.id === cp.issueId);
-        if (issue) sharedPolicies.push({ issueId: cp.issueId, name: issue.name });
-      }
+    // Map aligned questionIds to issue names for display
+    const questionToIssue = new Map<string, string>();
+    for (const r of candidateResponses) {
+      questionToIssue.set(r.questionId, r.issueId);
     }
 
-    return { score, sharedPolicies, totalQuizIssues: quizIssueIds.size };
-  }, [candidate, currentUser, issues, selectedDistrict]);
+    const seen = new Set<string>();
+    const sharedPolicies: { issueId: string; name: string }[] = [];
+    for (const qId of alignedQuestionIds) {
+      const issueId = questionToIssue.get(qId);
+      if (!issueId || seen.has(issueId)) continue;
+      seen.add(issueId);
+      const issue = issues.find((i) => i.id === issueId);
+      if (issue) sharedPolicies.push({ issueId, name: issue.name });
+    }
+
+    return { score, sharedPolicies, sharedCount };
+  }, [candidate, candidateUser, currentUser, issues]);
 
   // Sync endorsement count when candidate loads
   useEffect(() => {
@@ -218,12 +207,9 @@ export default function CandidateProfileScreen() {
 
   const renderIssuesTab = () => (
     <View style={styles.tabContent}>
-      {candidate?.topIssues?.map((topIssue, index) => (
+      {candidate?.topIssues?.map((topIssue) => (
         <Card key={topIssue.issueId} style={styles.issueCard}>
           <View style={styles.issueHeader}>
-            <Text variant="titleLarge" style={styles.issueRank}>
-              #{index + 1}
-            </Text>
             <Text variant="titleMedium" style={styles.issueName}>
               {getIssueName(topIssue.issueId)}
             </Text>
@@ -561,8 +547,8 @@ export default function CandidateProfileScreen() {
                   color={theme.colors.primary}
                 />
                 <Text variant="bodyMedium" style={{ marginLeft: 8, flex: 1 }}>
-                  <Text style={{ fontWeight: 'bold' }}>{alignmentDetails.sharedPolicies.length}</Text> of{' '}
-                  <Text style={{ fontWeight: 'bold' }}>{alignmentDetails.totalQuizIssues}</Text> policy positions match
+                  Alignment based on{' '}
+                  <Text style={{ fontWeight: 'bold' }}>{alignmentDetails.sharedCount}</Text> shared responses
                 </Text>
               </View>
 
@@ -590,7 +576,7 @@ export default function CandidateProfileScreen() {
             <Divider style={{ marginVertical: 16 }} />
 
             <Text variant="bodySmall" style={{ color: theme.colors.outline, textAlign: 'center' }}>
-              Score is based on shared policy positions between you and this candidate.
+              Score is based on how closely your quiz answers match this candidate's responses.
             </Text>
           </Pressable>
         </Pressable>

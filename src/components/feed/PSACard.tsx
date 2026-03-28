@@ -27,26 +27,21 @@ export default function PSACard({ feedItem, isActive = true, selectedIssueId, is
   const [isEndorsing, setIsEndorsing] = useState(false);
   const [displayedEndorsementCount, setDisplayedEndorsementCount] = useState(0);
 
-  const { psa, candidate, alignmentScore, matchedIssues, candidatePositions } = feedItem;
+  const { psa, candidate, alignmentScore, alignedQuestionIds, candidateResponses } = feedItem;
 
   // Check endorsement status from global store
   const hasEndorsed = hasEndorsedCandidate(candidate.id);
 
-  // Get the position for the selected issue, if any
+  // Get display content for the selected issue, if any
   const getSelectedIssueContent = () => {
-    if (!selectedIssueId || !candidatePositions) {
-      return { title: psa.title, description: psa.description };
-    }
-
-    const position = candidatePositions.find((p) => p.issueId === selectedIssueId);
-    if (!position) {
+    if (!selectedIssueId) {
       return { title: psa.title, description: psa.description };
     }
 
     const issueName = issues.find((i) => i.id === selectedIssueId)?.name || 'This Issue';
     return {
       title: `My Position on ${issueName}`,
-      description: position.position || psa.description,
+      description: psa.description,
     };
   };
 
@@ -218,11 +213,13 @@ export default function PSACard({ feedItem, isActive = true, selectedIssueId, is
           {displayDescription}
         </Text>
 
-        {/* Matched Issues */}
+        {/* Aligned Issues */}
         <View style={styles.matchedIssues}>
-          {matchedIssues.slice(0, 3).map((issue) => (
-            <Chip key={issue} label={issue} variant="info" style={styles.issueChip} />
-          ))}
+          {(alignedQuestionIds || []).slice(0, 3).map((qId) => {
+            const issueId = candidateResponses?.find((r) => r.questionId === qId)?.issueId;
+            const issueName = issueId ? (issues.find((i) => i.id === issueId)?.name || issueId) : qId;
+            return <Chip key={qId} label={issueName} variant="info" style={styles.issueChip} />;
+          })}
         </View>
 
         {/* Action Buttons */}

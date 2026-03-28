@@ -254,8 +254,9 @@ export interface FeedItem {
   psa: PSA;
   candidate: CandidatePreview;
   alignmentScore: number | null;
-  matchedIssues: string[];
-  candidatePositions: TopIssue[];
+  candidateResponses: QuestionnaireResponse[];
+  sharedCount: number;
+  alignedQuestionIds: string[];
 }
 
 export interface CandidatePreview {

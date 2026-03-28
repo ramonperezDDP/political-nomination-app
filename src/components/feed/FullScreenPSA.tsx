@@ -8,12 +8,6 @@ import { useRouter } from 'expo-router';
 import { useAuthStore, useConfigStore } from '@/stores';
 import { useUserStore, selectCanSeeAlignment, selectEndorseLockReason, selectHasAccount } from '@/stores';
 
-// Only match on quiz issues relevant to the browsed district
-const DISTRICT_ISSUE_IDS: Record<string, Set<string>> = {
-  'PA-01': new Set(['trade', 'iran', 'inflation', 'borders', 'welfare', 'pa01-infrastructure', 'pa01-housing']),
-  'PA-02': new Set(['trade', 'iran', 'inflation', 'borders', 'welfare', 'pa02-budget', 'pa02-transit']),
-};
-
 const DISTRICT_COLORS: Record<string, string> = {
   'PA-01': '#FFB6C1',
   'PA-02': '#ADD8E6',
@@ -37,7 +31,7 @@ export default function FullScreenPSA({ feedItem, isActive, height }: FullScreen
   const [isPaused, setIsPaused] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
 
-  const { candidate, psa, alignmentScore, matchedIssues, candidatePositions } = feedItem;
+  const { candidate, psa, alignmentScore, alignedQuestionIds, candidateResponses } = feedItem;
 
   const currentUser = useAuthStore((s) => s.user);
   const { issues } = useConfigStore();
@@ -51,33 +45,27 @@ export default function FullScreenPSA({ feedItem, isActive, height }: FullScreen
   const lockReason = useUserStore(lockReasonSelector);
   const canEndorse = lockReason === null;
 
-  // Find all shared policies where user and candidate align (closeness > 0.5)
-  // Use the candidate's actual district for filtering local issues
-  const candidateDistrict = candidate.district || 'PA-01';
-  const districtIssueIds = DISTRICT_ISSUE_IDS[candidateDistrict] || DISTRICT_ISSUE_IDS['PA-01'];
-
+  // Derive shared policy chip names from pre-computed alignedQuestionIds
   const sharedPolicies = useMemo(() => {
-    const responses = currentUser?.questionnaireResponses || [];
-    if (responses.length === 0 || !candidatePositions?.length) return [];
+    if (!alignedQuestionIds || alignedQuestionIds.length === 0) return [];
 
-    const matches: { issueId: string; name: string; closeness: number }[] = [];
-    for (const cp of candidatePositions) {
-      // Only compare on issues relevant to the candidate's district
-      if (!districtIssueIds.has(cp.issueId)) continue;
-      const userResp = responses.find((r) => r.issueId === cp.issueId);
-      if (!userResp) continue;
-      const userVal = Number(userResp.answer);
-      if (isNaN(userVal)) continue;
-      // Spectrum-mapped closeness: 1 - (|userVal - candidatePos| / 200)
-      // Consistent with calculateAlignmentScore in alignment.ts
-      const closeness = 1 - Math.abs(userVal - cp.spectrumPosition) / 200;
-      if (closeness >= 0.5) {
-        const issue = issues.find((i) => i.id === cp.issueId);
-        if (issue) matches.push({ issueId: cp.issueId, name: issue.name, closeness });
-      }
+    // Map questionId -> issueId via candidateResponses
+    const questionToIssue = new Map<string, string>();
+    for (const r of candidateResponses || []) {
+      questionToIssue.set(r.questionId, r.issueId);
     }
-    return matches.sort((a, b) => b.closeness - a.closeness);
-  }, [currentUser?.questionnaireResponses, candidatePositions, issues, districtIssueIds]);
+
+    const seen = new Set<string>();
+    const result: { issueId: string; name: string }[] = [];
+    for (const qId of alignedQuestionIds) {
+      const issueId = questionToIssue.get(qId);
+      if (!issueId || seen.has(issueId)) continue;
+      seen.add(issueId);
+      const issue = issues.find((i) => i.id === issueId);
+      if (issue) result.push({ issueId, name: issue.name });
+    }
+    return result;
+  }, [alignedQuestionIds, candidateResponses, issues]);
 
   const [showLockModal, setShowLockModal] = useState(false);
 
