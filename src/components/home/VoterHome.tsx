@@ -48,6 +48,12 @@ export default function VoterHome() {
       <QuizCard
         completedCount={completedIssueCount}
         totalCount={totalIssues}
+        answeredQuestionIds={
+          user?.questionnaireResponses
+            ?.filter((r) => districtQuestionIds.includes(r.questionId))
+            .map((r) => r.questionId) || []
+        }
+        district={selectedDistrict}
         onPress={() => router.push('/(main)/quiz' as any)}
       />
 

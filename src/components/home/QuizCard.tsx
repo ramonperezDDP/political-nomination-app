@@ -4,44 +4,49 @@ import { Text, useTheme } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { Card } from '@/components/ui';
-import { useConfigStore } from '@/stores';
+
+interface QuizQuestion {
+  id: string;
+  label: string;
+  icon: string;
+  scope: 'global' | 'national' | 'local';
+}
+
+// New quiz questions mapped by district
+const QUIZ_QUESTIONS: Record<string, QuizQuestion[]> = {
+  'PA-01': [
+    { id: 'trade-1', label: 'Trade', icon: 'swap-horizontal', scope: 'global' },
+    { id: 'iran-1', label: 'Iran', icon: 'earth', scope: 'global' },
+    { id: 'inflation-1', label: 'Inflation', icon: 'trending-up', scope: 'national' },
+    { id: 'borders-1', label: 'Borders', icon: 'passport', scope: 'national' },
+    { id: 'welfare-1', label: 'Welfare', icon: 'account-group', scope: 'national' },
+    { id: 'pa01-infrastructure-1', label: 'Infrastructure', icon: 'bridge', scope: 'local' },
+    { id: 'pa01-housing-1', label: 'Housing', icon: 'home-city', scope: 'local' },
+  ],
+  'PA-02': [
+    { id: 'trade-1', label: 'Trade', icon: 'swap-horizontal', scope: 'global' },
+    { id: 'iran-1', label: 'Iran', icon: 'earth', scope: 'global' },
+    { id: 'inflation-1', label: 'Inflation', icon: 'trending-up', scope: 'national' },
+    { id: 'borders-1', label: 'Borders', icon: 'passport', scope: 'national' },
+    { id: 'welfare-1', label: 'Welfare', icon: 'account-group', scope: 'national' },
+    { id: 'pa02-budget-1', label: 'Budget', icon: 'cash-multiple', scope: 'local' },
+    { id: 'pa02-transit-1', label: 'Transit', icon: 'train', scope: 'local' },
+  ],
+};
 
 interface QuizCardProps {
   completedCount: number;
   totalCount: number;
+  answeredQuestionIds: string[];
+  district: string;
   onPress: () => void;
 }
 
-// Map issue names to single-word labels
-function getOneWordLabel(name: string): string {
-  const map: Record<string, string> = {
-    'Economy & Jobs': 'Economy',
-    'Healthcare': 'Health',
-    'Climate Change': 'Climate',
-    'Immigration': 'Immigration',
-    'Education': 'Education',
-    'Gun Policy': 'Guns',
-    'Civil Rights': 'Rights',
-    'Minimum Wage': 'Wages',
-    'Prescription Drug Costs': 'Rx Costs',
-    'Medicare': 'Medicare',
-    'Tax Policy': 'Taxes',
-    'Social Security': 'Soc. Sec.',
-    'Housing': 'Housing',
-    'Criminal Justice': 'Justice',
-    'Foreign Policy': 'Foreign',
-    'Environment': 'Environ.',
-    'Veterans Affairs': 'Veterans',
-    'Infrastructure': 'Infra.',
-  };
-  return map[name] || name.split(' ')[0];
-}
-
-export default function QuizCard({ completedCount, totalCount, onPress }: QuizCardProps) {
+export default function QuizCard({ completedCount, totalCount, answeredQuestionIds, district, onPress }: QuizCardProps) {
   const theme = useTheme();
-  const { issues } = useConfigStore();
 
-  const displayIssues = issues.slice(0, totalCount);
+  const questions = QUIZ_QUESTIONS[district] || QUIZ_QUESTIONS['PA-01'];
+  const answeredSet = new Set(answeredQuestionIds);
 
   return (
     <Pressable onPress={onPress}>
@@ -56,10 +61,10 @@ export default function QuizCard({ completedCount, totalCount, onPress }: QuizCa
             </Text>
           </View>
           <View style={styles.issueGrid}>
-            {displayIssues.map((issue, index) => {
-              const isCompleted = index < completedCount;
+            {questions.map((q) => {
+              const isCompleted = answeredSet.has(q.id);
               return (
-                <View key={issue.id} style={styles.issueItem}>
+                <View key={q.id} style={styles.issueItem}>
                   <View
                     style={[
                       styles.issueCircle,
@@ -71,7 +76,7 @@ export default function QuizCard({ completedCount, totalCount, onPress }: QuizCa
                     ]}
                   >
                     <MaterialCommunityIcons
-                      name={isCompleted ? 'check' : (issue.icon as any) || 'help-circle-outline'}
+                      name={isCompleted ? 'check' : (q.icon as any)}
                       size={20}
                       color={isCompleted ? '#fff' : theme.colors.outline}
                     />
@@ -81,7 +86,7 @@ export default function QuizCard({ completedCount, totalCount, onPress }: QuizCa
                     numberOfLines={1}
                     style={[styles.issueLabel, { color: theme.colors.onSurface }]}
                   >
-                    {getOneWordLabel(issue.name)}
+                    {q.label}
                   </Text>
                 </View>
               );
