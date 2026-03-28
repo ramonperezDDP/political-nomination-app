@@ -74,13 +74,6 @@ export default function ProfileScreen() {
           description: 'Update your issues and questionnaire answers',
           onPress: () => router.push('/(main)/(profile)/issues' as any),
         },
-        {
-          id: 'dealbreakers',
-          icon: 'alert-circle',
-          label: 'Dealbreakers',
-          description: 'Manage your dealbreaker positions',
-          onPress: () => router.push('/(main)/(profile)/dealbreakers' as any),
-        },
       ],
     },
     {

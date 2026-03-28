@@ -75,13 +75,6 @@ export default function AuthLayout() {
           headerBackTitle: 'Issues',
         }}
       />
-      <Stack.Screen
-        name="onboarding/dealbreakers"
-        options={{
-          title: 'Dealbreakers',
-          headerBackTitle: 'Back',
-        }}
-      />
     </Stack>
   );
 }

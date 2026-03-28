@@ -2,7 +2,6 @@ export { useAuthStore, selectIsAuthenticated, selectUserRole, selectIsCandidate,
 export {
   useUserStore,
   selectUserIssues,
-  selectUserDealbreakers,
   selectHasCompletedOnboarding,
   selectEndorsedCandidateIds,
   // Plan 01: Authentication selectors
@@ -19,10 +18,8 @@ export {
   selectEndorseLockReason,
   // Plan 01: Onboarding selectors
   selectQuestionnaireComplete,
-  selectDealbreakersComplete,
   // Plan 01: Capability selectors
   selectCanSeeAlignment,
-  selectCanSeeDealbreakers,
   selectCanApply,
   // Plan 01: Progress selectors
   selectMissingVerifications,

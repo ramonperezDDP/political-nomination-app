@@ -8,7 +8,7 @@ import { SafeAreaView as NativeSafeAreaView } from 'react-native-safe-area-conte
 const SafeAreaView = Platform.OS === 'web' ? View : NativeSafeAreaView;
 
 import { useAuthStore, useUserStore } from '@/stores';
-import { getQuestions, ensureQuestionsExist } from '@/services/firebase/firestore';
+import { getQuestions, ensureQuestionsExist, updateUser } from '@/services/firebase/firestore';
 import {
   PrimaryButton,
   SecondaryButton,
@@ -104,7 +104,12 @@ export default function QuestionnaireScreen() {
     const success = await updateQuestionnaireResponses(user.id, responseArray);
 
     if (success) {
-      router.push('/(auth)/onboarding/dealbreakers');
+      // Mark onboarding as complete and navigate to main
+      await updateUser(user.id, {
+        state: 'verified',
+        role: 'constituent',
+      } as any);
+      router.replace('/(main)' as any);
     }
   };
 
@@ -133,7 +138,15 @@ export default function QuestionnaireScreen() {
             There are no questionnaire questions for your selected issues yet. You can continue to the next step.
           </Text>
           <PrimaryButton
-            onPress={() => router.push('/(auth)/onboarding/dealbreakers')}
+            onPress={async () => {
+              if (user?.id) {
+                await updateUser(user.id, {
+                  state: 'verified',
+                  role: 'constituent',
+                } as any);
+              }
+              router.replace('/(main)' as any);
+            }}
             style={styles.continueButton}
           >
             Continue

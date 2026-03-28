@@ -83,12 +83,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
               },
               onboarding: {
                 questionnaire: 'incomplete',
-                dealbreakers: 'incomplete',
               },
               districts: [],
               selectedIssues: [],
               questionnaireResponses: [],
-              dealbreakers: [],
               lastActiveAt: new Date() as any,
               sessionCount: 1,
               firstSeenAt: new Date() as any,

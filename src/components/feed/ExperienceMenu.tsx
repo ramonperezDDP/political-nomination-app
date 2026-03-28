@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { View, Pressable, StyleSheet, ViewStyle } from 'react-native';
 import { Text } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useUserStore, selectCanSeeAlignment, selectCanSeeDealbreakers } from '@/stores';
+import { useUserStore, selectCanSeeAlignment } from '@/stores';
 
-export type ExperienceFilter = 'random' | 'location' | 'issues' | 'most_important';
+export type ExperienceFilter = 'random' | 'location' | 'issues';
 
 interface ExperienceMenuProps {
   selectedFilter: ExperienceFilter;
@@ -24,7 +24,6 @@ const FILTER_OPTIONS: FilterOption[] = [
   { id: 'random', label: 'Explore', icon: 'shuffle-variant', disabledDescription: '' },
   { id: 'location', label: 'My Area', icon: 'map-marker', disabledDescription: '' },
   { id: 'issues', label: 'My Issues', icon: 'clipboard-list', disabledDescription: 'Complete the quiz to unlock' },
-  { id: 'most_important', label: 'Top Picks', icon: 'star', disabledDescription: 'Complete quiz & set dealbreakers' },
 ];
 
 export default function ExperienceMenu({
@@ -36,7 +35,6 @@ export default function ExperienceMenu({
   const [open, setOpen] = useState(false);
 
   const canSeeAlignment = useUserStore(selectCanSeeAlignment);
-  const canSeeDealbreakers = useUserStore(selectCanSeeDealbreakers);
 
   const selectedOption = FILTER_OPTIONS.find((o) => o.id === selectedFilter);
 
@@ -44,8 +42,6 @@ export default function ExperienceMenu({
     switch (filterId) {
       case 'issues':
         return !canSeeAlignment;
-      case 'most_important':
-        return !canSeeAlignment || !canSeeDealbreakers;
       default:
         return false;
     }

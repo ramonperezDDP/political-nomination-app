@@ -5,25 +5,9 @@ import { router } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Video, ResizeMode, AVPlaybackStatus } from 'expo-av';
 
-import { Card, CandidateAvatar, AlignmentBadge, Chip, PrimaryButton, Modal } from '@/components/ui';
+import { Card, CandidateAvatar, AlignmentBadge, Chip, PrimaryButton } from '@/components/ui';
 import { useAuthStore, useUserStore } from '@/stores';
-import { DEALBREAKER_MAP } from '@/utils/alignment';
 import type { FeedItem, Issue } from '@/types';
-
-const DEALBREAKER_LABELS: Record<string, { name: string; description: string }> = {
-  abortion_access:         { name: 'Abortion Access', description: 'Supports unrestricted access to abortion services' },
-  abortion_restrictions:   { name: 'Abortion Restrictions', description: 'Supports restrictions or bans on abortion' },
-  gun_control:             { name: 'Gun Control', description: 'Supports stricter gun control measures' },
-  gun_rights:              { name: 'Gun Rights', description: 'Opposes additional gun control measures' },
-  climate_action:          { name: 'Climate Action', description: 'Supports aggressive climate change policies' },
-  fossil_fuels:            { name: 'Fossil Fuel Support', description: 'Supports continued fossil fuel development' },
-  immigration_restrictive: { name: 'Immigration Restrictions', description: 'Supports stricter immigration enforcement' },
-  immigration_permissive:  { name: 'Immigration Reform', description: 'Supports pathway to citizenship' },
-  universal_healthcare:    { name: 'Universal Healthcare', description: 'Supports government-run healthcare system' },
-  private_healthcare:      { name: 'Private Healthcare', description: 'Supports market-based healthcare solutions' },
-  lgbtq_rights:            { name: 'LGBTQ+ Rights', description: 'Supports LGBTQ+ protections and rights' },
-  religious_liberty:       { name: 'Religious Liberty', description: 'Prioritizes religious exemptions' },
-};
 
 interface PSACardProps {
   feedItem: FeedItem;
@@ -42,9 +26,8 @@ export default function PSACard({ feedItem, isActive = true, selectedIssueId, is
   const [isMuted, setIsMuted] = useState(false);
   const [isEndorsing, setIsEndorsing] = useState(false);
   const [displayedEndorsementCount, setDisplayedEndorsementCount] = useState(0);
-  const [dealbreakerModalVisible, setDealbreakerModalVisible] = useState(false);
 
-  const { psa, candidate, alignmentScore, matchedIssues, hasDealbreaker, matchedDealbreakers, candidatePositions } = feedItem;
+  const { psa, candidate, alignmentScore, matchedIssues, candidatePositions } = feedItem;
 
   // Check endorsement status from global store
   const hasEndorsed = hasEndorsedCandidate(candidate.id);
@@ -178,21 +161,6 @@ export default function PSACard({ feedItem, isActive = true, selectedIssueId, is
           </View>
         )}
 
-        {/* Dealbreaker Warning */}
-        {hasDealbreaker && (
-          <Pressable
-            onPress={() => setDealbreakerModalVisible(true)}
-            style={[styles.dealbreakerBadge, { backgroundColor: theme.colors.error }]}
-            accessibilityRole="button"
-            accessibilityLabel="View dealbreaker details"
-          >
-            <MaterialCommunityIcons name="alert" size={16} color="white" />
-            <Text variant="labelSmall" style={{ color: 'white', marginLeft: 4 }}>
-              Dealbreaker
-            </Text>
-          </Pressable>
-        )}
-
         {/* Alignment Badge */}
         <View style={styles.alignmentContainer}>
           <AlignmentBadge score={alignmentScore} size="medium" />
@@ -284,50 +252,6 @@ export default function PSACard({ feedItem, isActive = true, selectedIssueId, is
         </View>
       </View>
 
-      {/* Dealbreaker Details */}
-      <Modal
-        visible={dealbreakerModalVisible}
-        onDismiss={() => setDealbreakerModalVisible(false)}
-        title="Dealbreaker Details"
-        contentStyle={{ maxHeight: undefined }}
-      >
-        <Text variant="bodyMedium" style={{ color: theme.colors.outline, marginBottom: 16 }}>
-          This candidate triggers the following dealbreakers based on your settings:
-        </Text>
-        {(matchedDealbreakers || []).map((dbId) => {
-          const label = DEALBREAKER_LABELS[dbId];
-          const mapping = DEALBREAKER_MAP[dbId];
-          const position = mapping
-            ? candidatePositions.find((p) => p.issueId === mapping.issueId)
-            : undefined;
-
-          return (
-            <View
-              key={dbId}
-              style={[styles.dealbreakerItem, { borderBottomColor: theme.colors.outlineVariant }]}
-            >
-              <View style={styles.dealbreakerItemHeader}>
-                <MaterialCommunityIcons
-                  name="alert-circle"
-                  size={20}
-                  color={theme.colors.error}
-                />
-                <Text variant="titleSmall" style={{ marginLeft: 8, fontWeight: '600' }}>
-                  {label?.name || dbId}
-                </Text>
-              </View>
-              <Text variant="bodySmall" style={{ color: theme.colors.outline, marginTop: 4 }}>
-                {label?.description}
-              </Text>
-              {position && (
-                <Text variant="bodySmall" style={{ color: theme.colors.onSurface, marginTop: 8 }}>
-                  Candidate&apos;s position: {position.position || 'Not specified'}
-                </Text>
-              )}
-            </View>
-          );
-        })}
-      </Modal>
     </Card>
   );
 }
@@ -355,16 +279,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.3)',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  dealbreakerBadge: {
-    position: 'absolute',
-    top: 12,
-    left: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
   },
   alignmentContainer: {
     position: 'absolute',
@@ -412,14 +326,5 @@ const styles = StyleSheet.create({
   },
   endorseButton: {
     flex: 1,
-  },
-  dealbreakerItem: {
-    paddingBottom: 12,
-    marginBottom: 12,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  dealbreakerItemHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
   },
 });

@@ -29,10 +29,6 @@ interface UserState {
     userId: string,
     responses: QuestionnaireResponse[]
   ) => Promise<boolean>;
-  updateDealbreakers: (
-    userId: string,
-    dealbreakers: string[]
-  ) => Promise<boolean>;
   fetchEndorsements: (odid: string) => Promise<void>;
   endorseCandidate: (odid: string, candidateId: string) => Promise<boolean>;
   revokeEndorsement: (odid: string, candidateId: string) => Promise<boolean>;
@@ -103,19 +99,6 @@ export const useUserStore = create<UserState>((set, get) => ({
     if (responses.length >= 1) {
       (updates as any)['onboarding.questionnaire'] = 'complete';
     }
-
-    return get().updateProfile(userId, updates);
-  },
-
-  // Update dealbreakers with completion marking
-  updateDealbreakers: async (userId: string, dealbreakers: string[]) => {
-    if (dealbreakers.length > 3) {
-      set({ error: 'You can select a maximum of 3 dealbreakers' });
-      return false;
-    }
-
-    const updates: Partial<User> = { dealbreakers };
-    (updates as any)['onboarding.dealbreakers'] = 'complete';
 
     return get().updateProfile(userId, updates);
   },
@@ -283,18 +266,11 @@ export const selectEndorseLockReason = (candidateDistrict: string) =>
 export const selectQuestionnaireComplete = (state: UserState) =>
   state.userProfile?.onboarding?.questionnaire === 'complete';
 
-export const selectDealbreakersComplete = (state: UserState) =>
-  state.userProfile?.onboarding?.dealbreakers === 'complete';
-
 // ─── Capability Selectors ───
 
-/** User can see alignment scores and use Issues/Most Important filters */
+/** User can see alignment scores and use Issues filter */
 export const selectCanSeeAlignment = (state: UserState) =>
   selectQuestionnaireComplete(state);
-
-/** User can use the dealbreakers filter */
-export const selectCanSeeDealbreakers = (state: UserState) =>
-  selectDealbreakersComplete(state);
 
 /** User can apply to be a candidate */
 export const selectCanApply = (state: UserState) =>
@@ -320,21 +296,19 @@ export const selectMissingOnboarding = (state: UserState): string[] => {
   const missing: string[] = [];
   const o = state.userProfile?.onboarding;
   if (!o || o.questionnaire !== 'complete') missing.push('questionnaire');
-  if (!o || o.dealbreakers !== 'complete') missing.push('dealbreakers');
   return missing;
 };
 
 /** Overall completion percentage for progress indicators */
 export const selectCompletionPercent = (state: UserState): number => {
   let completed = 0;
-  const total = 5;
+  const total = 4;
   const v = state.userProfile?.verification;
   const o = state.userProfile?.onboarding;
   if (v?.email === 'verified') completed++;
   if (v?.voterRegistration === 'verified') completed++;
   if (v?.photoId === 'verified') completed++;
   if (o?.questionnaire === 'complete') completed++;
-  if (o?.dealbreakers === 'complete') completed++;
   return Math.round((completed / total) * 100);
 };
 
@@ -347,8 +321,6 @@ export const selectBrowsingDistrict = (state: UserState) =>
 
 export const selectUserIssues = (state: UserState) =>
   state.userProfile?.selectedIssues || [];
-export const selectUserDealbreakers = (state: UserState) =>
-  state.userProfile?.dealbreakers || [];
 export const selectHasCompletedOnboarding = (state: UserState) =>
   selectQuestionnaireComplete(state);
 export const selectEndorsedCandidateIds = (state: UserState) =>

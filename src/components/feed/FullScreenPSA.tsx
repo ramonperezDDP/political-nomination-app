@@ -26,7 +26,7 @@ export default function FullScreenPSA({ feedItem, isActive, height }: FullScreen
   const [isPaused, setIsPaused] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
 
-  const { candidate, psa, alignmentScore, matchedIssues, hasDealbreaker } = feedItem;
+  const { candidate, psa, alignmentScore, matchedIssues } = feedItem;
 
   const currentUser = useAuthStore((s) => s.user);
   const canSeeAlignment = useUserStore(selectCanSeeAlignment);
@@ -96,18 +96,10 @@ export default function FullScreenPSA({ feedItem, isActive, height }: FullScreen
       {/* Gradient overlay at bottom for readability */}
       <View style={styles.bottomGradient} pointerEvents="none" />
 
-      {/* Dealbreaker badge — top left, below status bar */}
-      {hasDealbreaker && (
-        <View style={[styles.dealbreakerBadge, { top: insets.top + 8 }]}>
-          <MaterialCommunityIcons name="alert-circle" size={16} color="#fff" />
-          <Text style={styles.dealbreakerText}>Dealbreaker</Text>
-        </View>
-      )}
-
-      {/* Alignment circle — top left, below dealbreaker */}
+      {/* Alignment circle — top left */}
       <AlignmentCircle
         score={canSeeAlignment ? alignmentScore : null}
-        style={[styles.alignmentCircle, { top: insets.top + (hasDealbreaker ? 40 : 8) }]}
+        style={[styles.alignmentCircle, { top: insets.top + 8 }]}
       />
 
       {/* Right-side action buttons (TikTok style) */}
@@ -218,22 +210,6 @@ const styles = StyleSheet.create({
     right: 0,
     height: 200,
     backgroundColor: 'rgba(0,0,0,0.4)',
-  },
-  dealbreakerBadge: {
-    position: 'absolute',
-    left: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(244,67,54,0.85)',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    gap: 4,
-  },
-  dealbreakerText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '600',
   },
   alignmentCircle: {
     position: 'absolute',

@@ -30,7 +30,6 @@ const generateFeedItem = (
   candidate: Candidate,
   user: User | null,
   userIssues: string[],
-  userDealbreakers: string[],
   issues: Array<{ id: string; name: string }>,
   userResponses: Array<{ issueId: string; answer: string | number | string[] }> = []
 ): FeedItem => {
@@ -39,11 +38,10 @@ const generateFeedItem = (
     .sort((a, b) => a.priority - b.priority);
   const candidateIssueIds = candidatePriorityIssues.map((ti) => ti.issueId);
   const allPositions = candidate.topIssues || [];
-  const { score, matchedIssues, hasDealbreaker, matchedDealbreakers } = calculateAlignmentScore({
+  const { score, matchedIssues } = calculateAlignmentScore({
     candidateIssues: candidateIssueIds,
     userIssues,
     candidatePositions: candidatePriorityIssues,
-    userDealbreakers,
     allCandidatePositions: allPositions,
     userResponses,
   });
@@ -84,8 +82,6 @@ const generateFeedItem = (
     },
     alignmentScore: score,
     matchedIssues,
-    hasDealbreaker,
-    matchedDealbreakers,
     candidatePositions: candidate.topIssues || [],
   };
 };
@@ -121,7 +117,6 @@ export default function ForYouScreen() {
 
   // Stable user data for filters (avoid depending on entire user object)
   const userResponses = user?.questionnaireResponses;
-  const userDealbreakers = user?.dealbreakers;
 
   // Auto-switch to 'issues' when user completes quiz
   useEffect(() => {
@@ -143,10 +138,9 @@ export default function ForYouScreen() {
           candidatesData = await getCandidatesForFeed(selectedDistrict);
         }
         const userIssues = user?.selectedIssues || [];
-        const userDealbreakers = user?.dealbreakers || [];
         const userResponses = user?.questionnaireResponses || [];
         const items = candidatesData.map(({ candidate, user: candidateUser }) =>
-          generateFeedItem(candidate, candidateUser, userIssues, userDealbreakers, issues, userResponses)
+          generateFeedItem(candidate, candidateUser, userIssues, issues, userResponses)
         );
         items.sort((a, b) => (b.alignmentScore ?? -1) - (a.alignmentScore ?? -1));
         setFeedItems(items);
@@ -174,30 +168,6 @@ export default function ForYouScreen() {
           });
         });
 
-      case 'most_important': {
-        const dealbreakers = userDealbreakers || [];
-        if (dealbreakers.length === 0) return feedItems;
-        return feedItems.filter((item) => {
-          for (const dealbreakerId of dealbreakers) {
-            const response = (userResponses || []).find(
-              (r) => r.issueId === dealbreakerId
-            );
-            if (!response) continue;
-            const candidatePosition = item.candidatePositions.find(
-              (cp) => cp.issueId === dealbreakerId
-            );
-            if (!candidatePosition) continue;
-            const userValue = Number(response.answer);
-            const candidateValue = candidatePosition.spectrumPosition;
-            if ((userValue >= 0 && candidateValue < 0) ||
-                (userValue < 0 && candidateValue >= 0)) {
-              return false;
-            }
-          }
-          return true;
-        });
-      }
-
       case 'location':
         if (!selectedLocation) return feedItems;
         return feedItems.filter((item) =>
@@ -209,7 +179,7 @@ export default function ForYouScreen() {
       default:
         return feedItems;
     }
-  }, [feedItems, experienceFilter, selectedLocation, userResponses, userDealbreakers]);
+  }, [feedItems, experienceFilter, selectedLocation, userResponses]);
 
   // On native: full screen minus tab bar minus AppHeader.
   // AppHeader height ≈ safeAreaTop + paddingTop(8) + content(36) + paddingBottom(8) + border(1) = insets.top + 53

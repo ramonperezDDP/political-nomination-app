@@ -1167,7 +1167,6 @@ export const seedCandidates = async (): Promise<void> => {
       verificationStatus: 'verified' as const,
       selectedIssues: priorityIssues,
       questionnaireResponses: [],
-      dealbreakers: [],
       createdAt: now,
       updatedAt: now,
     });

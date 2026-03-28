@@ -46,14 +46,6 @@ export default function VerificationChecklist() {
       route: '/(main)/quiz',
       description: 'Answer at least 1 policy question to see your matches',
     },
-    {
-      id: 'dealbreakers',
-      label: 'Dealbreakers',
-      icon: 'alert-circle' as const,
-      status: user.onboarding?.dealbreakers || 'incomplete',
-      route: '/(main)/(profile)/dealbreakers',
-      description: 'Set your non-negotiable policy positions',
-    },
   ];
 
   const isDone = (status: string) => status === 'verified' || status === 'complete';

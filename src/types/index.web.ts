@@ -15,7 +15,6 @@ export interface UserVerification {
 
 export interface UserOnboarding {
   questionnaire: OnboardingState;
-  dealbreakers: OnboardingState;
 }
 
 // Hierarchical district model
@@ -45,7 +44,6 @@ export interface User {
   districts: UserDistrict[];
   selectedIssues: string[];
   questionnaireResponses: QuestionnaireResponse[];
-  dealbreakers: string[];
   zipCode?: string;
   lastBrowsingDistrict?: string;
   // Abandonment tracking metadata
@@ -248,8 +246,6 @@ export interface FeedItem {
   candidate: CandidatePreview;
   alignmentScore: number | null;
   matchedIssues: string[];
-  hasDealbreaker: boolean;
-  matchedDealbreakers: string[];
   candidatePositions: TopIssue[];
 }
 
@@ -456,5 +452,4 @@ export interface RegisterFormData {
 export interface OnboardingFormData {
   selectedIssues: string[];
   questionnaireResponses: QuestionnaireResponse[];
-  dealbreakers: string[];
 }

@@ -21,10 +21,10 @@ const BASE_FAQS: FAQ[] = [
       "The alignment score shows how closely a candidate's positions match your preferences based on the questionnaire you completed. A higher score means better alignment with your values.",
   },
   {
-    id: 'dealbreakers',
+    id: 'preferences',
     question: 'Can I change my policy preferences?',
     answer:
-      'Yes! You can update your policy preferences anytime in your profile settings. Candidates with positions that conflict with your preferences will be clearly marked in your feed.',
+      'Yes! You can update your policy preferences anytime in your profile settings. Your alignment scores will automatically recalculate based on your updated preferences.',
   },
 ];
 

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { StyleSheet, View, ScrollView, Dimensions, FlatList, Pressable, Modal, Platform } from 'react-native';
-import { Text, useTheme, SegmentedButtons, Chip, Divider, IconButton, Portal } from 'react-native-paper';
+import { Text, useTheme, SegmentedButtons, Chip, Divider, IconButton } from 'react-native-paper';
 import { useLocalSearchParams, useGlobalSearchParams, router } from 'expo-router';
 import { SafeAreaView as NativeSafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -13,7 +13,7 @@ import {
   inferGenderFromName,
 } from '@/services/firebase/firestore';
 import { useAuthStore, useConfigStore, useUserStore } from '@/stores';
-import { calculateAlignmentScore, DEALBREAKER_MAP } from '@/utils/alignment';
+import { calculateAlignmentScore } from '@/utils/alignment';
 import {
   Card,
   CandidateAvatar,
@@ -23,24 +23,8 @@ import {
   SecondaryButton,
   LoadingScreen,
   EmptyState,
-  Modal as UIModal,
 } from '@/components/ui';
 import type { Candidate, PSA, User, TopIssue } from '@/types';
-
-const DEALBREAKER_LABELS: Record<string, { name: string; description: string }> = {
-  abortion_access:         { name: 'Abortion Access', description: 'Supports unrestricted access to abortion services' },
-  abortion_restrictions:   { name: 'Abortion Restrictions', description: 'Supports restrictions or bans on abortion' },
-  gun_control:             { name: 'Gun Control', description: 'Supports stricter gun control measures' },
-  gun_rights:              { name: 'Gun Rights', description: 'Opposes additional gun control measures' },
-  climate_action:          { name: 'Climate Action', description: 'Supports aggressive climate change policies' },
-  fossil_fuels:            { name: 'Fossil Fuel Support', description: 'Supports continued fossil fuel development' },
-  immigration_restrictive: { name: 'Immigration Restrictions', description: 'Supports stricter immigration enforcement' },
-  immigration_permissive:  { name: 'Immigration Reform', description: 'Supports pathway to citizenship' },
-  universal_healthcare:    { name: 'Universal Healthcare', description: 'Supports government-run healthcare system' },
-  private_healthcare:      { name: 'Private Healthcare', description: 'Supports market-based healthcare solutions' },
-  lgbtq_rights:            { name: 'LGBTQ+ Rights', description: 'Supports LGBTQ+ protections and rights' },
-  religious_liberty:       { name: 'Religious Liberty', description: 'Prioritizes religious exemptions' },
-};
 
 const SafeAreaView = Platform.OS === 'web' ? View : NativeSafeAreaView;
 
@@ -64,7 +48,6 @@ export default function CandidateProfileScreen() {
   const [isEndorsing, setIsEndorsing] = useState(false);
   const [displayedEndorsementCount, setDisplayedEndorsementCount] = useState(0);
   const [showAlignmentTooltip, setShowAlignmentTooltip] = useState(false);
-  const [showDealbreakerModal, setShowDealbreakerModal] = useState(false);
 
   // Check endorsement status from global store
   const hasEndorsed = id ? hasEndorsedCandidate(id) : false;
@@ -72,11 +55,10 @@ export default function CandidateProfileScreen() {
   // Calculate alignment score and matching details (same algorithm as For You feed)
   const alignmentDetails = useMemo(() => {
     if (!candidate || !currentUser) {
-      return { score: null, matchedIssues: [], hasDealbreaker: false, matchedDealbreakers: [], matchedIssueNames: [], userIssueCount: 0 };
+      return { score: null, matchedIssues: [], matchedIssueNames: [], userIssueCount: 0 };
     }
 
     const userIssues = currentUser.selectedIssues || [];
-    const userDealbreakers = currentUser.dealbreakers || [];
 
     // Use only priority issues (≤ 5), same as the For You feed
     const candidatePriorityIssues = (candidate.topIssues || [])
@@ -84,11 +66,10 @@ export default function CandidateProfileScreen() {
       .sort((a, b) => a.priority - b.priority);
     const candidateIssueIds = candidatePriorityIssues.map((ti) => ti.issueId);
 
-    const { score, matchedIssues, hasDealbreaker, matchedDealbreakers } = calculateAlignmentScore({
+    const { score, matchedIssues } = calculateAlignmentScore({
       candidateIssues: candidateIssueIds,
       userIssues,
       candidatePositions: candidatePriorityIssues,
-      userDealbreakers,
       allCandidatePositions: candidate.topIssues || [],
       userResponses: currentUser.questionnaireResponses || [],
     });
@@ -98,7 +79,7 @@ export default function CandidateProfileScreen() {
       (issueId) => issues.find((i) => i.id === issueId)?.name || issueId
     );
 
-    return { score, matchedIssues, hasDealbreaker, matchedDealbreakers, matchedIssueNames, userIssueCount: userIssues.length };
+    return { score, matchedIssues, matchedIssueNames, userIssueCount: userIssues.length };
   }, [candidate, currentUser, issues]);
 
   // Sync endorsement count when candidate loads
@@ -404,21 +385,6 @@ export default function CandidateProfileScreen() {
 
         {/* Profile Header */}
         <View style={styles.header}>
-          {/* Dealbreaker Warning */}
-          {alignmentDetails.hasDealbreaker && (
-            <Pressable
-              onPress={() => setShowDealbreakerModal(true)}
-              style={[styles.dealbreakerBadge, { backgroundColor: theme.colors.error }]}
-              accessibilityRole="button"
-              accessibilityLabel="View dealbreaker details"
-            >
-              <MaterialCommunityIcons name="alert" size={16} color="white" />
-              <Text variant="labelSmall" style={{ color: 'white', marginLeft: 4 }}>
-                Dealbreaker
-              </Text>
-            </Pressable>
-          )}
-
           <CandidateAvatar
             candidateId={id || ''}
             displayName={candidateUser?.displayName || 'Candidate'}
@@ -523,51 +489,6 @@ export default function CandidateProfileScreen() {
         {activeTab === 'psas' && renderPSAsTab()}
       </ScrollView>
 
-      {/* Dealbreaker Details Modal */}
-      <UIModal
-        visible={showDealbreakerModal}
-        onDismiss={() => setShowDealbreakerModal(false)}
-        title="Dealbreaker Details"
-        contentStyle={{ maxHeight: undefined }}
-      >
-        <Text variant="bodyMedium" style={{ color: theme.colors.outline, marginBottom: 16 }}>
-          This candidate triggers the following dealbreakers based on your settings:
-        </Text>
-        {(alignmentDetails.matchedDealbreakers || []).map((dbId) => {
-          const label = DEALBREAKER_LABELS[dbId];
-          const mapping = DEALBREAKER_MAP[dbId];
-          const position = mapping
-            ? candidate?.topIssues?.find((p) => p.issueId === mapping.issueId)
-            : undefined;
-
-          return (
-            <View
-              key={dbId}
-              style={[styles.dealbreakerItem, { borderBottomColor: theme.colors.outlineVariant }]}
-            >
-              <View style={styles.dealbreakerItemHeader}>
-                <MaterialCommunityIcons
-                  name="alert-circle"
-                  size={20}
-                  color={theme.colors.error}
-                />
-                <Text variant="titleSmall" style={{ marginLeft: 8, fontWeight: '600' }}>
-                  {label?.name || dbId}
-                </Text>
-              </View>
-              <Text variant="bodySmall" style={{ color: theme.colors.outline, marginTop: 4 }}>
-                {label?.description}
-              </Text>
-              {position && (
-                <Text variant="bodySmall" style={{ color: theme.colors.onSurface, marginTop: 8 }}>
-                  Candidate&apos;s position: {position.position || 'Not specified'}
-                </Text>
-              )}
-            </View>
-          );
-        })}
-      </UIModal>
-
       {/* Alignment Score Tooltip Modal */}
       <Modal
         visible={showAlignmentTooltip}
@@ -637,18 +558,6 @@ export default function CandidateProfileScreen() {
                 </View>
               )}
 
-              {alignmentDetails.hasDealbreaker && (
-                <View style={[styles.tooltipRow, { marginTop: 12 }]}>
-                  <MaterialCommunityIcons
-                    name="alert-circle"
-                    size={20}
-                    color={theme.colors.error}
-                  />
-                  <Text variant="bodyMedium" style={{ marginLeft: 8, color: theme.colors.error }}>
-                    Contains a dealbreaker position
-                  </Text>
-                </View>
-              )}
             </View>
 
             <Divider style={{ marginVertical: 16 }} />
@@ -852,25 +761,5 @@ const styles = StyleSheet.create({
   },
   matchedIssueChip: {
     height: 28,
-  },
-  dealbreakerBadge: {
-    position: 'absolute',
-    top: 16,
-    left: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    zIndex: 1,
-  },
-  dealbreakerItem: {
-    paddingBottom: 12,
-    marginBottom: 12,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  dealbreakerItemHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
   },
 });
