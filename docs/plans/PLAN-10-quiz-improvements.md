@@ -1,8 +1,13 @@
 # PLAN-10: Quiz Improvements — REPLACED BY SUCCESSOR PLANS
 
-> **Updated 2026-03-28:** Round 3 feedback incorporated (`docs/feedback/Quiz Updates feedback 3.md`). **PLAN-10 APPROVED.** 10A: added "My Issues" semantics note. 10C1: added re-prompt rules. 10C2: added MVP confidence threshold, candidate filter behavior, coexistence migration rule, answer coverage metric. 10C3: added editorial enforcement mechanism.
+> **Updated 2026-03-28:** All blockers resolved. 10C decisions finalized:
+> 1. **Full replacement** — new multiple-choice questions replace all spectrum sliders (no coexistence)
+> 2. **Spectrum-mapped scoring** — each MC option maps to a spectrum value; reuses existing `calculateAlignmentScore` math
+> 3. **Exclude from feed** — candidates hidden from "My Issues" filter until they answer active questions
+> 4. **Product owner signs off** on scoring rules
+> 5. **Admin UI flag** — `editorialStatus: approved/pending` on questions; future admin login will allow question management
 >
-> **Product decisions (confirmed):** Dealbreakers removed entirely. Quiz is standalone (`app/(main)/quiz.tsx`), NOT onboarding. Top Picks filter dropped (3 filters).
+> **Product decisions (confirmed):** Dealbreakers removed entirely. Quiz is standalone (`app/(main)/quiz.tsx`), NOT onboarding. Top Picks filter dropped (3 filters). Avatar candidates get randomly assigned quiz answers.
 
 ---
 
@@ -88,7 +93,7 @@ This keeps 10B safely shippable and prevents it from becoming a dumping ground f
 
 ## PLAN-10C: Quiz v2 — New Matching Architecture
 
-> **Status: 🟡 APPROVED, needs 2-3 final decisions before build.** This is not a content update — it is a new matching system. Core architecture is sound; remaining gaps are contained.
+> **Status: ✅ ALL BLOCKERS RESOLVED. Ready to implement.** All 5 decisions made. Full replacement, spectrum-mapped scoring, exclude incomplete candidates from feed, product owner sign-off, admin UI flag for editorial.
 
 ### What This Actually Is
 
@@ -112,11 +117,7 @@ The plan frames 10C as "new quiz question content + scope taxonomy," but the act
 
 **Key decisions required before implementation:**
 
-1. **Replacement vs coexistence.** Do multiple-choice questions replace spectrum sliders or run alongside them? This is the core architectural fork:
-   - **If replace:** Need migration path for existing `questionnaireResponses`; current alignment scoring becomes obsolete; seeded candidate spectrum positions stop being primary matching asset
-   - **If coexist:** Two incompatible answer systems; must define how each contributes to matching; risk confusing users with mixed question types
-   - **Recommended default:** Coexistence only as a temporary bridge, with eventual replacement. This gives a migration path without breaking existing matching immediately.
-   - **Migration rule:** During coexistence, feed ranking continues to use spectrum scoring. Question-based scoring runs in parallel but is not used for ranking until full replacement (see 10C2 item 7).
+1. **~~Replacement vs coexistence.~~** **DECIDED: Full replacement.** New multiple-choice questions replace all spectrum sliders. No coexistence phase. Existing `questionnaireResponses` with spectrum values will be cleared/migrated. Each MC option maps to a spectrum value so `calculateAlignmentScore` math is reused.
 
 2. **Normalized data model.** Do NOT overload the Issue type further. Recommended separation:
    - **Issue** = stable policy topic (trade, inflation, borders). Has `id`, `name`, `scope`, `icon`.
@@ -169,13 +170,7 @@ Without an explicit owner, scoring plans tend to stall or drift.
 
 **Key decisions required before implementation:**
 
-1. **Scoring model.** Engineering cannot build feed behavior without a scoring contract. Provisional model needed:
-   - Exact match = 1.0
-   - Adjacent/compatible option = 0.5
-   - Opposite option = 0.0
-   - Unanswered by candidate = excluded from denominator
-   - Unanswered by user = excluded from denominator
-   - Minimum-answer threshold before showing match confidence
+1. **~~Scoring model.~~** **DECIDED: Spectrum-mapped scoring (Option C).** Each multiple-choice option maps to a spectrum value (-100 to +100). Existing `calculateAlignmentScore` math computes closeness as `1 - (|userValue - candidateValue| / 200)`. Example: Free Trade = -80, Limited Trade = 0, Protection = +80. User picks Free Trade (-80), candidate picks Limited Trade (0) → closeness = 0.6. No new scoring algorithm needed.
 
 2. **Match confidence vs score.** A candidate with 95% alignment on 2 answered overlaps is not the same as 82% alignment on 8 overlaps. Define whether the product surfaces:
    - Only a score
@@ -201,15 +196,9 @@ Without an explicit owner, scoring plans tend to stall or drift.
    - < 3 shared answers → show score but display "Low Confidence" indicator
    - This provides a consistent baseline without requiring perfection.
 
-6. **Candidate filter behavior for incomplete profiles.** When a candidate hasn't answered questions that a user has:
-   - Candidate is **included** in feed (not excluded)
-   - But: lower ranking, lower confidence, cannot qualify for "Strong Match" UI states
-   - This avoids unpredictable filtering while still rewarding complete profiles.
+6. **~~Candidate filter behavior for incomplete profiles.~~** **DECIDED: Exclude from feed.** Candidates hidden from "My Issues" filter until they answer active questions. Candidates still visible in "Explore" and "My Area" filters regardless of answer completeness.
 
-7. **Coexistence migration rule.** During the temporary coexistence phase:
-   - Feed ranking continues to use **spectrum scoring** (existing system)
-   - Question-based scoring is introduced **in parallel but not used for ranking** until Phase 2 (full replacement)
-   - This avoids mid-transition instability and confusing users with inconsistent results.
+7. ~~**Coexistence migration rule.**~~ **N/A — full replacement chosen, no coexistence phase.**
 
 8. **Answer coverage metric.** Track candidate profile completeness:
    - `answerCoverage = answeredQuestions / activeQuestions`
@@ -234,10 +223,7 @@ Without an explicit owner, scoring plans tend to stall or drift.
 - Consistency review across districts
 - Short label review for bias
 
-**Enforcement mechanism:** No question goes live without passing editorial review. Options:
-- Admin UI flag on Question document (`editorialStatus: 'approved' | 'pending' | 'rejected'`) — only `approved` questions can be added to QuizConfig
-- Or: simple manual checklist process with sign-off before seed/deploy
-- Without enforcement, editorial review becomes aspirational.
+**Enforcement mechanism:** **DECIDED: Admin UI flag.** Question document includes `editorialStatus: 'approved' | 'pending' | 'rejected'` — only `approved` questions can be added to QuizConfig. Future admin login will allow question management based on news/campaign developments.
 
 **Question Content** (from `docs/feedback/Possible Questions for App Module (1).md`, revised 2026-03-28):
 
@@ -297,9 +283,9 @@ Without an explicit owner, scoring plans tend to stall or drift.
 |----------|--------|-------------|
 | **10A** | ✅ Ready | Filter decision made: drop Top Picks to 3 filters |
 | **10B** | ✅ Safe whenever | None (presentation-only) |
-| **10C1** | 🟡 Nearly ready | Replacement-vs-coexistence decision (recommended: coexist → replace); 10A should land first |
-| **10C2** | 🟡 Nearly ready | Scoring model defaults defined; needs ownership assignment + final sign-off; 10C1 |
-| **10C3** | 🔴 Blocked | 10C1 + 10C2 + editorial review with enforcement |
+| **10C1** | ✅ Ready | Full replacement decided; 10A complete |
+| **10C2** | ✅ Ready | Spectrum-mapped scoring; exclude incomplete from feed; product owner sign-off |
+| **10C3** | ✅ Ready | Admin UI flag for editorial; question content finalized |
 
 **Recommended sequence:** 10A → 10B → 10C1 → 10C2 → 10C3
 
