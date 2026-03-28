@@ -67,11 +67,6 @@ export default function ProfileScreen() {
           description: 'Update your name and contact details',
           onPress: () => router.push('/(main)/(profile)/personal-info' as any),
         },
-      ],
-    },
-    {
-      title: 'Activity',
-      items: [
         {
           id: 'endorsements',
           icon: 'thumb-up',
@@ -127,13 +122,6 @@ export default function ProfileScreen() {
           label: 'Contact Support',
           description: 'Get help from our team',
           onPress: handleContactSupport,
-        },
-        {
-          id: 'feedback',
-          icon: 'message-alert',
-          label: 'Send Feedback',
-          description: 'Help us improve the app',
-          onPress: handleSendFeedback,
         },
       ],
     },
