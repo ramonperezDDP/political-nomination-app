@@ -30,7 +30,7 @@ export default function MassEndorseButton({
   const endorseCandidate = useUserStore((s) => s.endorseCandidate);
   const hasEndorsedCandidate = useUserStore((s) => s.hasEndorsedCandidate);
 
-  if (experienceFilter === 'random') return null;
+  // Mass endorse available on all filters
   if (filteredItems.length === 0) return null;
   if (!userId || !hasAccount || !fullyVerified) return null;
 

@@ -5,7 +5,7 @@ import { Text } from 'react-native-paper';
 import { Video, ResizeMode } from 'expo-av';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useAuthStore } from '@/stores';
+import { useAuthStore, useConfigStore } from '@/stores';
 import { useUserStore, selectCanSeeAlignment, selectEndorseLockReason, selectHasAccount } from '@/stores';
 import AlignmentCircle from './AlignmentCircle';
 import EndorseLockModal from './EndorseLockModal';
@@ -26,9 +26,10 @@ export default function FullScreenPSA({ feedItem, isActive, height }: FullScreen
   const [isPaused, setIsPaused] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
 
-  const { candidate, psa, alignmentScore, matchedIssues } = feedItem;
+  const { candidate, psa, alignmentScore, matchedIssues, candidatePositions } = feedItem;
 
   const currentUser = useAuthStore((s) => s.user);
+  const { issues } = useConfigStore();
   const canSeeAlignment = useUserStore(selectCanSeeAlignment);
   const hasAccount = useUserStore(selectHasAccount);
   const endorseCandidate = useUserStore((s) => s.endorseCandidate);
@@ -38,6 +39,26 @@ export default function FullScreenPSA({ feedItem, isActive, height }: FullScreen
   const lockReasonSelector = useMemo(() => selectEndorseLockReason(candidate.district), [candidate.district]);
   const lockReason = useUserStore(lockReasonSelector);
   const canEndorse = lockReason === null;
+
+  // Find all shared policies where user and candidate align (closeness > 0.5)
+  const sharedPolicies = useMemo(() => {
+    const responses = currentUser?.questionnaireResponses || [];
+    if (responses.length === 0 || !candidatePositions?.length) return [];
+
+    const matches: { issueId: string; name: string; closeness: number }[] = [];
+    for (const cp of candidatePositions) {
+      const userResp = responses.find((r) => r.issueId === cp.issueId);
+      if (!userResp) continue;
+      const userVal = Number(userResp.answer);
+      if (isNaN(userVal)) continue;
+      const closeness = 1 - Math.abs(userVal - cp.spectrumPosition) / 200;
+      if (closeness >= 0.5) {
+        const issue = issues.find((i) => i.id === cp.issueId);
+        if (issue) matches.push({ issueId: cp.issueId, name: issue.name, closeness });
+      }
+    }
+    return matches.sort((a, b) => b.closeness - a.closeness);
+  }, [currentUser?.questionnaireResponses, candidatePositions, issues]);
 
   const [showLockModal, setShowLockModal] = useState(false);
 
@@ -160,18 +181,20 @@ export default function FullScreenPSA({ feedItem, isActive, height }: FullScreen
 
       {/* Bottom info overlay */}
       <View style={styles.bottomInfo}>
-        <Text style={styles.candidateName}>@{candidate.displayName}</Text>
-        <Text style={styles.psaTitle}>{psa.title}</Text>
-        {matchedIssues.length > 0 && (
-          <View style={styles.issueTags}>
-            {matchedIssues.slice(0, 3).map((issueId) => (
-              <View key={issueId} style={styles.issueTag}>
-                <Text style={styles.issueTagText}>
-                  {issueId}
-                </Text>
-              </View>
-            ))}
-          </View>
+        <Text style={styles.candidateName}>{candidate.displayName}</Text>
+        {sharedPolicies.length > 0 ? (
+          <>
+            <Text style={styles.psaTitle}>Shares my position on:</Text>
+            <View style={styles.issueTags}>
+              {sharedPolicies.map((policy) => (
+                <View key={policy.issueId} style={styles.sharedPolicyChip}>
+                  <Text style={styles.sharedPolicyText}>{policy.name}</Text>
+                </View>
+              ))}
+            </View>
+          </>
+        ) : (
+          <Text style={styles.psaTitle}>{psa.title}</Text>
         )}
       </View>
 
@@ -277,5 +300,18 @@ const styles = StyleSheet.create({
   issueTagText: {
     color: '#fff',
     fontSize: 12,
+  },
+  sharedPolicyChip: {
+    backgroundColor: 'rgba(90,57,119,0.85)',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+  sharedPolicyText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
   },
 });

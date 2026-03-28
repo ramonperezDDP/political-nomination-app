@@ -4,7 +4,7 @@ import { Text } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useUserStore, selectCanSeeAlignment } from '@/stores';
 
-export type ExperienceFilter = 'random' | 'location' | 'issues';
+export type ExperienceFilter = 'location' | 'issues';
 
 interface ExperienceMenuProps {
   selectedFilter: ExperienceFilter;
@@ -21,9 +21,8 @@ interface FilterOption {
 }
 
 const FILTER_OPTIONS: FilterOption[] = [
-  { id: 'random', label: 'Explore', icon: 'shuffle-variant', disabledDescription: '' },
-  { id: 'location', label: 'My Area', icon: 'map-marker', disabledDescription: '' },
   { id: 'issues', label: 'My Issues', icon: 'clipboard-list', disabledDescription: 'Complete the quiz to unlock' },
+  { id: 'location', label: 'My Area', icon: 'map-marker', disabledDescription: '' },
 ];
 
 export default function ExperienceMenu({

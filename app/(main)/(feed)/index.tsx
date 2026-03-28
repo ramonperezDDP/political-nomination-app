@@ -102,7 +102,7 @@ export default function ForYouScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeIndex, setActiveIndex] = useState(0);
   const [experienceFilter, setExperienceFilter] = useState<ExperienceFilter>(
-    canSeeAlignment ? 'issues' : 'random'
+    canSeeAlignment ? 'issues' : 'location'
   );
   const [locationModalVisible, setLocationModalVisible] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
@@ -120,7 +120,7 @@ export default function ForYouScreen() {
 
   // Auto-switch to 'issues' when user completes quiz
   useEffect(() => {
-    if (canSeeAlignment && experienceFilter === 'random') {
+    if (canSeeAlignment && experienceFilter === 'location') {
       setExperienceFilter('issues');
     }
   }, [canSeeAlignment]);
@@ -142,7 +142,6 @@ export default function ForYouScreen() {
         const items = candidatesData.map(({ candidate, user: candidateUser }) =>
           generateFeedItem(candidate, candidateUser, userIssues, issues, userResponses)
         );
-        items.sort((a, b) => (b.alignmentScore ?? -1) - (a.alignmentScore ?? -1));
         setFeedItems(items);
       } catch (error) {
         console.warn('Error loading feed:', error);
@@ -156,17 +155,11 @@ export default function ForYouScreen() {
   const filteredItems = useMemo(() => {
     switch (experienceFilter) {
       case 'issues':
-        return feedItems.filter((item) => {
-          if (item.matchedIssues.length === 0) return false;
-          const responses = userResponses || [];
-          return item.candidatePositions.some((cp) => {
-            const userResponse = responses.find((r) => r.issueId === cp.issueId);
-            if (!userResponse) return false;
-            const userValue = Number(userResponse.answer);
-            return (userValue >= 0 && cp.spectrumPosition >= 0) ||
-                   (userValue < 0 && cp.spectrumPosition < 0);
-          });
-        });
+        // Show all candidates sorted by alignment score (best matches first).
+        // Differentiates from Explore which shows random order.
+        return [...feedItems]
+          .filter((item) => item.alignmentScore != null)
+          .sort((a, b) => (b.alignmentScore ?? 0) - (a.alignmentScore ?? 0));
 
       case 'location':
         if (!selectedLocation) return feedItems;
@@ -175,7 +168,6 @@ export default function ForYouScreen() {
           item.candidate.zone === selectedLocation
         );
 
-      case 'random':
       default:
         return feedItems;
     }
