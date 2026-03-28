@@ -10,6 +10,7 @@ interface ConfigState {
   currentRound: ContestRound | null;
   isLoading: boolean;
   error: string | null;
+  debugRoundOverride: string | null;
 
   // Actions
   initialize: () => () => void;
@@ -17,6 +18,7 @@ interface ConfigState {
   fetchIssues: () => Promise<void>;
   fetchContestRounds: () => Promise<void>;
   setError: (error: string | null) => void;
+  setDebugRound: (roundId: string | null) => void;
 }
 
 // Helper: derive currentRound from partyConfig and contestRounds
@@ -34,6 +36,7 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
   currentRound: null,
   isLoading: true,
   error: null,
+  debugRoundOverride: null,
 
   // Initialize config with real-time subscription
   initialize: () => {
@@ -50,12 +53,17 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
 
     // Subscribe to party config changes
     const unsubscribe = subscribeToPartyConfig((config) => {
-      const rounds = get().contestRounds;
-      set({
-        partyConfig: config,
-        currentRound: deriveCurrentRound(config, rounds),
-        isLoading: false,
-      });
+      const { debugRoundOverride, contestRounds } = get();
+      if (debugRoundOverride) {
+        // Keep the override active — only update partyConfig but not currentRound
+        set({ partyConfig: config, isLoading: false });
+      } else {
+        set({
+          partyConfig: config,
+          currentRound: deriveCurrentRound(config, contestRounds),
+          isLoading: false,
+        });
+      }
     });
 
     return unsubscribe;
@@ -134,6 +142,24 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
   setError: (error: string | null) => {
     set({ error });
   },
+
+  // Debug: override the current round locally (bypasses Firestore listener)
+  setDebugRound: (roundId: string | null) => {
+    const { contestRounds, partyConfig } = get();
+    if (!roundId) {
+      // Clear override — revert to Firestore value
+      set({
+        debugRoundOverride: null,
+        currentRound: deriveCurrentRound(partyConfig, contestRounds),
+      });
+    } else {
+      const round = contestRounds.find((r) => r.id === roundId) || null;
+      set({
+        debugRoundOverride: roundId,
+        currentRound: round,
+      });
+    }
+  },
 }));
 
 // Selectors
@@ -143,7 +169,7 @@ export const selectContestStage = (state: ConfigState): ContestStage =>
   (state.partyConfig?.currentRoundId || state.partyConfig?.contestStage || 'pre_nomination') as ContestStage;
 
 export const selectCurrentRoundId = (state: ConfigState): ContestRoundId =>
-  (state.partyConfig?.currentRoundId || state.partyConfig?.contestStage || 'pre_nomination') as ContestRoundId;
+  (state.debugRoundOverride || state.partyConfig?.currentRoundId || state.partyConfig?.contestStage || 'pre_nomination') as ContestRoundId;
 
 export const selectVotingMethod = (state: ConfigState): VotingMethod =>
   state.currentRound?.votingMethod || 'none';

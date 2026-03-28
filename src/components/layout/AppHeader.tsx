@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { StyleSheet, View, Image, Pressable } from 'react-native';
 import { Text, useTheme, Menu } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -13,13 +13,39 @@ const DISTRICT_COLORS: Record<string, string> = {
 
 const AVAILABLE_DISTRICTS = ['PA-01', 'PA-02'];
 
+const ROUND_IDS = [
+  'pre_nomination',
+  'round_1_endorsement',
+  'round_2_endorsement',
+  'round_3_endorsement',
+  'virtual_town_hall',
+  'debate',
+  'final_results',
+];
+
 export default function AppHeader() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const roundLabel = useConfigStore(selectCurrentRoundLabel);
+  const debugRoundOverride = useConfigStore((s) => s.debugRoundOverride);
+  const setDebugRound = useConfigStore((s) => s.setDebugRound);
+  const contestRounds = useConfigStore((s) => s.contestRounds);
   const selectedDistrict = useUserStore((s) => s.selectedBrowsingDistrict) || 'PA-01';
   const setDistrict = useUserStore((s) => s.setSelectedBrowsingDistrict);
   const [menuVisible, setMenuVisible] = useState(false);
+
+  const handleRoundTap = useCallback(() => {
+    if (contestRounds.length === 0) return;
+    const currentId = debugRoundOverride || useConfigStore.getState().partyConfig?.currentRoundId || 'pre_nomination';
+    const currentIdx = ROUND_IDS.indexOf(currentId);
+    const nextIdx = (currentIdx + 1) % ROUND_IDS.length;
+    setDebugRound(ROUND_IDS[nextIdx]);
+  }, [debugRoundOverride, contestRounds, setDebugRound]);
+
+  const handleRoundLongPress = useCallback(() => {
+    // Long press resets to Firestore value
+    setDebugRound(null);
+  }, [setDebugRound]);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + 8, backgroundColor: theme.colors.surface, borderBottomColor: theme.colors.outlineVariant }]}>
@@ -29,11 +55,22 @@ export default function AppHeader() {
         resizeMode="contain"
       />
 
-      <View style={styles.roundContainer}>
-        <Text variant="labelSmall" style={{ color: theme.colors.outline }}>
+      <Pressable
+        style={styles.roundContainer}
+        onPress={handleRoundTap}
+        onLongPress={handleRoundLongPress}
+      >
+        <Text
+          variant="labelSmall"
+          style={{
+            color: debugRoundOverride ? theme.colors.error : theme.colors.outline,
+            fontWeight: debugRoundOverride ? '700' : undefined,
+          }}
+        >
           {roundLabel}
+          {debugRoundOverride ? ' ⟳' : ''}
         </Text>
-      </View>
+      </Pressable>
 
       <Menu
         visible={menuVisible}
