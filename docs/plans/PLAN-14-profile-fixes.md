@@ -2,7 +2,7 @@
 
 > **Updated 2026-03-25:** Split per round 3 review. Original plan mixed safe header fixes with deferred features.
 
-## PLAN-14A: Profile Header + Beta CTA Hiding ✅ READY TO SHIP
+## PLAN-14A: Profile Header + Beta CTA Hiding ✅ COMPLETE (2026-03-27)
 
 > **Sequence:** Implement after PLAN-17 (hard dependency — file paths changed). No dependency on PLAN-16 (independent work).
 
@@ -33,10 +33,12 @@ Use `{false && ...}` guard. **Do NOT delete the code or styles** — will be re-
 
 ### Testing
 
-- Profile shows "YN" initials when no photo and name is default
-- "Unverified" appears for users missing any verification axis
-- "Verified" appears (primary color) when `selectFullyVerified` returns true
-- Run for Office card hidden on both Profile and Home
+- [x] Profile shows "YN" initials when no photo and name is default
+- [x] "Unverified" appears for users missing any verification axis
+- [x] "Verified" appears (primary color) when `selectFullyVerified` returns true
+- [x] Run for Office card hidden on Profile (not present in VoterHome)
+
+All tests verified 2026-03-27 via console log instrumentation and visual screenshot confirmation.
 
 ---
 

@@ -10,6 +10,7 @@ import {
   useUserStore,
   selectIsCandidate,
   selectHasPendingApplication,
+  selectFullyVerified,
   useCandidateStore,
 } from '@/stores';
 import { Card, UserAvatar, Chip, ConfirmModal } from '@/components/ui';
@@ -22,9 +23,12 @@ export default function ProfileScreen() {
   const { userProfile, endorsements } = useUserStore();
   const isCandidate = useAuthStore(selectIsCandidate);
   const { application } = useCandidateStore();
+  const isFullyVerified = useUserStore(selectFullyVerified);
   const hasPendingApplication = application?.status === 'pending' || application?.status === 'under_review';
 
   const [showSignOutModal, setShowSignOutModal] = React.useState(false);
+
+
 
   const handleSignOut = async () => {
     await signOut();
@@ -185,22 +189,25 @@ export default function ProfileScreen() {
         <View style={styles.header}>
           <UserAvatar
             photoUrl={user?.photoUrl || undefined}
-            displayName={user?.displayName || 'User'}
+            displayName={user?.displayName || 'Your Name'}
             size={80}
           />
           <View style={styles.headerInfo}>
             <Text variant="headlineSmall" style={styles.displayName}>
-              {user?.displayName || 'User'}
+              {user?.displayName || 'Your Name'}
             </Text>
             <Text variant="bodyMedium" style={{ color: theme.colors.outline }}>
               {user?.email}
+            </Text>
+            <Text variant="bodySmall" style={{ color: isFullyVerified ? theme.colors.primary : theme.colors.outline }}>
+              {isFullyVerified ? 'Verified' : 'Unverified'}
             </Text>
             <View style={styles.roleBadge}>
               <Chip
                 label={isCandidate ? 'Candidate' : 'Voter'}
                 variant={isCandidate ? 'success' : 'info'}
               />
-              {userProfile?.verificationStatus === 'verified' && (
+              {isFullyVerified && (
                 <MaterialCommunityIcons
                   name="check-decagram"
                   size={20}
@@ -212,8 +219,8 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        {/* Run for Office CTA (for non-candidates) */}
-        {!isCandidate && !hasPendingApplication && (
+        {/* Run for Office CTA (hidden during beta — replace with partyConfig.features?.runForOffice before beta exits) */}
+        {false && !isCandidate && !hasPendingApplication && (
           <Card
             style={[styles.ctaCard, { backgroundColor: theme.colors.primaryContainer }]}
             onPress={() => router.push('/(candidate)/apply')}
