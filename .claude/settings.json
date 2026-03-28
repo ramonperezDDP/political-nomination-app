@@ -1,0 +1,48 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run lint)",
+      "Bash(npm run type-check)",
+      "Bash(npm run start*)",
+      "Bash(npm run build:*)",
+      "Bash(npm install*)",
+      "Bash(npx expo *)",
+      "Bash(npx tsc *)",
+      "Bash(cd functions && npm run build*)",
+      "Bash(cd functions && npm run lint*)",
+      "Bash(cd functions && npm install*)",
+      "Bash(node scripts/*)",
+      "Bash(git status*)",
+      "Bash(git log*)",
+      "Bash(git diff*)",
+      "Bash(git branch*)",
+      "Bash(git show*)",
+      "Bash(git stash*)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git checkout *)",
+      "Bash(git merge *)",
+      "Bash(git rebase *)",
+      "Bash(ls *)",
+      "Bash(cat *)",
+      "Bash(mkdir *)",
+      "Bash(which *)",
+      "Bash(echo *)",
+      "Read",
+      "Write",
+      "Edit",
+      "Glob",
+      "Grep",
+      "NotebookEdit"
+    ],
+    "deny": [
+      "Bash(git push *)",
+      "Bash(git push)",
+      "Bash(firebase deploy*)",
+      "Bash(eas build*)",
+      "Bash(eas submit*)",
+      "Bash(npm publish*)",
+      "Bash(rm -rf *)"
+    ]
+  }
+}

@@ -1,6 +1,6 @@
 # PLAN-10: Quiz Improvements — REPLACED BY SUCCESSOR PLANS
 
-> **Updated 2026-03-28:** All blockers resolved. 10C decisions finalized:
+> **Updated 2026-03-28:** All sub-plans complete. 10A (dealbreaker removal), 10C (quiz v2), 10D (inline bottom sheet), 10E (pure quiz-based matching) all shipped. 10B (UX polish) safe whenever. Decisions finalized:
 > 1. **Full replacement** — new multiple-choice questions replace all spectrum sliders (no coexistence)
 > 2. **Spectrum-mapped scoring** — each MC option maps to a spectrum value; reuses existing `calculateAlignmentScore` math
 > 3. **Exclude from feed** — candidates hidden from "My Issues" filter until they answer active questions

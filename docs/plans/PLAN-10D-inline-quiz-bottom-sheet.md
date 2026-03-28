@@ -1,6 +1,6 @@
 # PLAN-10D: Inline Quiz Bottom Sheet on Home Screen
 
-> **Status: ✅ COMPLETE (2026-03-28).** Implemented with all 10 reviewer UX tweaks. Added clear answer feature post-implementation.
+> **Status: ✅ COMPLETE (2026-03-28).** Implemented with all 10 reviewer UX tweaks. Added clear answer feature. "Continue the quiz" CTA removed — quiz is now fully inline via bottom sheet.
 >
 > **Depends on:** PLAN-10C (complete) — uses the new multiple-choice question model and `getActiveQuestions` / `updateSingleQuizResponse` functions.
 >

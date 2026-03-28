@@ -1,6 +1,6 @@
 # PLAN-10E: Eliminate Priority Issues — Pure Quiz-Based Matching
 
-> **Status: ✅ COMPLETE (Step 1, 2026-03-28).** Priority issues removed from matching. Pure quiz-based scoring live. Step 2 (POSITION_TEMPLATES deletion) pending.
+> **Status: ✅ COMPLETE (2026-03-28).** Priority issues removed from matching. Pure quiz-based scoring live. 3-tier alignment chips (exact/close/not matched) on candidate profile. Issues tab rewritten as quiz answer comparison. Alignment tooltip modal removed — breakdown shown inline. Step 2 (POSITION_TEMPLATES deletion) pending.
 >
 > **Depends on:** PLAN-10C (complete), PLAN-10D (complete)
 
