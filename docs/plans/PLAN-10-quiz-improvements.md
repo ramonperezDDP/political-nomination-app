@@ -93,7 +93,7 @@ This keeps 10B safely shippable and prevents it from becoming a dumping ground f
 
 ## PLAN-10C: Quiz v2 — New Matching Architecture
 
-> **Status: ✅ ALL BLOCKERS RESOLVED. Ready to implement.** All 5 decisions made. Full replacement, spectrum-mapped scoring, exclude incomplete candidates from feed, product owner sign-off, admin UI flag for editorial.
+> **Status: ✅ COMPLETE (2026-03-28).** 10C1+10C2+10C3 implemented. 9 new MC questions replace old spectrum sliders. Quiz UI rewritten with radio cards grouped by Global/National/Local. Candidates seeded with quiz answers. Alignment scoring works via spectrum-mapped values.
 
 ### What This Actually Is
 
@@ -283,9 +283,9 @@ Without an explicit owner, scoring plans tend to stall or drift.
 |----------|--------|-------------|
 | **10A** | ✅ Ready | Filter decision made: drop Top Picks to 3 filters |
 | **10B** | ✅ Safe whenever | None (presentation-only) |
-| **10C1** | ✅ Ready | Full replacement decided; 10A complete |
-| **10C2** | ✅ Ready | Spectrum-mapped scoring; exclude incomplete from feed; product owner sign-off |
-| **10C3** | ✅ Ready | Admin UI flag for editorial; question content finalized |
+| **10C1** | ✅ Complete | Data model, QuizConfig, Firestore functions |
+| **10C2** | ✅ Complete | Spectrum-mapped scoring, candidate answers, feed integration |
+| **10C3** | ✅ Complete | 9 questions seeded, quiz UI rewritten, candidates populated |
 
 **Recommended sequence:** 10A → 10B → 10C1 → 10C2 → 10C3
 
