@@ -73,10 +73,13 @@ export default function PersonalInfoScreen() {
         finalPhotoUrl = uploadResult.url;
       }
 
-      await updateUser(user.id, {
+      const updateData: Record<string, any> = {
         displayName: displayName.trim(),
-        photoUrl: finalPhotoUrl,
-      });
+      };
+      if (finalPhotoUrl !== undefined) {
+        updateData.photoUrl = finalPhotoUrl;
+      }
+      await updateUser(user.id, updateData);
 
       // User data will be updated automatically via the real-time subscription
       Alert.alert('Success', 'Your profile has been updated.');
