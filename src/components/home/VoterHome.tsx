@@ -192,7 +192,6 @@ export default function VoterHome() {
             .map((r) => r.questionId) || []
         }
         district={selectedDistrict}
-        onPress={() => router.push('/(main)/quiz' as any)}
         onQuestionPress={handleQuestionPress}
       />
       {showHint && completedIssueCount === 0 && (
