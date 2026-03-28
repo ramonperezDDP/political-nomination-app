@@ -37,7 +37,7 @@ const generateFeedItem = (
     .map((r) => ({ questionId: r.questionId, issueId: r.issueId, answer: Number(r.answer) }))
     .filter((r) => !isNaN(r.answer));
 
-  const { score, sharedCount, alignedQuestionIds } = calculateAlignmentScore({
+  const { score, sharedCount, alignedQuestionIds, exactMatchIds, closeMatchIds, notMatchedIds } = calculateAlignmentScore({
     candidateResponses,
     userResponses: currentUserResponses,
   });
@@ -85,6 +85,9 @@ const generateFeedItem = (
     candidateResponses,
     sharedCount,
     alignedQuestionIds,
+    exactMatchIds,
+    closeMatchIds,
+    notMatchedIds,
   };
 };
 

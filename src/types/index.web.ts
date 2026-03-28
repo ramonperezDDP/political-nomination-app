@@ -257,6 +257,9 @@ export interface FeedItem {
   candidateResponses: QuestionnaireResponse[];
   sharedCount: number;
   alignedQuestionIds: string[];
+  exactMatchIds: string[];
+  closeMatchIds: string[];
+  notMatchedIds: string[];
 }
 
 export interface CandidatePreview {

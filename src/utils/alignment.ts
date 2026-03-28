@@ -16,9 +16,13 @@ export interface AlignmentInput {
 }
 
 export interface AlignmentResult {
-  score: number | null;       // 0-100, null if no shared answers
-  sharedCount: number;        // how many questions both answered
-  alignedQuestionIds: string[]; // questionIds where closeness >= 0.75
+  score: number | null;              // 0-100, null if no shared answers
+  sharedCount: number;               // how many questions both answered
+  exactMatchIds: string[];           // questionIds where closeness >= 0.75
+  closeMatchIds: string[];           // questionIds where closeness 0.5–0.74
+  notMatchedIds: string[];           // questionIds where closeness < 0.5
+  // Legacy alias for feed chips (exact matches)
+  alignedQuestionIds: string[];
 }
 
 export function calculateAlignmentScore({
@@ -35,7 +39,9 @@ export function calculateAlignmentScore({
   // Compare each user response against the candidate's answer for the same questionId
   let closenessTotal = 0;
   let sharedCount = 0;
-  const alignedQuestionIds: string[] = [];
+  const exactMatchIds: string[] = [];
+  const closeMatchIds: string[] = [];
+  const notMatchedIds: string[] = [];
 
   for (const ur of userResponses) {
     const userVal = Number(ur.answer);
@@ -50,12 +56,16 @@ export function calculateAlignmentScore({
     sharedCount++;
 
     if (closeness >= 0.75) {
-      alignedQuestionIds.push(ur.questionId);
+      exactMatchIds.push(ur.questionId);
+    } else if (closeness >= 0.5) {
+      closeMatchIds.push(ur.questionId);
+    } else {
+      notMatchedIds.push(ur.questionId);
     }
   }
 
   if (sharedCount === 0) {
-    return { score: null, sharedCount: 0, alignedQuestionIds: [] };
+    return { score: null, sharedCount: 0, exactMatchIds: [], closeMatchIds: [], notMatchedIds: [], alignedQuestionIds: [] };
   }
 
   const score = Math.round((closenessTotal / sharedCount) * 100);
@@ -63,6 +73,9 @@ export function calculateAlignmentScore({
   return {
     score: Math.min(100, Math.max(0, score)),
     sharedCount,
-    alignedQuestionIds,
+    exactMatchIds,
+    closeMatchIds,
+    notMatchedIds,
+    alignedQuestionIds: exactMatchIds,
   };
 }

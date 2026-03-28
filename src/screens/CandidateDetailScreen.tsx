@@ -11,6 +11,7 @@ import {
   incrementCandidateViews,
   getUser,
   inferGenderFromName,
+  getActiveQuestions,
 } from '@/services/firebase/firestore';
 import { useAuthStore, useConfigStore, useUserStore } from '@/stores';
 
@@ -29,7 +30,7 @@ import {
   LoadingScreen,
   EmptyState,
 } from '@/components/ui';
-import type { Candidate, PSA, User } from '@/types';
+import type { Candidate, PSA, User, Question } from '@/types';
 
 const SafeAreaView = Platform.OS === 'web' ? View : NativeSafeAreaView;
 
@@ -50,11 +51,11 @@ export default function CandidateProfileScreen() {
   const [candidate, setCandidate] = useState<Candidate | null>(null);
   const [candidateUser, setCandidateUser] = useState<User | null>(null);
   const [psas, setPSAs] = useState<PSA[]>([]);
+  const [quizQuestions, setQuizQuestions] = useState<Question[]>([]);
   const [activeTab, setActiveTab] = useState<ProfileTab>('issues');
   const [isLoading, setIsLoading] = useState(true);
   const [isEndorsing, setIsEndorsing] = useState(false);
   const [displayedEndorsementCount, setDisplayedEndorsementCount] = useState(0);
-  const [showAlignmentTooltip, setShowAlignmentTooltip] = useState(false);
 
   // Check endorsement status from global store
   const hasEndorsed = id ? hasEndorsedCandidate(id) : false;
@@ -63,7 +64,7 @@ export default function CandidateProfileScreen() {
   // PLAN-10E: Pure quiz-based matching using questionnaireResponses
   const alignmentDetails = useMemo(() => {
     if (!candidate || !currentUser) {
-      return { score: null, sharedPolicies: [], sharedCount: 0 };
+      return { score: null, sharedCount: 0, exactMatches: [], closeMatches: [], notMatched: [] };
     }
 
     const userResponses = (currentUser.questionnaireResponses || [])
@@ -74,28 +75,37 @@ export default function CandidateProfileScreen() {
       .map((r) => ({ questionId: r.questionId, issueId: r.issueId, answer: Number(r.answer) }))
       .filter((r) => !isNaN(r.answer));
 
-    const { score, sharedCount, alignedQuestionIds } = calculateAlignmentScore({
+    const { score, sharedCount, exactMatchIds, closeMatchIds, notMatchedIds } = calculateAlignmentScore({
       candidateResponses,
       userResponses,
     });
 
-    // Map aligned questionIds to issue names for display
+    // Map questionIds to issue names for display
     const questionToIssue = new Map<string, string>();
     for (const r of candidateResponses) {
       questionToIssue.set(r.questionId, r.issueId);
     }
 
-    const seen = new Set<string>();
-    const sharedPolicies: { issueId: string; name: string }[] = [];
-    for (const qId of alignedQuestionIds) {
-      const issueId = questionToIssue.get(qId);
-      if (!issueId || seen.has(issueId)) continue;
-      seen.add(issueId);
-      const issue = issues.find((i) => i.id === issueId);
-      if (issue) sharedPolicies.push({ issueId, name: issue.name });
-    }
+    const mapToNames = (ids: string[]) => {
+      const seen = new Set<string>();
+      const result: { issueId: string; name: string }[] = [];
+      for (const qId of ids) {
+        const issueId = questionToIssue.get(qId);
+        if (!issueId || seen.has(issueId)) continue;
+        seen.add(issueId);
+        const issue = issues.find((i) => i.id === issueId);
+        if (issue) result.push({ issueId, name: issue.name });
+      }
+      return result;
+    };
 
-    return { score, sharedPolicies, sharedCount };
+    return {
+      score,
+      sharedCount,
+      exactMatches: mapToNames(exactMatchIds),
+      closeMatches: mapToNames(closeMatchIds),
+      notMatched: mapToNames(notMatchedIds),
+    };
   }, [candidate, candidateUser, currentUser, issues]);
 
   // Sync endorsement count when candidate loads
@@ -124,6 +134,11 @@ export default function CandidateProfileScreen() {
           // Fetch PSAs
           const candidatePSAs = await getCandidatePSAs(id, 'published');
           setPSAs(candidatePSAs);
+
+          // Fetch quiz questions for the candidate's district
+          const district = candidateData.district || selectedDistrict;
+          const questions = await getActiveQuestions(district);
+          setQuizQuestions(questions);
         }
       } catch (error) {
         console.error('Error fetching candidate:', error);
@@ -205,31 +220,104 @@ export default function CandidateProfileScreen() {
     );
   };
 
-  const renderIssuesTab = () => (
-    <View style={styles.tabContent}>
-      {candidate?.topIssues?.map((topIssue) => (
-        <Card key={topIssue.issueId} style={styles.issueCard}>
-          <View style={styles.issueHeader}>
-            <Text variant="titleMedium" style={styles.issueName}>
-              {getIssueName(topIssue.issueId)}
-            </Text>
-          </View>
-          <Text variant="bodyMedium" style={{ color: theme.colors.outline, marginBottom: 16 }}>
-            {topIssue.position}
-          </Text>
-          {renderSpectrumPosition(topIssue.spectrumPosition)}
-        </Card>
-      ))}
+  const renderIssuesTab = () => {
+    const candidateResponses = candidateUser?.questionnaireResponses || [];
+    const userResponses = currentUser?.questionnaireResponses || [];
 
-      {(!candidate?.topIssues || candidate.topIssues.length === 0) && (
-        <EmptyState
-          icon="clipboard-list-outline"
-          title="No issues listed"
-          message="This candidate hasn't added their issue positions yet"
-        />
-      )}
-    </View>
-  );
+    // Build lookup maps
+    const candidateAnswerMap = new Map<string, number>();
+    for (const r of candidateResponses) {
+      candidateAnswerMap.set(r.questionId, Number(r.answer));
+    }
+    const userAnswerMap = new Map<string, number>();
+    for (const r of userResponses) {
+      userAnswerMap.set(r.questionId, Number(r.answer));
+    }
+
+    if (quizQuestions.length === 0 && candidateResponses.length === 0) {
+      return (
+        <View style={styles.tabContent}>
+          <EmptyState
+            icon="clipboard-list-outline"
+            title="No quiz responses yet"
+            message="This candidate hasn't answered the policy quiz yet"
+          />
+        </View>
+      );
+    }
+
+    return (
+      <View style={styles.tabContent}>
+        {quizQuestions.map((question) => {
+          const candidateVal = candidateAnswerMap.get(question.id);
+          const userVal = userAnswerMap.get(question.id);
+          const hasCandidate = candidateVal !== undefined && !isNaN(candidateVal);
+          const hasUser = userVal !== undefined && !isNaN(userVal);
+
+          return (
+            <Card key={question.id} style={styles.issueCard}>
+              <Text variant="titleSmall" style={{ fontWeight: '600', marginBottom: 10 }}>
+                {question.text}
+              </Text>
+              {(() => {
+                // Find closest option for a given spectrum value
+                const findClosestId = (val: number | undefined) => {
+                  if (val === undefined || isNaN(val) || !question.options?.length) return null;
+                  let best = question.options[0];
+                  for (const opt of question.options) {
+                    if (Math.abs(val - opt.spectrumValue) < Math.abs(val - best.spectrumValue)) best = opt;
+                  }
+                  return best.id;
+                };
+                const candidatePickId = hasCandidate ? findClosestId(candidateVal) : null;
+                const userPickId = hasUser ? findClosestId(userVal) : null;
+
+                return question.options?.map((option) => {
+                const isCandidatePick = option.id === candidatePickId;
+                const isUserPick = option.id === userPickId;
+
+                return (
+                  <View
+                    key={option.id}
+                    style={[
+                      styles.quizOptionRow,
+                      isCandidatePick && { backgroundColor: chipColor, borderRadius: 8 },
+                      isUserPick && !isCandidatePick && { backgroundColor: theme.colors.primaryContainer, borderRadius: 8 },
+                      isCandidatePick && isUserPick && { backgroundColor: chipColor, borderColor: theme.colors.primary, borderWidth: 2, borderRadius: 8 },
+                    ]}
+                  >
+                    <Text variant="bodyMedium" style={{ flex: 1 }}>
+                      <Text style={{ fontWeight: '600' }}>{option.shortLabel}</Text>
+                      {'  '}
+                      <Text style={{ color: theme.colors.outline, fontSize: 12 }}>{option.text}</Text>
+                    </Text>
+                    <View style={{ flexDirection: 'row', gap: 4 }}>
+                      {isCandidatePick && (
+                        <View style={{ backgroundColor: theme.colors.outline, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8 }}>
+                          <Text variant="labelSmall" style={{ color: '#fff', fontSize: 10, fontWeight: '600' }}>Candidate</Text>
+                        </View>
+                      )}
+                      {isUserPick && (
+                        <View style={{ backgroundColor: theme.colors.primary, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8 }}>
+                          <Text variant="labelSmall" style={{ color: '#fff', fontSize: 10, fontWeight: '600' }}>You</Text>
+                        </View>
+                      )}
+                    </View>
+                  </View>
+                );
+                });
+              })()}
+              {!hasCandidate && (
+                <Text variant="bodySmall" style={{ color: theme.colors.outline, fontStyle: 'italic', marginTop: 4 }}>
+                  No response yet
+                </Text>
+              )}
+            </Card>
+          );
+        })}
+      </View>
+    );
+  };
 
   const renderBioTab = () => (
     <View style={styles.tabContent}>
@@ -429,35 +517,67 @@ export default function CandidateProfileScreen() {
               </Text>
             </View>
             <View style={styles.statDivider} />
-            <Pressable
-              style={styles.stat}
-              onPress={() => setShowAlignmentTooltip(true)}
-              accessibilityRole="button"
-              accessibilityLabel={`${alignmentDetails.score !== null ? `${alignmentDetails.score}% match` : 'N/A'}. Tap for details.`}
-            >
-              <View style={styles.alignmentRow}>
-                <AlignmentBadge score={alignmentDetails.score} size="small" />
-                <MaterialCommunityIcons
-                  name="information-outline"
-                  size={16}
-                  color={theme.colors.primary}
-                  style={{ marginLeft: 4 }}
-                />
-              </View>
+            <View style={styles.stat}>
+              <AlignmentBadge score={alignmentDetails.score} size="small" />
               <Text variant="bodySmall" style={{ color: theme.colors.outline, marginTop: 4 }}>
                 Match
               </Text>
-            </Pressable>
+            </View>
           </View>
 
-          {/* Top Issues Chips */}
-          <View style={styles.chipsContainer}>
-            {candidate.topIssues?.slice(0, 3).map((issue) => (
-              <Chip key={issue.issueId} style={[styles.chip, { backgroundColor: chipColor }]}>
-                {getIssueName(issue.issueId)}
-              </Chip>
-            ))}
-          </View>
+          {/* Alignment Breakdown */}
+          {alignmentDetails.sharedCount > 0 && (
+            <View style={styles.alignmentBreakdown}>
+              <Text variant="bodySmall" style={{ color: theme.colors.outline, marginBottom: 8, textAlign: 'center' }}>
+                Alignment based on {alignmentDetails.sharedCount} shared responses
+              </Text>
+
+              {alignmentDetails.exactMatches.length > 0 && (
+                <View style={styles.chipSection}>
+                  <Text variant="labelSmall" style={{ color: theme.colors.primary, marginBottom: 4 }}>
+                    Exact position matches
+                  </Text>
+                  <View style={styles.chipsContainer}>
+                    {alignmentDetails.exactMatches.map((p) => (
+                      <Chip key={p.issueId} style={[styles.chip, { backgroundColor: chipColor }]} textStyle={{ fontSize: 12 }}>
+                        {p.name}
+                      </Chip>
+                    ))}
+                  </View>
+                </View>
+              )}
+
+              {alignmentDetails.closeMatches.length > 0 && (
+                <View style={styles.chipSection}>
+                  <Text variant="labelSmall" style={{ color: theme.colors.outline, marginBottom: 4 }}>
+                    Close matches
+                  </Text>
+                  <View style={styles.chipsContainer}>
+                    {alignmentDetails.closeMatches.map((p) => (
+                      <Chip key={p.issueId} style={[styles.chip, { backgroundColor: theme.colors.surfaceVariant }]} textStyle={{ fontSize: 12 }}>
+                        {p.name}
+                      </Chip>
+                    ))}
+                  </View>
+                </View>
+              )}
+
+              {alignmentDetails.notMatched.length > 0 && (
+                <View style={styles.chipSection}>
+                  <Text variant="labelSmall" style={{ color: theme.colors.error, marginBottom: 4 }}>
+                    Not matched
+                  </Text>
+                  <View style={styles.chipsContainer}>
+                    {alignmentDetails.notMatched.map((p) => (
+                      <Chip key={p.issueId} style={[styles.chip, { backgroundColor: theme.colors.errorContainer }]} textStyle={{ fontSize: 12, color: theme.colors.onErrorContainer }}>
+                        {p.name}
+                      </Chip>
+                    ))}
+                  </View>
+                </View>
+              )}
+            </View>
+          )}
 
           {/* Action Buttons */}
           <View style={styles.actionButtons}>
@@ -502,85 +622,6 @@ export default function CandidateProfileScreen() {
         {activeTab === 'psas' && renderPSAsTab()}
       </ScrollView>
 
-      {/* Alignment Score Tooltip Modal */}
-      <Modal
-        visible={showAlignmentTooltip}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowAlignmentTooltip(false)}
-      >
-        <Pressable
-          style={styles.modalOverlay}
-          onPress={() => setShowAlignmentTooltip(false)}
-        >
-          <Pressable
-            style={[styles.tooltipContainer, { backgroundColor: theme.colors.surface }]}
-            onPress={(e) => e.stopPropagation()}
-          >
-            <View style={styles.tooltipHeader}>
-              <Text variant="titleMedium" style={{ fontWeight: 'bold' }}>
-                Alignment Score Explained
-              </Text>
-              <IconButton
-                icon="close"
-                size={20}
-                onPress={() => setShowAlignmentTooltip(false)}
-              />
-            </View>
-
-            <View style={[styles.scoreHighlight, { backgroundColor: theme.colors.primaryContainer }]}>
-              <Text variant="displaySmall" style={{ fontWeight: 'bold', color: theme.colors.primary }}>
-                {alignmentDetails.score !== null ? `${alignmentDetails.score}%` : 'N/A'}
-              </Text>
-              <Text variant="bodyMedium" style={{ color: theme.colors.onPrimaryContainer }}>
-                {alignmentDetails.score !== null ? 'Overall Match' : 'Complete the quiz to see your match'}
-              </Text>
-            </View>
-
-            <Divider style={{ marginVertical: 16 }} />
-
-            <View style={styles.tooltipSection}>
-              <View style={styles.tooltipRow}>
-                <MaterialCommunityIcons
-                  name="checkbox-marked-circle"
-                  size={20}
-                  color={theme.colors.primary}
-                />
-                <Text variant="bodyMedium" style={{ marginLeft: 8, flex: 1 }}>
-                  Alignment based on{' '}
-                  <Text style={{ fontWeight: 'bold' }}>{alignmentDetails.sharedCount}</Text> shared responses
-                </Text>
-              </View>
-
-              {alignmentDetails.sharedPolicies.length > 0 && (
-                <View style={styles.matchedIssuesList}>
-                  <Text variant="labelMedium" style={{ color: theme.colors.outline, marginBottom: 8 }}>
-                    Shared Positions:
-                  </Text>
-                  <View style={styles.issueChipsWrap}>
-                    {alignmentDetails.sharedPolicies.map((policy) => (
-                      <Chip
-                        key={policy.issueId}
-                        style={[styles.matchedIssueChip, { backgroundColor: chipColor }]}
-                        textStyle={{ fontSize: 12 }}
-                      >
-                        {policy.name}
-                      </Chip>
-                    ))}
-                  </View>
-                </View>
-              )}
-
-            </View>
-
-            <Divider style={{ marginVertical: 16 }} />
-
-            <Text variant="bodySmall" style={{ color: theme.colors.outline, textAlign: 'center' }}>
-              Score is based on how closely your quiz answers match this candidate's responses.
-            </Text>
-          </Pressable>
-        </Pressable>
-      </Modal>
     </SafeAreaView>
   );
 }
@@ -624,11 +665,20 @@ const styles = StyleSheet.create({
     height: 40,
     backgroundColor: 'rgba(0,0,0,0.1)',
   },
+  alignmentBreakdown: {
+    marginTop: 8,
+    marginBottom: 12,
+    paddingHorizontal: 8,
+  },
+  chipSection: {
+    marginBottom: 8,
+    alignItems: 'center',
+  },
   chipsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
-    marginBottom: 16,
+    marginBottom: 4,
   },
   chip: {
     margin: 4,
@@ -654,6 +704,13 @@ const styles = StyleSheet.create({
   issueCard: {
     marginBottom: 16,
     padding: 16,
+  },
+  quizOptionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    marginBottom: 4,
   },
   issueHeader: {
     flexDirection: 'row',
