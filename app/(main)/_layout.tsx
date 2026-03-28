@@ -3,6 +3,10 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from 'react-native-paper';
 import { useAuthStore } from '@/stores';
 
+export const unstable_settings = {
+  initialRouteName: '(home)',
+};
+
 export default function MainLayout() {
   const theme = useTheme();
   const isInitialized = useAuthStore((state) => state.isInitialized);
@@ -77,6 +81,12 @@ export default function MainLayout() {
       />
       <Tabs.Screen
         name="quiz"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="index"
         options={{
           href: null,
         }}

@@ -129,7 +129,7 @@ export default function QuizScreen() {
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: theme.colors.background }]}
-      edges={['bottom']}
+      edges={['top', 'bottom']}
     >
       {/* Web-only back header */}
       {Platform.OS === 'web' && (
@@ -143,23 +143,23 @@ export default function QuizScreen() {
         </View>
       )}
 
-      {/* Progress banner */}
-      <View style={[styles.progressBanner, { backgroundColor: theme.colors.primaryContainer }]}>
-        <MaterialCommunityIcons
-          name="clipboard-check-outline"
-          size={18}
-          color={theme.colors.primary}
-        />
-        <Text variant="labelLarge" style={{ color: theme.colors.primary, marginLeft: 8 }}>
-          {completedCount} of {totalQuestions} questions answered
-        </Text>
-      </View>
-
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
+        {/* Progress banner */}
+        <View style={[styles.progressBanner, { backgroundColor: theme.colors.primaryContainer }]}>
+          <MaterialCommunityIcons
+            name="clipboard-check-outline"
+            size={18}
+            color={theme.colors.primary}
+          />
+          <Text variant="labelLarge" style={{ color: theme.colors.primary, marginLeft: 8 }}>
+            {completedCount} of {totalQuestions} questions answered
+          </Text>
+        </View>
+
         {sections.map((section) => (
           <View key={section.scope} style={styles.section}>
             <Text
@@ -258,8 +258,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
-    marginHorizontal: 16,
-    marginTop: 16,
+    marginBottom: 16,
     borderRadius: 8,
   },
   scrollView: {
