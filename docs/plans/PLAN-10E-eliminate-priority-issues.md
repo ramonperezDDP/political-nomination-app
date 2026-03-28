@@ -1,12 +1,16 @@
 # PLAN-10E: Eliminate Priority Issues — Pure Quiz-Based Matching
 
-> **Status:** Ready for review.
+> **Status:** Approved with revisions (feedback round 5). All 6 reviewer items addressed.
 >
 > **Depends on:** PLAN-10C (complete), PLAN-10D (complete)
 
 ## Summary
 
-Remove the "priority issues" concept entirely. Candidates and voters fill out the exact same quiz questionnaire and are matched purely on spectrum closeness of their quiz answers. No priority rankings, no issue overlap ratio, no priority bonus scoring.
+Remove the "priority issues" concept from matching. Candidates and voters fill out the exact same quiz questionnaire and are matched purely on spectrum closeness of their quiz answers. No priority rankings, no issue overlap ratio, no priority bonus scoring.
+
+**Single explainable user story:** "You and the candidate answered the same questions. We compare how close your answers are."
+
+**Important distinction (from review):** Removing `topIssues` from *matching* does not mean removing richer candidate policy content from the product forever. The quiz is the matching instrument. Candidates may still have additional policy profile content in the future — but that content would be for exploration/display, not for scoring.
 
 ## What's Being Removed
 
@@ -18,7 +22,7 @@ The current system has two parallel matching concepts:
 
 These overlap and create confusion: the alignment tooltip says "0 of 7 priority issues match" while the shared policy chips show 3 matches because they use different matching logic.
 
-**After this change:** Only quiz responses exist. Candidates and voters are matched solely on their quiz answers via spectrum closeness.
+**After this change:** Only quiz responses are used for matching. `topIssues` stops being read for scoring (field remains in Firestore, harmless).
 
 ## New Alignment Scoring
 
@@ -37,6 +41,23 @@ alignmentScore = average(closeness values) * 100
 - Unanswered questions excluded from the average
 - If no shared answers: score = null
 
+**New interface (uses `questionId`, not `issueId`, per review):**
+```ts
+interface AlignmentInput {
+  candidateResponses: Array<{ questionId: string; issueId: string; answer: number }>;
+  userResponses: Array<{ questionId: string; issueId: string; answer: number }>;
+}
+
+interface AlignmentResult {
+  score: number | null;       // 0-100, null if no shared answers
+  sharedCount: number;        // how many questions both answered
+  totalQuestions: number;      // total active quiz questions
+  alignedQuestionIds: string[]; // questionIds where closeness >= 0.75 (for chips)
+}
+```
+
+Responses keyed by `questionId` (consistent with PLAN-10C's normalized model). `issueId` still carried for display grouping but not used as the matching key.
+
 **Example:**
 - User: Trade = -80, Iran = -80, Inflation = -70
 - Candidate: Trade = -75, Iran = 0, Inflation = -65
@@ -45,44 +66,69 @@ alignmentScore = average(closeness values) * 100
 - Inflation closeness: 1 - 5/200 = 0.975
 - Average: 0.85 → **Score: 85%**
 
+## Shared Policy Chip Rules (from review)
+
+Chips on For You cards and candidate detail show specific policies where user and candidate are closely aligned. Explicit rules:
+
+- **Show chip** when closeness ≥ 0.75 (same direction AND reasonably close)
+- Chip shows the issue name (e.g., "Trade", "Welfare")
+- Styled with district color (pink PA-01, blue PA-02)
+- If closeness is 0.5–0.74: not shown as chip (contributes to score but not highlighted)
+- If closeness < 0.5: not shown and pulls score down
+
+This means a chip labeled "Trade" indicates genuine agreement, not just "both answered this question."
+
+## Null / Low-Data Behavior (from review)
+
+| State | My Issues filter | For You card | Candidate detail |
+|-------|-----------------|--------------|-----------------|
+| User answered 0 questions | Filter unavailable (gated by `selectCanSeeAlignment`) | No score shown, "Top issues:" fallback | "Complete the quiz to see your match" |
+| User answered 1+ questions, candidate answered 0 | Candidate excluded from My Issues (per PLAN-10C) | N/A (excluded) | "This candidate hasn't answered yet" |
+| User answered 1+ questions, candidate answered 1+ but no overlap | Score shown (may be low), no chips | Score + "Top issues:" fallback | Score shown, no "Shared Positions" |
+| Both answered, some overlap | Score shown, shared policy chips | Score + "Shares my position on:" chips | Score + side-by-side comparison |
+
+**Sorting with null scores:** Candidates with null scores sort to the end of My Issues (effectively hidden since the filter excludes them per PLAN-10C).
+
+## Candidate Completeness (restate from PLAN-10C)
+
+Per PLAN-10C decision: **candidates are hidden from "My Issues" filter until they answer active questions.** This means:
+- Candidates with 0 quiz responses → excluded from My Issues, visible in My Area
+- Candidates with partial responses → included in My Issues (scored on answered overlap only)
+- No minimum coverage threshold beyond "at least 1 answer"
+
+## Alignment Tooltip Language (from review)
+
+Do NOT say "X of 7 policy positions match" — that implies binary match/mismatch.
+
+Instead: **"Alignment based on X shared responses"** — reflects the continuous closeness model.
+
+Example tooltip content:
+```
+85% Overall Match
+Alignment based on 5 shared responses
+
+Shared Positions:
+[Trade] [Inflation] [Welfare]
+```
+
 ## Files to Modify
 
 ### 1. `src/utils/alignment.ts`
 
 Rewrite `calculateAlignmentScore`:
 
-**Remove:**
-- `candidateIssues` and `userIssues` params (no priority issues)
-- `candidatePositions` param (no priority list)
-- Issue overlap ratio calculation
-- Priority bonus calculation
-- Base 10 points
+**Remove:** `candidateIssues`, `userIssues`, `candidatePositions` params. Remove issue overlap, priority bonus, base points.
 
-**Keep:**
-- `userResponses` param
-- Spectrum closeness math
-
-**New interface:**
-```ts
-interface AlignmentInput {
-  candidateResponses: Array<{ issueId: string; answer: number }>;
-  userResponses: Array<{ issueId: string; answer: number }>;
-}
-
-interface AlignmentResult {
-  score: number | null;  // 0-100, null if no shared answers
-  sharedCount: number;   // how many questions both answered
-  totalQuestions: number; // total active quiz questions
-}
-```
+**New:** Accept `candidateResponses` and `userResponses` keyed by `questionId`. Return `score`, `sharedCount`, `totalQuestions`, `alignedQuestionIds`.
 
 ### 2. `app/(main)/(feed)/index.tsx`
 
 Update `generateFeedItem`:
-- Remove `userIssues` param (no selected issues)
-- Pass candidate's `questionnaireResponses` (from the candidate's user doc) instead of `topIssues` to alignment scoring
-- Remove `candidatePositions` from FeedItem (no longer needed — shared policies are computed in FullScreenPSA from candidate responses)
-- Remove `matchedIssues` from FeedItem
+- Remove `userIssues` param
+- Pass candidate's `questionnaireResponses` to alignment scoring
+- FeedItem carries derived presentation data: `alignmentScore`, `sharedCount`, `alignedQuestionIds`, `candidateResponses`
+
+**FeedItem should contain derived alignment presentation data** (from review), not just raw responses. UI components should be presentation-only and not recompute matching logic.
 
 ### 3. `src/types/index.ts` and `src/types/index.web.ts`
 
@@ -90,43 +136,38 @@ Update `FeedItem`:
 - Remove `matchedIssues: string[]`
 - Remove `candidatePositions: TopIssue[]`
 - Add `candidateResponses: QuestionnaireResponse[]`
+- Add `sharedCount: number`
+- Add `alignedQuestionIds: string[]`
 
-Update `Candidate`:
-- `topIssues` becomes optional/deprecated (keep for backward compat during migration, but not used for matching)
+`Candidate.topIssues`: keep field (backward compat) but not used for matching.
 
 ### 4. `src/screens/CandidateDetailScreen.tsx`
 
-- Alignment tooltip: already fixed to use spectrum closeness (this commit)
-- Issues tab: currently shows candidate's `topIssues` with spectrum sliders. Replace with candidate's quiz answers displayed as their selected option per question
-- Remove priority ranking display (#1, #2, #3 etc.)
+- Alignment tooltip: use new language ("Alignment based on X shared responses")
+- Issues tab rewrite: show side-by-side quiz answer comparison per question
+  - If user hasn't answered: show candidate answer only, no comparison implied
+  - If candidate hasn't answered: show "No response yet"
+  - Only show active quiz questions (not retired historical answers)
+- Remove priority ranking display
 
 ### 5. `src/components/feed/FullScreenPSA.tsx`
 
-- `sharedPolicies` computation: change from iterating `candidatePositions` (topIssues) to iterating `candidateResponses` (quiz answers)
-- Remove `candidatePositions` from feedItem destructuring
+- `sharedPolicies`: derive from `feedItem.alignedQuestionIds` (pre-computed, no local recomputation)
+- Remove `candidatePositions` usage
 
 ### 6. `src/services/firebase/firestore.ts` and `firestore.web.ts`
 
-- `getCandidatesForFeed`: ensure candidate user docs (with `questionnaireResponses`) are returned alongside candidate docs
-- `seedCandidates`: candidates already get `questionnaireResponses` from PLAN-10C. No change needed for seeding.
-- `POSITION_TEMPLATES` and `generateAllIssuePositions`: can be removed entirely (only used for generating `topIssues`)
-- `ALL_ISSUE_IDS`: can be removed (only used by position generation)
+Two-step migration (from review):
+1. **Step 1:** Stop using `topIssues` in runtime matching/UI
+2. **Step 2:** Remove generation code (`POSITION_TEMPLATES`, `generateAllIssuePositions`, `ALL_ISSUE_IDS`) after confirming no seed paths depend on them
 
-### 7. `src/stores/configStore.ts`
+### 7. Copy / Analytics Audit (from review)
 
-- Remove or simplify any selectors that reference priority issues
-
-### 8. Candidate detail — Issues tab rewrite
-
-Currently shows a ranked list with spectrum position sliders. Replace with:
-
-```
-Question: "What tariff policy should apply to foreign goods?"
-Candidate's answer: [Protection] — highlighted
-Your answer: [Free Trade] — highlighted differently
-```
-
-Shows each quiz question with both the candidate's and user's selected options, making it easy to see where they agree and disagree.
+Same discipline as PLAN-10A:
+- String audit: find all user-facing text referencing "priority issues", "top issues" as a matching concept, "issue overlap"
+- Analytics audit: any events/funnels named after priority-issue concepts
+- Explainer audit: "match" vs "closeness" wording consistency
+- Tooltip/help text audit
 
 ## What Does NOT Change
 
@@ -138,25 +179,29 @@ Shows each quiz question with both the candidate's and user's selected options, 
 
 ## Seed Data Impact
 
-- `POSITION_TEMPLATES` (5 leanings × 31 issues) can be deleted — ~400 lines
-- `generateAllIssuePositions` function can be deleted — ~30 lines
-- `ALL_ISSUE_IDS` array can be deleted — ~10 lines
-- Candidates' `topIssues` field will still exist in Firestore but won't be used for matching
-- Auto-reseed migration check in feed can be simplified (no more wrong-district position checks)
+- `POSITION_TEMPLATES` (5 leanings × 31 issues) deleted in Step 2 — ~400 lines
+- `generateAllIssuePositions` function deleted in Step 2 — ~30 lines
+- `ALL_ISSUE_IDS` array deleted in Step 2 — ~10 lines
+- Candidates' `topIssues` field remains in Firestore (harmless, not read for matching)
+- Auto-reseed migration check in feed simplified
 
 ## Testing
 
-- [ ] Alignment score is computed purely from shared quiz answers
-- [ ] Score = null when no shared answers (user hasn't taken quiz)
-- [ ] Alignment tooltip shows "X of 7 policy positions match"
-- [ ] Shared policy chips on For You cards still work (using candidateResponses)
-- [ ] Candidate detail Issues tab shows quiz answers comparison (not priority ranking)
-- [ ] No references to "priority issues" in UI
-- [ ] Feed "My Issues" filter still sorts by alignment score
+- [ ] Alignment score computed purely from shared quiz answers (no priority overlap/bonus)
+- [ ] Score = null when no shared answers
+- [ ] Alignment tooltip says "Alignment based on X shared responses" (not "X match")
+- [ ] Shared policy chips appear only when closeness ≥ 0.75
+- [ ] Candidate detail Issues tab shows side-by-side quiz answer comparison
+- [ ] Candidate with 0 answers: excluded from My Issues, visible in My Area
+- [ ] Candidate with 0 answers: detail page shows "hasn't answered yet"
+- [ ] User with 0 answers: My Issues filter unavailable
+- [ ] No user-facing references to "priority issues"
+- [ ] Feed My Issues filter sorts by alignment score
+- [ ] FeedItem carries pre-computed presentation data (sharedCount, alignedQuestionIds)
 - [ ] Seed candidates still get quiz responses and alignment works
 
 ## Estimated Impact
 
-- ~500 lines removed (position templates, priority logic)
+- ~500 lines removed (position templates, priority logic) — in Step 2
 - ~100 lines rewritten (alignment scoring, feed generation, detail screen)
 - Simpler mental model: one questionnaire, one matching formula
