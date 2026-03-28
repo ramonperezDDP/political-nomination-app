@@ -1,6 +1,6 @@
 # PLAN-10D: Inline Quiz Bottom Sheet on Home Screen
 
-> **Status: ✅ APPROVED — ready to implement.** Reviewer feedback incorporated (`docs/feedback/Quiz Updates feedback 4.md`). All 10 UX tweaks addressed.
+> **Status: ✅ COMPLETE (2026-03-28).** Implemented with all 10 reviewer UX tweaks. Added clear answer feature post-implementation.
 >
 > **Depends on:** PLAN-10C (complete) — uses the new multiple-choice question model and `getActiveQuestions` / `updateSingleQuizResponse` functions.
 >
@@ -141,3 +141,6 @@ Questions are loaded once in VoterHome via `getActiveQuestions(selectedDistrict)
 - [ ] First-time hint "Tap a topic to answer quickly" appears once
 - [ ] Accessibility labels on circles ("Trade — answered", "Borders — not answered")
 - [ ] Auto-dismiss delay feels natural (~450ms, not jarring)
+- [ ] Tapping answered question shows "Clear answer" link at bottom of sheet
+- [ ] Clearing removes checkmark and decrements progress counter
+- [ ] Clearing all answers resets onboarding.questionnaire to incomplete
