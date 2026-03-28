@@ -1006,6 +1006,28 @@ xcrun simctl launch booted com.politicalnomination.app \
 
 ---
 
+## Firestore update() Rejects undefined Values
+
+**Symptom:** "Error: Unsupported field type: undefined" when saving a form. The error toast shows "Unsupported fi..." and an alert says "Failed to update your profile."
+
+**Cause:** Firestore's `update()` method does not accept `undefined` as a field value. If an optional field (e.g., `photoUrl`) is `undefined` and included in the update payload, Firestore throws.
+
+**Fix:** Filter out `undefined` values before passing to `update()`:
+
+```tsx
+// BAD — photoUrl may be undefined
+await updateUser(userId, { displayName, photoUrl });
+
+// GOOD — only include defined fields
+const data: Record<string, any> = { displayName };
+if (photoUrl !== undefined) data.photoUrl = photoUrl;
+await updateUser(userId, data);
+```
+
+**Key lesson:** Always guard optional fields before passing to Firestore writes. This applies to `update()`, `set()` with merge, and batch writes.
+
+---
+
 ## Environment Information
 
 This troubleshooting guide was tested with:
