@@ -1,6 +1,6 @@
 # PLAN-10E: Eliminate Priority Issues — Pure Quiz-Based Matching
 
-> **Status: ✅ COMPLETE (2026-03-28).** Priority issues removed from matching. Pure quiz-based scoring live. 3-tier alignment chips (exact/close/not matched) on candidate profile. Issues tab rewritten as quiz answer comparison. Alignment tooltip modal removed — breakdown shown inline. Step 2 (POSITION_TEMPLATES deletion) pending.
+> **Status: ✅ FULLY COMPLETE (2026-03-28).** Both steps done. Step 1: priority issues removed from matching, pure quiz-based scoring, 3-tier alignment chips, Issues tab rewritten, tooltip modal removed. Step 2: deleted 553 lines of dead code (POSITION_TEMPLATES, generateAllIssuePositions, fillMissingIssuePositions, ALL_ISSUE_IDS) from both firestore.ts and firestore.web.ts.
 >
 > **Depends on:** PLAN-10C (complete), PLAN-10D (complete)
 
