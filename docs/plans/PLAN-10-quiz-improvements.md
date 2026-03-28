@@ -106,13 +106,19 @@ The current quiz uses a **spectrum slider** (Progressive ↔ Conservative) for e
 6. **Seed data:** Update `seedIssues()` or create new `seedQuestions()` with the content above
 7. **Alignment scoring:** Define how multiple-choice responses map to candidate matching (current system uses spectrum position — new system needs a different approach)
 8. **Short labels:** The parenthetical labels (e.g., "Free Trade", "Protection") should be stored and used for display on candidate cards and feed tags
+9. **Candidate answers:** All seed/avatar candidates must have responses to the new questions so users can filter and match on them. This means:
+   - Add a `questionResponses` (or extend existing `issuePositions`) field on the Candidate type to store multiple-choice answers
+   - Update `seedCandidates()` to generate plausible answers for each avatar candidate, varying by candidate's political lean
+   - Ensure the For You feed filters (Issues, Top Picks) work against the new question-based matching, not just the old spectrum positions
+   - Real candidates will answer these questions as part of their campaign profile setup
+10. **Feed integration:** The Experience Menu filters ("My Issues", "Top Picks") must support filtering candidates by match on the new multiple-choice questions — a user who picks "Free Trade" should see candidates who also picked "Free Trade" ranked higher
 
 #### Open Questions
 
-- How do multiple-choice answers map to alignment scoring? The current spectrum model uses a -1 to 1 range. Multiple-choice options may need a different scoring model.
-- Do candidates also answer these questions? If so, how do candidate responses get entered?
+- How do multiple-choice answers map to alignment scoring? The current spectrum model uses a -1 to 1 range. Multiple-choice = exact match (1.0) vs mismatch (0.0)? Or weighted partial matches?
 - Should the 7 existing spectrum questions be removed, kept alongside, or migrated to multiple-choice?
 - Are these questions fixed in code or Firestore-driven (like the current issues)?
+- How should candidate answer diversity be distributed in seed data? (e.g., random, correlated with existing spectrum positions, or manually curated per avatar)
 
 #### References
 
