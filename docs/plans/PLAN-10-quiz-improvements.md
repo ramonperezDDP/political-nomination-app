@@ -8,7 +8,7 @@
 
 ## PLAN-10A: Dealbreaker Removal Migration
 
-**Status: 🔴 BLOCKED** on PLAN-05 replacement filter semantics. Do not begin removing dealbreaker code until the feed filter product decision is made.
+**Status: ✅ READY TO IMPLEMENT.** Filter semantics decision made 2026-03-28: drop "Top Picks" filter entirely (3 filters: Explore, My Area, My Issues). Slot reserved for future 10C2 scoring-based filter.
 
 **Scope:** Cross-system migration removing all dealbreaker references from the product. This is NOT just a cleanup — it is a silent product change that affects capability gating, feed filtering, alignment explanation, and user expectations.
 
@@ -39,11 +39,11 @@
    - Completion percentage logic
    - VerificationChecklist and any similar components
 
-4. **Feed semantics rewrite.** Removing dealbreakers means "Most Important" / "Top Picks" either **disappears or gets redefined.** This is a product decision, not a code decision:
-   - Does the filter drop from 4 to 3?
-   - Does "Top Picks" get replaced with something else (e.g., "Best Match")?
-   - Does mass endorse behavior change when the exclusion filter is gone?
-   - **This is the primary blocker** — PLAN-05's experience menu depended on dealbreaker-based "Most Important" logic.
+4. **Feed semantics rewrite.** ~~RESOLVED 2026-03-28:~~ Drop "Top Picks" / "Most Important" filter entirely. Feed goes from 4 filters to 3 (Explore, My Area, My Issues). Mass endorse button behavior unchanged (still works with any active non-random filter). A future 10C2 scoring-based filter can reclaim the 4th slot when Quiz v2 lands.
+   - Remove `most_important` from ExperienceMenu options
+   - Remove `most_important` filter logic from `app/(main)/(feed)/index.tsx`
+   - Remove `selectCanSeeDealbreakers` gating from ExperienceMenu
+   - Update MassEndorseButton if it references the removed filter
 
 5. **Analytics/event taxonomy audit.** If any analytics events, logs, funnel names, or dashboard labels reference dealbreakers, top picks, most important, or dealbreaker completion — those become stale the moment 10A lands. Audit and update or remove to prevent distorted product/growth analysis.
 
@@ -262,16 +262,15 @@ Without an explicit owner, scoring plans tend to stall or drift.
 
 | Sub-plan | Status | Dependencies |
 |----------|--------|-------------|
-| **10A** | 🔴 Blocked | PLAN-05 replacement filter semantics decision |
+| **10A** | ✅ Ready | Filter decision made: drop Top Picks to 3 filters |
 | **10B** | ✅ Safe whenever | None (presentation-only) |
 | **10C1** | 🔴 Blocked | Replacement-vs-coexistence decision, response model decision; 10A should land first |
 | **10C2** | 🔴 Blocked | Scoring model, candidate answer contract, ownership assignment; 10C1 |
 | **10C3** | 🔴 Blocked | 10C1 + 10C2 + editorial review |
 
-**Recommended sequence:**
-- If PLAN-05 filter decision is **unresolved**: 10B first, then 10A when unblocked
-- If PLAN-05 filter decision is **resolved**: 10A first (removing dead concepts reduces confusion before polishing quiz UI), then 10B
-- Then: 10C1 → 10C2 → 10C3
+**Recommended sequence:** 10A → 10B → 10C1 → 10C2 → 10C3
+
+Filter decision resolved — 10A goes first to remove dead concepts before polishing quiz UI.
 
 ---
 
