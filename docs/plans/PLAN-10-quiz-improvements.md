@@ -68,7 +68,7 @@
 
 ## PLAN-10B: Standalone Quiz UX Cleanup
 
-**Status:** ✅ Safe to implement whenever. Low priority.
+**Status:** ✅ COMPLETE (2026-03-28). Original items addressed by 10C/10D: progress indicator, scope grouping, inline bottom sheet, radio card UI. No remaining presentation-only work.
 
 **Scope:** Presentation-only improvements to the standalone quiz (`app/(main)/quiz.tsx`).
 
@@ -282,7 +282,7 @@ Without an explicit owner, scoring plans tend to stall or drift.
 | Sub-plan | Status | Dependencies |
 |----------|--------|-------------|
 | **10A** | ✅ Ready | Filter decision made: drop Top Picks to 3 filters |
-| **10B** | ✅ Safe whenever | None (presentation-only) |
+| **10B** | ✅ Complete | Addressed by 10C/10D implementation |
 | **10C1** | ✅ Complete | Data model, QuizConfig, Firestore functions |
 | **10C2** | ✅ Complete | Spectrum-mapped scoring, candidate answers, feed integration |
 | **10C3** | ✅ Complete | 9 questions seeded, quiz UI rewritten, candidates populated |
