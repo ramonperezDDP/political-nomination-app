@@ -2,7 +2,7 @@
 
 > **Updated 2026-03-25:** This is a spec draft, not an implementation plan. Needs a dedicated Bookmark Domain Spec before it becomes actionable.
 >
-> **Blocked on:** Bookmark domain spec, dealbreaker removal (PLAN-10), PLAN-00 Phase 2.
+> **Blocked on:** Bookmark domain spec, PLAN-00 Phase 2. ~~dealbreaker removal (PLAN-10)~~ — resolved 2026-03-28, dealbreakers fully removed.
 
 > **Depends on:** [PLAN-00 Phase 2](./PLAN-00-contest-round-architecture.md) — hiding eliminated candidates, round-scoped endorsements. Phase 3 — round-appropriate voting UI.
 
@@ -10,7 +10,7 @@
 
 1. **Bookmarks are round-aware pre-endorsements.** If a bookmarked candidate is eliminated, alert the user and block conversion to endorsement.
 2. **Remove share gating.** Sharing is discovery/advocacy, not a binding political action. Do NOT require verification to share.
-3. **Dealbreakers are being removed** (PLAN-10). The alignment explainer must be refactored to remove dealbreaker content before reuse.
+3. ~~**Dealbreakers are being removed** (PLAN-10).~~ **RESOLVED 2026-03-28:** Dealbreaker code fully removed in PLAN-10A. Alignment explainer no longer contains dealbreaker content.
 
 ## What This Plan Covers (Intent)
 

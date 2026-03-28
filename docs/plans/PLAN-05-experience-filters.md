@@ -1,6 +1,8 @@
 # Plan 05: Experience Filters & Location Maps — ✅ COMPLETE
 
-> **Completed 2026-03-27.** Custom ExperienceMenu dropdown (4 filters: Random, Location, Issues, Top Picks), LocationMapModal with SVG zone maps for PA-01/PA-02, MassEndorseButton with district gating. Uses custom dropdown instead of Paper Menu to avoid Portal touch-blocking. All filter logic and gating selectors functional.
+> **Completed 2026-03-27.** Custom ExperienceMenu dropdown, LocationMapModal with SVG zone maps for PA-01/PA-02, MassEndorseButton with district gating. Uses custom dropdown instead of Paper Menu to avoid Portal touch-blocking. All filter logic and gating selectors functional.
+>
+> **Updated 2026-03-28:** PLAN-10A removed dealbreakers and dropped "Top Picks" filter. Feed now has 3 filters (Explore, My Area, My Issues). "My Issues" represents positive overlap only — no exclusion logic. `selectCanSeeDealbreakers` removed. 4th slot reserved for future 10C2 scoring-based filter.
 
 **Feedback:** Experience dropdown menu with 4 filters: Random, Location (with PA-01/PA-02 maps), Issues, Most Important Issues. Anonymous mode — no email or account required to enter the app. Users can apply filters and then mass endorse all candidates remaining after filtering. Simplified SVG maps for the beta. PNs provide their address for zone assignment. Users can view candidates in other districts but cannot endorse outside their own.
 

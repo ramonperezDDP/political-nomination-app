@@ -1,5 +1,7 @@
 # Plan 06: No-Quiz User Handling
 
+> **Note (2026-03-28):** PLAN-10A removed dealbreakers and the "Most Important" filter. References to `selectCanSeeDealbreakers` and "Most Important locked" in this plan are stale. Feed now has 3 filters (Explore, My Area, My Issues). The quiz prompt and gating logic described below still applies to "My Issues" filter.
+
 **Feedback:** Users who haven't filled out the quiz default to "Random" on the For You page. Before scrolling, they see a full-screen message telling them to take the quiz. This message appears every time they open the page until the quiz minimum is met (1 question). The prompt reads: "You've completed X out of 7 quiz questions. Complete more to further refine your search."
 
 ---
