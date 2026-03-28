@@ -9,6 +9,7 @@ interface QuizBottomSheetProps {
   question: Question | null;
   currentAnswer?: number;
   onAnswer: (spectrumValue: number) => void;
+  onClear?: () => void;
   onDismiss: () => void;
   saving: boolean;
   error?: string | null;
@@ -20,6 +21,7 @@ export default function QuizBottomSheet({
   question,
   currentAnswer,
   onAnswer,
+  onClear,
   onDismiss,
   saving,
   error,
@@ -124,6 +126,18 @@ export default function QuizBottomSheet({
               );
             })}
           </ScrollView>
+
+          {currentAnswer !== undefined && onClear && (
+            <Pressable
+              onPress={() => { if (!saving) onClear(); }}
+              disabled={saving}
+              style={[styles.clearButton, { opacity: saving ? 0.5 : 1 }]}
+            >
+              <Text variant="labelMedium" style={{ color: theme.colors.error }}>
+                Clear answer
+              </Text>
+            </Pressable>
+          )}
         </Animated.View>
       </View>
     </Modal>
@@ -180,5 +194,10 @@ const styles = StyleSheet.create({
   optionLabel: {
     fontWeight: 'bold',
     marginBottom: 2,
+  },
+  clearButton: {
+    alignItems: 'center',
+    paddingVertical: 12,
+    marginTop: 4,
   },
 });

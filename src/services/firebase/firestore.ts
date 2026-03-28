@@ -1757,6 +1757,32 @@ export const updateSingleQuizResponse = async (
   return updated;
 };
 
+// Remove a single quiz response by questionId
+export const clearQuizResponse = async (
+  userId: string,
+  questionId: string
+): Promise<QuestionnaireResponse[]> => {
+  const userDoc = await getCollection<User>(Collections.USERS).doc(userId).get();
+  if (!userDoc.exists) throw new Error('User not found');
+
+  const userData = userDoc.data() as User;
+  const existing = userData.questionnaireResponses || [];
+  const updated = existing.filter((r) => r.questionId !== questionId);
+
+  const updates: Record<string, any> = {
+    questionnaireResponses: updated,
+    lastQuizActivityAt: firestore.Timestamp.now(),
+    updatedAt: firestore.Timestamp.now(),
+  };
+
+  if (updated.length === 0) {
+    updates['onboarding.questionnaire'] = 'incomplete';
+  }
+
+  await getCollection<User>(Collections.USERS).doc(userId).update(updates);
+  return updated;
+};
+
 // Check if questions exist and seed them if not
 export const ensureQuestionsExist = async (): Promise<void> => {
   try {

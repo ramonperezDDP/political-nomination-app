@@ -6,7 +6,7 @@ import { router } from 'expo-router';
 import { Card } from '@/components/ui';
 import { useAuthStore, useConfigStore, useUserStore, selectHasAccount, selectCurrentRoundId } from '@/stores';
 import { getFaqsForRound } from '@/constants/faqs';
-import { getActiveQuestions, updateSingleQuizResponse, updateUser } from '@/services/firebase/firestore';
+import { getActiveQuestions, updateSingleQuizResponse, clearQuizResponse, updateUser } from '@/services/firebase/firestore';
 import type { Question, QuestionnaireResponse } from '@/types';
 import VideoCard from './VideoCard';
 import QuizCard from './QuizCard';
@@ -138,6 +138,33 @@ export default function VoterHome() {
     }
   }, [user, activeQuestion, saving, questions, setUser]);
 
+  const handleClear = useCallback(async () => {
+    if (!user?.id || !activeQuestion || saving) return;
+
+    setSaving(true);
+    setSaveError(null);
+
+    // Optimistic: remove from local state
+    const existing = user.questionnaireResponses || [];
+    const updatedResponses = existing.filter((r) => r.questionId !== activeQuestion.id);
+    setUser({ ...user, questionnaireResponses: updatedResponses });
+
+    try {
+      await clearQuizResponse(user.id, activeQuestion.id);
+
+      dismissTimerRef.current = setTimeout(() => {
+        setActiveQuestionId(null);
+        setSaving(false);
+        dismissTimerRef.current = null;
+      }, 450);
+    } catch (error) {
+      console.warn('VoterHome: Error clearing quiz response:', error);
+      setUser({ ...user, questionnaireResponses: existing });
+      setSaveError('Failed to clear. Try again.');
+      setSaving(false);
+    }
+  }, [user, activeQuestion, saving, setUser]);
+
   // Count only responses for quiz questions in the current district
   const completedIssueCount = useMemo(() => {
     if (!user?.questionnaireResponses?.length) return 0;
@@ -180,6 +207,7 @@ export default function VoterHome() {
           question={activeQuestion}
           currentAnswer={currentAnswerForActive}
           onAnswer={handleAnswer}
+          onClear={handleClear}
           onDismiss={handleDismiss}
           saving={saving}
           error={saveError}
