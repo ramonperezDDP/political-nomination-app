@@ -13,6 +13,11 @@ import {
   inferGenderFromName,
 } from '@/services/firebase/firestore';
 import { useAuthStore, useConfigStore, useUserStore } from '@/stores';
+
+const DISTRICT_COLORS: Record<string, string> = {
+  'PA-01': '#FFB6C1',
+  'PA-02': '#ADD8E6',
+};
 import { calculateAlignmentScore } from '@/utils/alignment';
 import {
   Card,
@@ -39,6 +44,8 @@ export default function CandidateProfileScreen() {
   const { user: currentUser } = useAuthStore();
   const { issues } = useConfigStore();
   const { hasEndorsedCandidate, endorseCandidate, revokeEndorsement } = useUserStore();
+  const selectedDistrict = useUserStore((s) => s.selectedBrowsingDistrict) || 'PA-01';
+  const chipColor = DISTRICT_COLORS[selectedDistrict] || '#E0E0E0';
 
   const [candidate, setCandidate] = useState<Candidate | null>(null);
   const [candidateUser, setCandidateUser] = useState<User | null>(null);
@@ -440,7 +447,7 @@ export default function CandidateProfileScreen() {
           {/* Top Issues Chips */}
           <View style={styles.chipsContainer}>
             {candidate.topIssues?.slice(0, 3).map((issue) => (
-              <Chip key={issue.issueId} style={styles.chip}>
+              <Chip key={issue.issueId} style={[styles.chip, { backgroundColor: chipColor }]}>
                 {getIssueName(issue.issueId)}
               </Chip>
             ))}

@@ -131,9 +131,14 @@ export default function ForYouScreen() {
       setIsLoading(true);
       try {
         let candidatesData = await getCandidatesForFeed(selectedDistrict);
-        if (candidatesData.length === 0 ||
-            candidatesData.some(({ candidate }) => !candidate.zone)) {
-          // Reseed if no candidates or if they lack zone data (Plan 05 migration)
+        const needsReseed = candidatesData.length === 0 ||
+          candidatesData.some(({ candidate }) => !candidate.zone) ||
+          // Reseed if candidates have wrong-district local issues (PLAN-10C migration)
+          candidatesData.some(({ candidate }) =>
+            candidate.district === 'PA-02' &&
+            candidate.topIssues?.some((ti: any) => ti.issueId === 'pa01-infrastructure')
+          );
+        if (needsReseed) {
           await reseedAllData();
           candidatesData = await getCandidatesForFeed(selectedDistrict);
         }

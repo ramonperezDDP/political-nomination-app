@@ -7,6 +7,17 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAuthStore, useConfigStore } from '@/stores';
 import { useUserStore, selectCanSeeAlignment, selectEndorseLockReason, selectHasAccount } from '@/stores';
+
+// Only match on quiz issues relevant to the browsed district
+const DISTRICT_ISSUE_IDS: Record<string, Set<string>> = {
+  'PA-01': new Set(['trade', 'iran', 'inflation', 'borders', 'welfare', 'pa01-infrastructure', 'pa01-housing']),
+  'PA-02': new Set(['trade', 'iran', 'inflation', 'borders', 'welfare', 'pa02-budget', 'pa02-transit']),
+};
+
+const DISTRICT_COLORS: Record<string, string> = {
+  'PA-01': '#FFB6C1',
+  'PA-02': '#ADD8E6',
+};
 import AlignmentCircle from './AlignmentCircle';
 import EndorseLockModal from './EndorseLockModal';
 import type { FeedItem } from '@/types';
@@ -41,24 +52,33 @@ export default function FullScreenPSA({ feedItem, isActive, height }: FullScreen
   const canEndorse = lockReason === null;
 
   // Find all shared policies where user and candidate align (closeness > 0.5)
+  // Use the candidate's actual district for filtering local issues
+  const candidateDistrict = candidate.district || 'PA-01';
+  const districtIssueIds = DISTRICT_ISSUE_IDS[candidateDistrict] || DISTRICT_ISSUE_IDS['PA-01'];
+
   const sharedPolicies = useMemo(() => {
     const responses = currentUser?.questionnaireResponses || [];
     if (responses.length === 0 || !candidatePositions?.length) return [];
 
     const matches: { issueId: string; name: string; closeness: number }[] = [];
     for (const cp of candidatePositions) {
+      // Only compare on issues relevant to the current district
+      if (!districtIssueIds.has(cp.issueId)) continue;
       const userResp = responses.find((r) => r.issueId === cp.issueId);
       if (!userResp) continue;
       const userVal = Number(userResp.answer);
       if (isNaN(userVal)) continue;
-      const closeness = 1 - Math.abs(userVal - cp.spectrumPosition) / 200;
-      if (closeness >= 0.5) {
+      // Match if same direction (both positive or both negative/zero)
+      const sameDirection = (userVal >= 0 && cp.spectrumPosition >= 0) ||
+                            (userVal < 0 && cp.spectrumPosition < 0);
+      if (sameDirection) {
+        const closeness = 1 - Math.abs(userVal - cp.spectrumPosition) / 200;
         const issue = issues.find((i) => i.id === cp.issueId);
         if (issue) matches.push({ issueId: cp.issueId, name: issue.name, closeness });
       }
     }
     return matches.sort((a, b) => b.closeness - a.closeness);
-  }, [currentUser?.questionnaireResponses, candidatePositions, issues]);
+  }, [currentUser?.questionnaireResponses, candidatePositions, issues, districtIssueIds]);
 
   const [showLockModal, setShowLockModal] = useState(false);
 
@@ -187,14 +207,26 @@ export default function FullScreenPSA({ feedItem, isActive, height }: FullScreen
             <Text style={styles.psaTitle}>Shares my position on:</Text>
             <View style={styles.issueTags}>
               {sharedPolicies.map((policy) => (
-                <View key={policy.issueId} style={styles.sharedPolicyChip}>
+                <View
+                  key={policy.issueId}
+                  style={[styles.sharedPolicyChip, { backgroundColor: DISTRICT_COLORS[candidate.district] || '#FFB6C1' }]}
+                >
                   <Text style={styles.sharedPolicyText}>{policy.name}</Text>
                 </View>
               ))}
             </View>
           </>
         ) : (
-          <Text style={styles.psaTitle}>{psa.title}</Text>
+          <>
+            <Text style={styles.psaTitle}>Top issues:</Text>
+            <View style={styles.issueTags}>
+              {candidate.topIssues.slice(0, 3).map((issue) => (
+                <View key={issue} style={[styles.sharedPolicyChip, { backgroundColor: DISTRICT_COLORS[candidate.district] || '#FFB6C1' }]}>
+                  <Text style={styles.sharedPolicyText}>{issue}</Text>
+                </View>
+              ))}
+            </View>
+          </>
         )}
       </View>
 
@@ -302,15 +334,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   sharedPolicyChip: {
-    backgroundColor: 'rgba(90,57,119,0.85)',
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 14,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.3)',
   },
   sharedPolicyText: {
-    color: '#fff',
+    color: '#333',
     fontSize: 12,
     fontWeight: '600',
   },

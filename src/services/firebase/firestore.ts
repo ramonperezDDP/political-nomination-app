@@ -842,11 +842,19 @@ const POSITION_TEMPLATES: Record<string, Record<string, { position: string; base
 const generateAllIssuePositions = (
   leaning: 'progressive' | 'moderate_progressive' | 'centrist' | 'moderate_conservative' | 'conservative',
   priorityIssues: string[], // Issues in priority order (index 0 = top priority)
-  customPositions?: Record<string, { position: string; spectrum: number }> // Override specific positions
+  customPositions?: Record<string, { position: string; spectrum: number }>, // Override specific positions
+  district?: string // Filter local issues to this district only
 ): Array<{ issueId: string; position: string; priority: number; spectrumPosition: number }> => {
   const template = POSITION_TEMPLATES[leaning];
 
-  return ALL_ISSUE_IDS.map((issueId) => {
+  // Filter out local issues from wrong district
+  const issueIds = ALL_ISSUE_IDS.filter((id) => {
+    if (id.startsWith('pa01-') && district && district !== 'PA-01') return false;
+    if (id.startsWith('pa02-') && district && district !== 'PA-02') return false;
+    return true;
+  });
+
+  return issueIds.map((issueId) => {
     // Check for custom override
     if (customPositions && customPositions[issueId]) {
       return {
@@ -1399,7 +1407,7 @@ export const seedCandidates = async (): Promise<void> => {
       customPositions[i.issueId] = { position: i.position, spectrum: i.spectrumPosition };
     });
 
-    const fullTopIssues = generateAllIssuePositions(leaning, priorityIssues, customPositions);
+    const fullTopIssues = generateAllIssuePositions(leaning, priorityIssues, customPositions, district);
 
     // PLAN-10C: Generate quiz responses for this candidate's district
     const QUIZ_QUESTION_IDS: Record<string, string[]> = {
