@@ -239,36 +239,36 @@ Without an explicit owner, scoring plans tend to stall or drift.
 - Or: simple manual checklist process with sign-off before seed/deploy
 - Without enforcement, editorial review becomes aspirational.
 
-**Question Content** (from `docs/feedback/Possible Questions for App Module.md`):
+**Question Content** (from `docs/feedback/Possible Questions for App Module (1).md`, revised 2026-03-28):
 
 **Global (all districts):**
 
 | Question | Options (short label) |
 |----------|-----------------------|
-| **Trade** — How should foreign goods be treated? | Free Trade, Limited Trade, Protection |
-| **Iran** — What should we do next with Iran? | Escalation, Limited Response, No Involvement |
+| **Trade** — What tariff policy should apply to foreign goods? | Free Trade, Limited Trade, Protection |
+| **Iran** — What policy do you support with respect to Iran? | Escalation, Limited Response, No Involvement |
 
 **National (all districts):**
 
 | Question | Options (short label) |
 |----------|-----------------------|
-| **Inflation** — What measures should be used to control the cost of living? | Regulation, Strengthen Production, Fiscal Policy |
-| **Borders** — How do we treat those here illegally and foreigners seeking to immigrate? | Open, Partially Close, Close |
-| **Welfare** — What should be done with Social Security and Medicare/Medicaid? | Socialize, Maintain, Privatize |
+| **Inflation** — What policy focus best eases the cost of living? | Regulation, Strengthen Production, Fiscal Policy |
+| **Borders** — How should undocumented immigrants and asylum seekers be treated? | Open, Partially Close, Close |
+| **Welfare** — What policy focus should guide Social Security & Medicare/Medicaid reform? | Socialize, Maintain, Privatize |
 
 **Local (PA-01):**
 
 | Question | Options |
 |----------|---------|
-| **Infrastructure** — Provide federal funding for flood mitigation and stormwater projects? | Yes, No |
-| **Housing** — Approve stricter environmental and preservation standards on new homes? | Yes, No |
+| **Infrastructure** — Should federal funding cover flood mitigation and stormwater projects? | Yes, No |
+| **Housing** — Should new homes meet stricter environmental and preservation standards? | Yes, No |
 
 **Local (PA-02):**
 
 | Question | Options |
 |----------|---------|
-| **Grants** — Increase funding for community-based violence prevention programs? | Yes, No |
-| **Transit** — Provide federal funding for safety improvements to light rail systems? | Yes, No |
+| **Budget** — Should grants for violence prevention require partner contributions? | Yes, No |
+| **Transit** — Should the federal government fund safety improvements for light rail? | Yes, No |
 
 **Implementation items:**
 - Seed questions into Firestore using 10C1 data model
