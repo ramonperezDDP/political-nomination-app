@@ -35,6 +35,7 @@ export const Collections = {
   CONTEST_ROUNDS: 'contestRounds',
   CONTEST_TRANSITIONS: 'contestTransitions',
   VOTES: 'votes',
+  QUIZ_CONFIG: 'quizConfig',
 } as const;
 
 // Storage paths

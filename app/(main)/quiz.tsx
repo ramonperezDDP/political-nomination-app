@@ -7,109 +7,52 @@ import { useRouter } from 'expo-router';
 
 const SafeAreaView = Platform.OS === 'web' ? View : NativeSafeAreaView;
 
-import { useAuthStore, useConfigStore, useUserStore } from '@/stores';
-import { getQuestions, updateSingleQuizResponse, updateUser } from '@/services/firebase/firestore';
-import { BottomSheet, LoadingScreen } from '@/components/ui';
-import type { Issue, Question, QuestionnaireResponse } from '@/types';
-
-// District issue mapping (hardcoded for MVP; production would use Firestore)
-const DISTRICT_ISSUES: Record<string, { global: string[]; national: string[]; local: string[] }> = {
-  'PA-01': {
-    global: ['climate-change', 'economy'],
-    national: ['healthcare', 'education', 'gun-policy'],
-    local: ['infrastructure', 'housing'],
-  },
-  'PA-02': {
-    global: ['climate-change', 'economy'],
-    national: ['healthcare', 'immigration', 'criminal-justice'],
-    local: ['infrastructure', 'housing'],
-  },
-};
+import { useAuthStore, useUserStore } from '@/stores';
+import { getActiveQuestions, updateSingleQuizResponse, updateUser, reseedAllData } from '@/services/firebase/firestore';
+import { LoadingScreen } from '@/components/ui';
+import type { Question, QuestionnaireResponse, QuestionScope } from '@/types';
 
 const DEFAULT_DISTRICT = 'PA-01';
 
-// Map issue names to one-word labels (same as QuizCard)
-function getOneWordLabel(name: string): string {
-  const map: Record<string, string> = {
-    'Economy & Jobs': 'Economy',
-    'Healthcare': 'Health',
-    'Climate Change': 'Climate',
-    'Immigration': 'Immigration',
-    'Education': 'Education',
-    'Gun Policy': 'Guns',
-    'Civil Rights': 'Rights',
-    'Minimum Wage': 'Wages',
-    'Prescription Drug Prices': 'Rx Costs',
-    'Medicare & Medicaid': 'Medicare',
-    'Tax Policy': 'Taxes',
-    'Social Security': 'Soc. Sec.',
-    'Housing': 'Housing',
-    'Criminal Justice Reform': 'Justice',
-    'Foreign Policy': 'Foreign',
-    'Environment': 'Environ.',
-    'Veterans Affairs': 'Veterans',
-    'Infrastructure': 'Infra.',
-  };
-  return map[name] || name.split(' ')[0];
-}
+const SCOPE_LABELS: Record<QuestionScope, string> = {
+  global: 'Global Issues',
+  national: 'National Issues',
+  local: 'Local Issues',
+};
 
-interface SectionData {
-  title: string;
-  issues: Issue[];
-}
+const SCOPE_ORDER: QuestionScope[] = ['global', 'national', 'local'];
 
 export default function QuizScreen() {
   const theme = useTheme();
   const router = useRouter();
   const { user } = useAuthStore();
-  const { issues: allIssues } = useConfigStore();
+  const selectedDistrict = useUserStore((s) => s.selectedBrowsingDistrict) || DEFAULT_DISTRICT;
 
   const [questions, setQuestions] = useState<Question[]>([]);
   const [responses, setResponses] = useState<Map<string, QuestionnaireResponse>>(new Map());
   const [loading, setLoading] = useState(true);
-  const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
-  const [sheetAnswer, setSheetAnswer] = useState<string>('');
   const [saving, setSaving] = useState(false);
 
-  // Get district config
-  const district = user?.lastBrowsingDistrict || DEFAULT_DISTRICT;
-  const districtConfig = DISTRICT_ISSUES[district] || DISTRICT_ISSUES[DEFAULT_DISTRICT];
-  const allIssueIds = useMemo(
-    () => [...districtConfig.global, ...districtConfig.national, ...districtConfig.local],
-    [districtConfig]
-  );
-
-  // Build issue lookup from configStore
-  const issueMap = useMemo(() => {
-    const m = new Map<string, Issue>();
-    allIssues.forEach((i) => m.set(i.id, i));
-    return m;
-  }, [allIssues]);
-
-  // Build sections
-  const sections: SectionData[] = useMemo(() => {
-    const resolve = (ids: string[]) =>
-      ids.map((id) => issueMap.get(id)).filter(Boolean) as Issue[];
-    return [
-      { title: 'Global Issues', issues: resolve(districtConfig.global) },
-      { title: 'National Issues', issues: resolve(districtConfig.national) },
-      { title: 'Local Issues', issues: resolve(districtConfig.local) },
-    ];
-  }, [districtConfig, issueMap]);
-
-  // Load questions and existing responses on mount
+  // Load questions and existing responses
   useEffect(() => {
     const load = async () => {
       try {
-        const fetched = await getQuestions(allIssueIds);
+        let fetched = await getActiveQuestions(selectedDistrict);
+        // If no questions found (old seed data), trigger a full reseed
+        if (fetched.length === 0) {
+          console.log('Quiz: No active questions found — reseeding all data...');
+          await reseedAllData();
+          fetched = await getActiveQuestions(selectedDistrict);
+        }
         setQuestions(fetched);
 
-        // Load existing responses from user profile
+        // Load existing responses keyed by questionId
         if (user?.questionnaireResponses?.length) {
+          const questionIds = new Set(fetched.map((q) => q.id));
           const m = new Map<string, QuestionnaireResponse>();
           user.questionnaireResponses.forEach((r) => {
-            if (allIssueIds.includes(r.issueId)) {
-              m.set(r.issueId, r);
+            if (questionIds.has(r.questionId)) {
+              m.set(r.questionId, r);
             }
           });
           setResponses(m);
@@ -121,74 +64,62 @@ export default function QuizScreen() {
       }
     };
     load();
-  }, [allIssueIds, user?.questionnaireResponses]);
+  }, [selectedDistrict, user?.questionnaireResponses]);
 
-  // Question for the selected issue
-  const activeQuestion = useMemo(() => {
-    if (!selectedIssueId) return null;
-    return questions.find((q) => q.issueId === selectedIssueId) || null;
-  }, [selectedIssueId, questions]);
-
-  // When bottom sheet opens, set the current answer if it exists
-  useEffect(() => {
-    if (selectedIssueId) {
-      const existing = responses.get(selectedIssueId);
-      setSheetAnswer(existing ? String(existing.answer) : '');
+  // Group questions by scope
+  const sections = useMemo(() => {
+    const grouped = new Map<QuestionScope, Question[]>();
+    for (const q of questions) {
+      const scope = q.scope || 'national';
+      if (!grouped.has(scope)) grouped.set(scope, []);
+      grouped.get(scope)!.push(q);
     }
-  }, [selectedIssueId, responses]);
+    return SCOPE_ORDER
+      .filter((s) => grouped.has(s))
+      .map((s) => ({ scope: s, title: SCOPE_LABELS[s], questions: grouped.get(s)! }));
+  }, [questions]);
 
+  const totalQuestions = questions.length;
   const completedCount = responses.size;
 
-  const handleIssuePress = useCallback((issueId: string) => {
-    setSelectedIssueId(issueId);
-  }, []);
-
-  const handleCloseSheet = useCallback(() => {
-    setSelectedIssueId(null);
-    setSheetAnswer('');
-  }, []);
+  // All question issue IDs for setting selectedIssues
+  const allQuestionIssueIds = useMemo(() => questions.map((q) => q.issueId), [questions]);
 
   const handleSelectAnswer = useCallback(
-    async (value: string) => {
-      if (!user?.id || !selectedIssueId || !activeQuestion || saving) return;
+    async (question: Question, spectrumValue: number) => {
+      if (!user?.id || saving) return;
 
-      setSheetAnswer(value);
       setSaving(true);
 
       const response: QuestionnaireResponse = {
-        questionId: activeQuestion.id,
-        issueId: selectedIssueId,
-        answer: value,
+        questionId: question.id,
+        issueId: question.issueId,
+        answer: spectrumValue,
       };
 
       try {
-        const updated = await updateSingleQuizResponse(user.id, response);
+        await updateSingleQuizResponse(user.id, response);
 
         // Update local state
         setResponses((prev) => {
           const m = new Map(prev);
-          m.set(selectedIssueId, response);
+          m.set(question.id, response);
           return m;
         });
 
-        // Set selectedIssues to the 7 district issue IDs if not already matching
+        // Set selectedIssues to the quiz question issue IDs if not already matching
         const currentIssues = user.selectedIssues || [];
-        const needsUpdate = allIssueIds.some((id) => !currentIssues.includes(id));
+        const needsUpdate = allQuestionIssueIds.some((id) => !currentIssues.includes(id));
         if (needsUpdate) {
-          await updateUser(user.id, { selectedIssues: allIssueIds });
+          await updateUser(user.id, { selectedIssues: allQuestionIssueIds });
         }
       } catch (error) {
         console.warn('Error saving quiz response:', error);
       } finally {
         setSaving(false);
-        // Close sheet after brief delay so user sees their selection
-        setTimeout(() => {
-          setSelectedIssueId(null);
-          setSheetAnswer('');
-        }, 400);
       }
     },
-    [user?.id, user?.selectedIssues, selectedIssueId, activeQuestion, saving, allIssueIds]
+    [user?.id, user?.selectedIssues, saving, allQuestionIssueIds]
   );
 
   if (loading) {
@@ -200,7 +131,7 @@ export default function QuizScreen() {
       style={[styles.container, { backgroundColor: theme.colors.background }]}
       edges={['bottom']}
     >
-      {/* Web-only back header (Stack header doesn't render on web) */}
+      {/* Web-only back header */}
       {Platform.OS === 'web' && (
         <View style={[styles.webHeader, { borderBottomColor: theme.colors.outlineVariant }]}>
           <Pressable onPress={() => router.back()} style={styles.webBackButton}>
@@ -220,7 +151,7 @@ export default function QuizScreen() {
           color={theme.colors.primary}
         />
         <Text variant="labelLarge" style={{ color: theme.colors.primary, marginLeft: 8 }}>
-          {completedCount} out of {allIssueIds.length} quiz questions completed
+          {completedCount} of {totalQuestions} questions answered
         </Text>
       </View>
 
@@ -230,93 +161,80 @@ export default function QuizScreen() {
         showsVerticalScrollIndicator={false}
       >
         {sections.map((section) => (
-          <View key={section.title} style={styles.section}>
+          <View key={section.scope} style={styles.section}>
             <Text
               variant="titleMedium"
               style={[styles.sectionTitle, { color: theme.colors.onSurface }]}
             >
               {section.title}
             </Text>
-            <View style={styles.issueGrid}>
-              {section.issues.map((issue) => {
-                const isCompleted = responses.has(issue.id);
-                return (
-                  <Pressable
-                    key={issue.id}
-                    onPress={() => handleIssuePress(issue.id)}
-                    style={styles.issueItem}
+
+            {section.questions.map((question) => {
+              const currentResponse = responses.get(question.id);
+              const selectedValue = currentResponse ? String(currentResponse.answer) : '';
+
+              return (
+                <View
+                  key={question.id}
+                  style={[styles.questionCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant }]}
+                >
+                  <Text
+                    variant="bodyLarge"
+                    style={[styles.questionText, { color: theme.colors.onSurface }]}
                   >
-                    <View
-                      style={[
-                        styles.issueCircle,
-                        {
-                          backgroundColor: isCompleted
-                            ? theme.colors.primary
-                            : theme.colors.surfaceVariant,
-                        },
-                      ]}
-                    >
-                      <MaterialCommunityIcons
-                        name={isCompleted ? 'check' : (issue.icon as any) || 'help-circle-outline'}
-                        size={24}
-                        color={isCompleted ? '#fff' : theme.colors.outline}
-                      />
-                    </View>
-                    <Text
-                      variant="labelSmall"
-                      numberOfLines={1}
-                      style={[styles.issueLabel, { color: theme.colors.onSurface }]}
-                    >
-                      {getOneWordLabel(issue.name)}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
+                    {question.text}
+                  </Text>
+
+                  <RadioButton.Group
+                    onValueChange={(value) => {
+                      const numValue = Number(value);
+                      handleSelectAnswer(question, numValue);
+                    }}
+                    value={selectedValue}
+                  >
+                    {question.options?.map((option) => {
+                      const isSelected = selectedValue === String(option.spectrumValue);
+                      return (
+                        <Pressable
+                          key={option.id}
+                          onPress={() => handleSelectAnswer(question, option.spectrumValue)}
+                          style={[
+                            styles.optionCard,
+                            {
+                              backgroundColor: isSelected
+                                ? theme.colors.primaryContainer
+                                : theme.colors.surfaceVariant,
+                              borderColor: isSelected
+                                ? theme.colors.primary
+                                : 'transparent',
+                            },
+                          ]}
+                        >
+                          <RadioButton value={String(option.spectrumValue)} />
+                          <View style={styles.optionContent}>
+                            <Text
+                              variant="labelLarge"
+                              style={[styles.optionLabel, { color: theme.colors.onSurface }]}
+                            >
+                              {option.shortLabel}
+                            </Text>
+                            <Text
+                              variant="bodySmall"
+                              style={{ color: theme.colors.onSurfaceVariant }}
+                            >
+                              {option.text}
+                            </Text>
+                          </View>
+                        </Pressable>
+                      );
+                    })}
+                  </RadioButton.Group>
+                </View>
+              );
+            })}
           </View>
         ))}
       </ScrollView>
-
-      {/* Bottom sheet for answering a question */}
-      <BottomSheet
-        visible={!!selectedIssueId && !!activeQuestion}
-        onDismiss={handleCloseSheet}
-        title={activeQuestion?.text}
-      >
-        <ScrollView style={styles.sheetScroll} showsVerticalScrollIndicator={false}>
-          {activeQuestion?.options && (
-            <RadioButton.Group
-              onValueChange={handleSelectAnswer}
-              value={sheetAnswer}
-            >
-              {activeQuestion.options.map((option) => (
-                <Pressable
-                  key={option.id}
-                  onPress={() => handleSelectAnswer(String(option.value))}
-                  style={[
-                    styles.optionCard,
-                    {
-                      backgroundColor:
-                        sheetAnswer === String(option.value)
-                          ? theme.colors.primaryContainer
-                          : theme.colors.surfaceVariant,
-                      borderColor:
-                        sheetAnswer === String(option.value)
-                          ? theme.colors.primary
-                          : 'transparent',
-                    },
-                  ]}
-                >
-                  <RadioButton value={String(option.value)} />
-                  <Text variant="bodyMedium" style={styles.optionText}>
-                    {option.text}
-                  </Text>
-                </Pressable>
-              ))}
-            </RadioButton.Group>
-          )}
-        </ScrollView>
-      </BottomSheet>
     </SafeAreaView>
   );
 }
@@ -358,40 +276,30 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 12,
   },
-  issueGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 16,
+  questionCard: {
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 16,
+    marginBottom: 16,
   },
-  issueItem: {
-    alignItems: 'center',
-    width: 72,
-  },
-  issueCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  issueLabel: {
-    marginTop: 6,
-    textAlign: 'center',
-    fontSize: 11,
-  },
-  sheetScroll: {
-    maxHeight: 400,
+  questionText: {
+    fontWeight: '600',
+    marginBottom: 12,
   },
   optionCard: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     padding: 12,
     borderRadius: 8,
     borderWidth: 2,
     marginBottom: 8,
   },
-  optionText: {
+  optionContent: {
     flex: 1,
-    marginLeft: 8,
+    marginLeft: 4,
+  },
+  optionLabel: {
+    fontWeight: 'bold',
+    marginBottom: 2,
   },
 });

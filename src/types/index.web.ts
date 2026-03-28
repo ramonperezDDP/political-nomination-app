@@ -199,23 +199,8 @@ export interface Attachment {
 
 // Questionnaire Types
 export type QuestionType = 'single_choice' | 'multiple_choice' | 'slider' | 'ranking';
-
-export interface Question {
-  id: string;
-  issueId: string;
-  text: string;
-  type: QuestionType;
-  options?: QuestionOption[];
-  sliderConfig?: SliderConfig;
-  order: number;
-  isRequired: boolean;
-}
-
-export interface QuestionOption {
-  id: string;
-  text: string;
-  value: string | number;
-}
+export type QuestionScope = 'global' | 'national' | 'local';
+export type EditorialStatus = 'approved' | 'pending' | 'rejected';
 
 export interface SliderConfig {
   min: number;
@@ -223,6 +208,30 @@ export interface SliderConfig {
   step: number;
   leftLabel: string;
   rightLabel: string;
+}
+
+export interface Question {
+  id: string;
+  issueId: string;
+  text: string;
+  type: QuestionType;
+  options?: QuestionOption[];
+  /** @deprecated Kept for backward compat with onboarding questionnaire */
+  sliderConfig?: SliderConfig;
+  scope: QuestionScope;
+  districtFilter?: string[];
+  isActive: boolean;
+  editorialStatus: EditorialStatus;
+  order: number;
+  isRequired: boolean;
+}
+
+export interface QuestionOption {
+  id: string;
+  text: string;
+  shortLabel: string;
+  spectrumValue: number;
+  value: string | number;
 }
 
 // Leaderboard Types

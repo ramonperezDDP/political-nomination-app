@@ -444,6 +444,16 @@ export const seedIssues = async (): Promise<void> => {
     { id: 'lgbtq-rights', name: 'LGBTQ+ Rights', description: 'Equal rights and protections for LGBTQ+ individuals', category: 'Social Issues', icon: 'rainbow', order: 20, isActive: true },
     { id: 'infrastructure', name: 'Infrastructure', description: 'Roads, bridges, and public works investment', category: 'Infrastructure', icon: 'bridge', order: 21, isActive: true },
     { id: 'housing', name: 'Housing', description: 'Affordable housing and homelessness', category: 'Infrastructure', icon: 'home', order: 22, isActive: true },
+    // PLAN-10C: New MC quiz issues
+    { id: 'trade', name: 'Trade Policy', description: 'Tariffs, free trade, and international commerce', category: 'Economy', icon: 'swap-horizontal', order: 23, isActive: true },
+    { id: 'iran', name: 'Iran Policy', description: 'US foreign policy toward Iran', category: 'Foreign Policy', icon: 'earth', order: 24, isActive: true },
+    { id: 'inflation', name: 'Cost of Living', description: 'Inflation, cost of living, and economic relief', category: 'Economy', icon: 'chart-line', order: 25, isActive: true },
+    { id: 'borders', name: 'Border Policy', description: 'Immigration enforcement and border security', category: 'Immigration', icon: 'gate', order: 26, isActive: true },
+    { id: 'welfare', name: 'Social Safety Net', description: 'Social Security, Medicare, and Medicaid reform', category: 'Healthcare', icon: 'shield-account', order: 27, isActive: true },
+    { id: 'pa01-infrastructure', name: 'PA-01 Infrastructure', description: 'Flood mitigation and stormwater projects in PA-01', category: 'Infrastructure', icon: 'water', order: 28, isActive: true },
+    { id: 'pa01-housing', name: 'PA-01 Housing Standards', description: 'Environmental and preservation standards for new homes in PA-01', category: 'Infrastructure', icon: 'home-city', order: 29, isActive: true },
+    { id: 'pa02-budget', name: 'PA-02 Violence Prevention', description: 'Violence prevention grant funding in PA-02', category: 'Civil Rights', icon: 'cash-check', order: 30, isActive: true },
+    { id: 'pa02-transit', name: 'PA-02 Light Rail', description: 'Federal funding for light rail safety in PA-02', category: 'Infrastructure', icon: 'train', order: 31, isActive: true },
   ];
 
   const batch = writeBatch(db);
@@ -457,141 +467,86 @@ export const seedIssues = async (): Promise<void> => {
   console.log('Issues seeded successfully!');
 };
 
-// Seed questionnaire questions for each issue
+// Seed questionnaire questions — PLAN-10C multiple-choice format
 export const seedQuestions = async (): Promise<void> => {
   const questions: Question[] = [
-    { id: 'economy-1', issueId: 'economy', text: 'What role should the government play in the economy?', type: 'single_choice', options: [
-      { id: 'e1-a', text: 'Significant intervention to ensure fair wages, worker protections, and reduce inequality', value: -80 },
-      { id: 'e1-b', text: 'Moderate regulation to protect consumers and workers while allowing business growth', value: -30 },
-      { id: 'e1-c', text: 'Limited regulation focused on preventing monopolies and fraud', value: 30 },
-      { id: 'e1-d', text: 'Minimal government involvement - free markets work best with little interference', value: 80 },
-    ], order: 1, isRequired: true },
-    { id: 'taxes-1', issueId: 'taxes', text: 'How should the tax system be structured?', type: 'single_choice', options: [
-      { id: 't1-a', text: 'Significantly higher taxes on wealthy individuals and corporations to fund social programs', value: -85 },
-      { id: 't1-b', text: 'Moderately progressive taxes with higher rates for top earners', value: -40 },
-      { id: 't1-c', text: 'Flatter tax rates with fewer deductions and loopholes', value: 40 },
-      { id: 't1-d', text: 'Lower taxes across the board to stimulate economic growth', value: 85 },
-    ], order: 1, isRequired: true },
-    { id: 'minimum-wage-1', issueId: 'minimum-wage', text: 'What should happen with the federal minimum wage?', type: 'single_choice', options: [
-      { id: 'mw1-a', text: 'Raise to $20-25/hour and index to inflation', value: -90 },
-      { id: 'mw1-b', text: 'Raise to $15-17/hour gradually over several years', value: -50 },
-      { id: 'mw1-c', text: 'Keep current levels and let states decide their own minimums', value: 40 },
-      { id: 'mw1-d', text: 'Eliminate the federal minimum wage - let the market determine wages', value: 90 },
-    ], order: 1, isRequired: true },
-    { id: 'healthcare-1', issueId: 'healthcare', text: 'What healthcare system do you prefer?', type: 'single_choice', options: [
-      { id: 'h1-a', text: 'Single-payer Medicare for All - government-funded universal healthcare', value: -90 },
-      { id: 'h1-b', text: 'Public option alongside private insurance - expand ACA', value: -45 },
-      { id: 'h1-c', text: 'Market-based with subsidies for those who need help', value: 45 },
-      { id: 'h1-d', text: 'Fully private system with minimal government involvement', value: 90 },
-    ], order: 1, isRequired: true },
-    { id: 'medicare-1', issueId: 'medicare', text: 'What changes should be made to Medicare and Medicaid?', type: 'single_choice', options: [
-      { id: 'mc1-a', text: 'Expand both programs significantly - lower Medicare age, expand Medicaid to all states', value: -85 },
-      { id: 'mc1-b', text: 'Strengthen current programs and fill coverage gaps', value: -40 },
-      { id: 'mc1-c', text: 'Add private options and competition to improve efficiency', value: 40 },
-      { id: 'mc1-d', text: 'Convert to block grants and give states more control', value: 85 },
-    ], order: 1, isRequired: true },
-    { id: 'prescription-drugs-1', issueId: 'prescription-drugs', text: 'How should prescription drug prices be addressed?', type: 'single_choice', options: [
-      { id: 'pd1-a', text: 'Allow government to negotiate all drug prices and cap costs', value: -85 },
-      { id: 'pd1-b', text: 'Allow Medicare to negotiate prices for some drugs', value: -40 },
-      { id: 'pd1-c', text: 'Increase market competition and transparency', value: 40 },
-      { id: 'pd1-d', text: 'Let the free market determine prices without government interference', value: 85 },
-    ], order: 1, isRequired: true },
-    { id: 'education-1', issueId: 'education', text: 'What approach to K-12 education do you support?', type: 'single_choice', options: [
-      { id: 'ed1-a', text: 'Significantly increase public school funding, reduce class sizes, pay teachers more', value: -80 },
-      { id: 'ed1-b', text: 'Increase funding while also supporting some charter school options', value: -30 },
-      { id: 'ed1-c', text: 'Promote school choice through vouchers and charter schools', value: 50 },
-      { id: 'ed1-d', text: 'Full parental choice - vouchers for private, religious, or homeschool', value: 85 },
-    ], order: 1, isRequired: true },
-    { id: 'higher-education-1', issueId: 'higher-education', text: 'What should be done about college costs and student debt?', type: 'single_choice', options: [
-      { id: 'he1-a', text: 'Free public college and cancel most student debt', value: -90 },
-      { id: 'he1-b', text: 'Debt-free community college and income-based repayment', value: -45 },
-      { id: 'he1-c', text: 'Expand Pell grants and vocational training alternatives', value: 30 },
-      { id: 'he1-d', text: 'Reduce government involvement - let market competition lower costs', value: 80 },
-    ], order: 1, isRequired: true },
-    { id: 'climate-change-1', issueId: 'climate-change', text: 'What action should be taken on climate change?', type: 'single_choice', options: [
-      { id: 'cc1-a', text: 'Aggressive action - Green New Deal, end fossil fuels by 2035', value: -95 },
-      { id: 'cc1-b', text: 'Strong action - net-zero by 2050, major investments in clean energy', value: -50 },
-      { id: 'cc1-c', text: 'Market-based solutions like carbon pricing, support innovation', value: 30 },
-      { id: 'cc1-d', text: 'No major government action - focus on adaptation, not prevention', value: 85 },
-    ], order: 1, isRequired: true },
-    { id: 'clean-energy-1', issueId: 'clean-energy', text: 'How should we approach energy policy?', type: 'single_choice', options: [
-      { id: 'ce1-a', text: 'Rapidly transition to 100% renewable energy, phase out fossil fuels', value: -90 },
-      { id: 'ce1-b', text: 'Major investment in renewables while using natural gas as bridge fuel', value: -40 },
-      { id: 'ce1-c', text: 'All-of-the-above approach including oil, gas, nuclear, and renewables', value: 40 },
-      { id: 'ce1-d', text: 'Focus on energy independence through domestic fossil fuel production', value: 85 },
-    ], order: 1, isRequired: true },
-    { id: 'immigration-1', issueId: 'immigration', text: 'What should be the approach to immigration?', type: 'single_choice', options: [
-      { id: 'im1-a', text: 'Welcome more immigrants, create easier paths to legal status, reduce enforcement', value: -85 },
-      { id: 'im1-b', text: 'Comprehensive reform with path to citizenship and reasonable enforcement', value: -35 },
-      { id: 'im1-c', text: 'Secure borders first, then consider legal immigration reform', value: 45 },
-      { id: 'im1-d', text: 'Significantly reduce immigration, build wall, increase deportations', value: 90 },
-    ], order: 1, isRequired: true },
-    { id: 'path-to-citizenship-1', issueId: 'path-to-citizenship', text: 'What should happen with undocumented immigrants already in the US?', type: 'single_choice', options: [
-      { id: 'pc1-a', text: 'Clear path to citizenship for all, protect DACA recipients', value: -90 },
-      { id: 'pc1-b', text: 'Earned legalization after meeting requirements (taxes, background check)', value: -40 },
-      { id: 'pc1-c', text: 'Legal status but not citizenship, focus on enforcement', value: 40 },
-      { id: 'pc1-d', text: 'No amnesty - enforce existing laws and increase deportations', value: 90 },
-    ], order: 1, isRequired: true },
-    { id: 'civil-rights-1', issueId: 'civil-rights', text: 'What approach should government take on civil rights and discrimination?', type: 'single_choice', options: [
-      { id: 'cr1-a', text: 'Strong federal enforcement, expand protected classes, support reparations study', value: -85 },
-      { id: 'cr1-b', text: 'Enforce existing civil rights laws and address systemic inequities', value: -40 },
-      { id: 'cr1-c', text: 'Protect individual rights, limit government mandates on private businesses', value: 40 },
-      { id: 'cr1-d', text: 'Reduce federal civil rights enforcement, let states and markets decide', value: 85 },
-    ], order: 1, isRequired: true },
-    { id: 'voting-rights-1', issueId: 'voting-rights', text: 'What voting policies do you support?', type: 'single_choice', options: [
-      { id: 'vr1-a', text: 'Automatic registration, expand early/mail voting, make Election Day a holiday', value: -85 },
-      { id: 'vr1-b', text: 'Make voting easier while maintaining reasonable verification', value: -35 },
-      { id: 'vr1-c', text: 'Require voter ID, verify citizenship, clean up voter rolls', value: 50 },
-      { id: 'vr1-d', text: 'Strict voter ID, limit mail voting, tighten registration requirements', value: 90 },
-    ], order: 1, isRequired: true },
-    { id: 'criminal-justice-1', issueId: 'criminal-justice', text: 'What criminal justice reforms do you support?', type: 'single_choice', options: [
-      { id: 'cj1-a', text: 'End cash bail, abolish private prisons, defund police and invest in communities', value: -90 },
-      { id: 'cj1-b', text: 'Reform sentencing, invest in rehabilitation, community policing', value: -45 },
-      { id: 'cj1-c', text: 'Support police, focus on reducing crime, modest sentencing reform', value: 45 },
-      { id: 'cj1-d', text: 'Tough on crime, mandatory minimums, back the blue', value: 90 },
-    ], order: 1, isRequired: true },
-    { id: 'foreign-policy-1', issueId: 'foreign-policy', text: 'What should guide American foreign policy?', type: 'single_choice', options: [
-      { id: 'fp1-a', text: 'Diplomacy first, reduce military interventions, strengthen international institutions', value: -75 },
-      { id: 'fp1-b', text: 'Engaged diplomacy with allies, use military as last resort', value: -30 },
-      { id: 'fp1-c', text: 'Peace through strength, support allies, deter adversaries', value: 40 },
-      { id: 'fp1-d', text: 'America First, reduce foreign commitments, focus on national interests', value: 80 },
-    ], order: 1, isRequired: true },
-    { id: 'defense-1', issueId: 'defense', text: 'What level of military spending do you support?', type: 'single_choice', options: [
-      { id: 'd1-a', text: 'Significantly reduce military budget, invest savings in domestic programs', value: -85 },
-      { id: 'd1-b', text: 'Modest reductions focused on waste, maintain core capabilities', value: -35 },
-      { id: 'd1-c', text: 'Maintain current levels, modernize equipment', value: 35 },
-      { id: 'd1-d', text: 'Increase military spending to maintain global superiority', value: 85 },
-    ], order: 1, isRequired: true },
-    { id: 'gun-policy-1', issueId: 'gun-policy', text: 'What gun policies do you support?', type: 'single_choice', options: [
-      { id: 'gp1-a', text: 'Assault weapons ban, universal background checks, red flag laws, gun registry', value: -90 },
-      { id: 'gp1-b', text: 'Universal background checks and red flag laws, no assault weapons ban', value: -40 },
-      { id: 'gp1-c', text: 'Enforce existing laws better, protect Second Amendment rights', value: 45 },
-      { id: 'gp1-d', text: 'No new restrictions, constitutional carry, protect all gun rights', value: 90 },
-    ], order: 1, isRequired: true },
-    { id: 'abortion-1', issueId: 'abortion', text: 'What is your position on abortion?', type: 'single_choice', options: [
-      { id: 'ab1-a', text: 'Legal without restrictions, codify Roe v. Wade, government funding', value: -90 },
-      { id: 'ab1-b', text: 'Legal with some restrictions (viability), keep government out of the decision', value: -40 },
-      { id: 'ab1-c', text: 'Legal only in limited cases (rape, incest, health), support alternatives', value: 45 },
-      { id: 'ab1-d', text: 'Oppose abortion in most/all cases, support life from conception', value: 90 },
-    ], order: 1, isRequired: true },
-    { id: 'lgbtq-rights-1', issueId: 'lgbtq-rights', text: 'What LGBTQ+ policies do you support?', type: 'single_choice', options: [
-      { id: 'lg1-a', text: 'Full equality, expand anti-discrimination protections, support gender-affirming care', value: -90 },
-      { id: 'lg1-b', text: 'Support marriage equality and workplace protections', value: -40 },
-      { id: 'lg1-c', text: 'Protect religious liberty, parental rights in schools, limit medical transitions for minors', value: 50 },
-      { id: 'lg1-d', text: 'Traditional marriage, religious exemptions, oppose gender ideology in schools', value: 90 },
-    ], order: 1, isRequired: true },
-    { id: 'infrastructure-1', issueId: 'infrastructure', text: 'How should we approach infrastructure investment?', type: 'single_choice', options: [
-      { id: 'in1-a', text: 'Massive public investment in green infrastructure, public transit, broadband', value: -80 },
-      { id: 'in1-b', text: 'Bipartisan investment in roads, bridges, broadband, some clean energy', value: -25 },
-      { id: 'in1-c', text: 'Public-private partnerships, focus on traditional infrastructure', value: 35 },
-      { id: 'in1-d', text: 'Limit federal role, let states and private sector lead', value: 80 },
-    ], order: 1, isRequired: true },
-    { id: 'housing-1', issueId: 'housing', text: 'How should we address housing affordability?', type: 'single_choice', options: [
-      { id: 'ho1-a', text: 'Major public investment in affordable housing, rent control, tenant protections', value: -85 },
-      { id: 'ho1-b', text: 'Incentivize construction, expand housing vouchers, support first-time buyers', value: -35 },
-      { id: 'ho1-c', text: 'Reduce regulations to allow more building, limit rent control', value: 45 },
-      { id: 'ho1-d', text: 'Let the market work, reduce government involvement in housing', value: 85 },
-    ], order: 1, isRequired: true },
+    {
+      id: 'trade-1', issueId: 'trade', text: 'What tariff policy should apply to foreign goods?', type: 'single_choice',
+      scope: 'global', isActive: true, editorialStatus: 'approved',
+      options: [
+        { id: 'trade-1-a', text: 'Eliminate most tariffs and pursue broad free-trade agreements to lower consumer prices', shortLabel: 'Free Trade', spectrumValue: -80, value: -80 },
+        { id: 'trade-1-b', text: 'Keep moderate tariffs on strategic sectors while negotiating targeted trade deals', shortLabel: 'Limited Trade', spectrumValue: 0, value: 0 },
+        { id: 'trade-1-c', text: 'Impose higher tariffs on imports to protect domestic industries and jobs', shortLabel: 'Protection', spectrumValue: 80, value: 80 },
+      ], order: 1, isRequired: true,
+    },
+    {
+      id: 'iran-1', issueId: 'iran', text: 'What policy do you support with respect to Iran?', type: 'single_choice',
+      scope: 'global', isActive: true, editorialStatus: 'approved',
+      options: [
+        { id: 'iran-1-a', text: 'Increase sanctions and military pressure to prevent Iran from obtaining nuclear weapons', shortLabel: 'Escalation', spectrumValue: 80, value: 80 },
+        { id: 'iran-1-b', text: 'Pursue diplomatic engagement with limited sanctions to encourage cooperation', shortLabel: 'Limited Response', spectrumValue: 0, value: 0 },
+        { id: 'iran-1-c', text: 'Withdraw from the region and avoid military or economic involvement with Iran', shortLabel: 'No Involvement', spectrumValue: -80, value: -80 },
+      ], order: 2, isRequired: true,
+    },
+    {
+      id: 'inflation-1', issueId: 'inflation', text: 'What policy focus best eases the cost of living?', type: 'single_choice',
+      scope: 'national', isActive: true, editorialStatus: 'approved',
+      options: [
+        { id: 'inflation-1-a', text: 'Strengthen regulations on pricing and corporate profits to protect consumers', shortLabel: 'Regulation', spectrumValue: -70, value: -70 },
+        { id: 'inflation-1-b', text: 'Invest in domestic production and supply chains to bring costs down naturally', shortLabel: 'Strengthen Production', spectrumValue: 0, value: 0 },
+        { id: 'inflation-1-c', text: 'Cut government spending and reduce the deficit to curb inflation', shortLabel: 'Fiscal Policy', spectrumValue: 70, value: 70 },
+      ], order: 3, isRequired: true,
+    },
+    {
+      id: 'borders-1', issueId: 'borders', text: 'How should undocumented immigrants and asylum seekers be treated?', type: 'single_choice',
+      scope: 'national', isActive: true, editorialStatus: 'approved',
+      options: [
+        { id: 'borders-1-a', text: 'Create more legal pathways for immigration and provide a path to citizenship', shortLabel: 'Open', spectrumValue: -80, value: -80 },
+        { id: 'borders-1-b', text: 'Process asylum claims fairly while maintaining border security', shortLabel: 'Partially Close', spectrumValue: 0, value: 0 },
+        { id: 'borders-1-c', text: 'Strengthen border enforcement and increase deportations of undocumented immigrants', shortLabel: 'Close', spectrumValue: 80, value: 80 },
+      ], order: 4, isRequired: true,
+    },
+    {
+      id: 'welfare-1', issueId: 'welfare', text: 'What policy focus should guide Social Security & Medicare/Medicaid reform?', type: 'single_choice',
+      scope: 'national', isActive: true, editorialStatus: 'approved',
+      options: [
+        { id: 'welfare-1-a', text: 'Expand benefits and fund through higher taxes on wealthy individuals and corporations', shortLabel: 'Socialize', spectrumValue: -80, value: -80 },
+        { id: 'welfare-1-b', text: 'Maintain current benefit levels and make targeted adjustments for sustainability', shortLabel: 'Maintain', spectrumValue: 0, value: 0 },
+        { id: 'welfare-1-c', text: 'Transition toward private accounts and market-based alternatives', shortLabel: 'Privatize', spectrumValue: 80, value: 80 },
+      ], order: 5, isRequired: true,
+    },
+    {
+      id: 'pa01-infrastructure-1', issueId: 'pa01-infrastructure', text: 'Should federal funding cover flood mitigation and stormwater projects?', type: 'single_choice',
+      scope: 'local', districtFilter: ['PA-01'], isActive: true, editorialStatus: 'approved',
+      options: [
+        { id: 'pa01-infra-1-a', text: 'Yes, federal investment in flood mitigation protects communities and saves money long-term', shortLabel: 'Yes', spectrumValue: -50, value: -50 },
+        { id: 'pa01-infra-1-b', text: 'No, stormwater projects should be funded locally or by the state', shortLabel: 'No', spectrumValue: 50, value: 50 },
+      ], order: 6, isRequired: true,
+    },
+    {
+      id: 'pa01-housing-1', issueId: 'pa01-housing', text: 'Should new homes meet stricter environmental and preservation standards?', type: 'single_choice',
+      scope: 'local', districtFilter: ['PA-01'], isActive: true, editorialStatus: 'approved',
+      options: [
+        { id: 'pa01-housing-1-a', text: 'Yes, stricter standards protect the environment and community character', shortLabel: 'Yes', spectrumValue: -50, value: -50 },
+        { id: 'pa01-housing-1-b', text: 'No, stricter standards increase costs and slow needed housing construction', shortLabel: 'No', spectrumValue: 50, value: 50 },
+      ], order: 7, isRequired: true,
+    },
+    {
+      id: 'pa02-budget-1', issueId: 'pa02-budget', text: 'Should grants for violence prevention require partner contributions?', type: 'single_choice',
+      scope: 'local', districtFilter: ['PA-02'], isActive: true, editorialStatus: 'approved',
+      options: [
+        { id: 'pa02-budget-1-a', text: 'Yes, requiring partner contributions ensures accountability and shared investment', shortLabel: 'Yes', spectrumValue: 50, value: 50 },
+        { id: 'pa02-budget-1-b', text: 'No, matching requirements exclude under-resourced communities that need help most', shortLabel: 'No', spectrumValue: -50, value: -50 },
+      ], order: 6, isRequired: true,
+    },
+    {
+      id: 'pa02-transit-1', issueId: 'pa02-transit', text: 'Should the federal government fund safety improvements for light rail?', type: 'single_choice',
+      scope: 'local', districtFilter: ['PA-02'], isActive: true, editorialStatus: 'approved',
+      options: [
+        { id: 'pa02-transit-1-a', text: 'Yes, federal funding for transit safety benefits riders and reduces accidents', shortLabel: 'Yes', spectrumValue: -50, value: -50 },
+        { id: 'pa02-transit-1-b', text: 'No, local transit safety should be funded by local and state governments', shortLabel: 'No', spectrumValue: 50, value: 50 },
+      ], order: 7, isRequired: true,
+    },
   ];
 
   const batch = writeBatch(db);
@@ -605,6 +560,28 @@ export const seedQuestions = async (): Promise<void> => {
   console.log(`Seeded ${questions.length} questions successfully!`);
 };
 
+// Seed quiz config — maps districts to their question sets
+export const seedQuizConfig = async (): Promise<void> => {
+  const batch = writeBatch(db);
+
+  const pa01Ref = doc(db, Collections.QUIZ_CONFIG, 'PA-01');
+  batch.set(pa01Ref, {
+    questionIds: ['trade-1', 'iran-1', 'inflation-1', 'borders-1', 'welfare-1', 'pa01-infrastructure-1', 'pa01-housing-1'],
+    version: 1,
+    updatedAt: Timestamp.now(),
+  });
+
+  const pa02Ref = doc(db, Collections.QUIZ_CONFIG, 'PA-02');
+  batch.set(pa02Ref, {
+    questionIds: ['trade-1', 'iran-1', 'inflation-1', 'borders-1', 'welfare-1', 'pa02-budget-1', 'pa02-transit-1'],
+    version: 1,
+    updatedAt: Timestamp.now(),
+  });
+
+  await batch.commit();
+  console.log('Quiz config seeded successfully!');
+};
+
 // All issue IDs for generating complete candidate positions
 const ALL_ISSUE_IDS = [
   'economy', 'taxes', 'minimum-wage', 'healthcare', 'medicare', 'prescription-drugs',
@@ -612,6 +589,9 @@ const ALL_ISSUE_IDS = [
   'path-to-citizenship', 'civil-rights', 'voting-rights', 'criminal-justice',
   'foreign-policy', 'defense', 'gun-policy', 'abortion', 'lgbtq-rights',
   'infrastructure', 'housing',
+  // PLAN-10C new quiz issues
+  'trade', 'iran', 'inflation', 'borders', 'welfare',
+  'pa01-infrastructure', 'pa01-housing', 'pa02-budget', 'pa02-transit',
 ];
 
 // Position templates by political leaning (spectrum: -100 = progressive, +100 = conservative)
@@ -639,6 +619,15 @@ const POSITION_TEMPLATES: Record<string, Record<string, { position: string; base
     'lgbtq-rights': { position: 'Full equality, ban conversion therapy, protect trans rights, pass Equality Act', baseSpectrum: -92 },
     'infrastructure': { position: 'Massive public investment in green infrastructure, public transit, high-speed rail', baseSpectrum: -82 },
     'housing': { position: 'National rent control, social housing, end homelessness with Housing First', baseSpectrum: -88 },
+    'trade': { position: 'Free trade agreements that include strong labor and environmental standards', baseSpectrum: -80 },
+    'iran': { position: 'Diplomatic engagement, rejoin nuclear deal, avoid military escalation', baseSpectrum: -80 },
+    'inflation': { position: 'Regulate corporate pricing and protect consumers from price gouging', baseSpectrum: -70 },
+    'borders': { position: 'Open pathways to citizenship, welcome refugees, reduce enforcement', baseSpectrum: -80 },
+    'welfare': { position: 'Expand Social Security and Medicare, fund through progressive taxation', baseSpectrum: -80 },
+    'pa01-infrastructure': { position: 'Federal funding for flood mitigation is essential', baseSpectrum: -50 },
+    'pa01-housing': { position: 'Stricter environmental standards for new construction', baseSpectrum: -50 },
+    'pa02-budget': { position: 'No matching requirement — fund underserved communities fully', baseSpectrum: -50 },
+    'pa02-transit': { position: 'Federal investment in transit safety is critical', baseSpectrum: -50 },
   },
   moderate_progressive: {
     'economy': { position: 'Balanced approach with targeted investments in infrastructure and job training', baseSpectrum: -45 },
@@ -663,6 +652,15 @@ const POSITION_TEMPLATES: Record<string, Record<string, { position: string; base
     'lgbtq-rights': { position: 'Support marriage equality and anti-discrimination protections', baseSpectrum: -55 },
     'infrastructure': { position: 'Bipartisan infrastructure investment in roads, bridges, broadband', baseSpectrum: -40 },
     'housing': { position: 'Expand affordable housing tax credits, help first-time buyers', baseSpectrum: -48 },
+    'trade': { position: 'Targeted trade deals with labor protections, moderate tariffs', baseSpectrum: -40 },
+    'iran': { position: 'Diplomatic engagement with limited sanctions', baseSpectrum: -40 },
+    'inflation': { position: 'Invest in production and supply chains to ease prices', baseSpectrum: -30 },
+    'borders': { position: 'Fair asylum processing with reasonable border security', baseSpectrum: -40 },
+    'welfare': { position: 'Strengthen current programs, fill coverage gaps', baseSpectrum: -40 },
+    'pa01-infrastructure': { position: 'Support federal flood mitigation funding', baseSpectrum: -30 },
+    'pa01-housing': { position: 'Support reasonable environmental standards', baseSpectrum: -30 },
+    'pa02-budget': { position: 'Flexible matching for community grants', baseSpectrum: -20 },
+    'pa02-transit': { position: 'Federal transit safety investment is important', baseSpectrum: -30 },
   },
   centrist: {
     'economy': { position: 'Pro-growth policies that work for business and workers, reduce regulations', baseSpectrum: 5 },
@@ -687,6 +685,15 @@ const POSITION_TEMPLATES: Record<string, Record<string, { position: string; base
     'lgbtq-rights': { position: 'Civil unions, oppose discrimination, respect religious freedom', baseSpectrum: 5 },
     'infrastructure': { position: 'Public-private partnerships, prioritize maintenance over new projects', baseSpectrum: 15 },
     'housing': { position: 'Reduce regulations to increase supply, oppose rent control', baseSpectrum: 25 },
+    'trade': { position: 'Balanced trade policy, strategic tariffs where needed', baseSpectrum: 0 },
+    'iran': { position: 'Cautious engagement, maintain leverage through sanctions', baseSpectrum: 0 },
+    'inflation': { position: 'Strengthen domestic production to lower costs', baseSpectrum: 0 },
+    'borders': { position: 'Process asylum claims fairly while maintaining security', baseSpectrum: 0 },
+    'welfare': { position: 'Maintain current benefits, targeted sustainability adjustments', baseSpectrum: 0 },
+    'pa01-infrastructure': { position: 'Mixed local-federal approach to flood mitigation', baseSpectrum: 0 },
+    'pa01-housing': { position: 'Balanced approach to housing standards', baseSpectrum: 0 },
+    'pa02-budget': { position: 'Some matching requirements with flexibility', baseSpectrum: 0 },
+    'pa02-transit': { position: 'Shared responsibility for transit safety funding', baseSpectrum: 0 },
   },
   moderate_conservative: {
     'economy': { position: 'Free market solutions, reduce regulations, lower taxes to spur growth', baseSpectrum: 55 },
@@ -711,6 +718,15 @@ const POSITION_TEMPLATES: Record<string, Record<string, { position: string; base
     'lgbtq-rights': { position: 'Oppose special protections, protect religious liberty', baseSpectrum: 50 },
     'infrastructure': { position: 'Private sector solutions, toll roads, oppose federal spending increases', baseSpectrum: 52 },
     'housing': { position: 'Free market housing, reduce zoning regulations, no rent control', baseSpectrum: 55 },
+    'trade': { position: 'Protective tariffs to support American manufacturing', baseSpectrum: 50 },
+    'iran': { position: 'Strong sanctions and military deterrence against Iran', baseSpectrum: 50 },
+    'inflation': { position: 'Cut government spending to reduce inflation', baseSpectrum: 50 },
+    'borders': { position: 'Secure border first, enforce immigration laws strictly', baseSpectrum: 55 },
+    'welfare': { position: 'Transition toward private options, reduce government role', baseSpectrum: 50 },
+    'pa01-infrastructure': { position: 'Local funding for stormwater projects', baseSpectrum: 30 },
+    'pa01-housing': { position: 'Reduce building regulations to increase housing supply', baseSpectrum: 30 },
+    'pa02-budget': { position: 'Require matching contributions for grant accountability', baseSpectrum: 35 },
+    'pa02-transit': { position: 'Local government should fund local transit safety', baseSpectrum: 30 },
   },
   conservative: {
     'economy': { position: 'Dramatically reduce government, slash regulations, free enterprise', baseSpectrum: 85 },
@@ -735,6 +751,15 @@ const POSITION_TEMPLATES: Record<string, Record<string, { position: string; base
     'lgbtq-rights': { position: 'Traditional marriage only, oppose transgender policies, religious freedom first', baseSpectrum: 88 },
     'infrastructure': { position: 'Privatize infrastructure, toll roads, no federal involvement', baseSpectrum: 78 },
     'housing': { position: 'Complete deregulation, eliminate HUD, free market only', baseSpectrum: 85 },
+    'trade': { position: 'Maximum tariffs to protect American jobs and industry', baseSpectrum: 80 },
+    'iran': { position: 'Maximum pressure campaign, military option on the table', baseSpectrum: 80 },
+    'inflation': { position: 'Slash government spending and eliminate regulations', baseSpectrum: 70 },
+    'borders': { position: 'Close the border, mass deportations, end asylum abuse', baseSpectrum: 80 },
+    'welfare': { position: 'Privatize Social Security and Medicare completely', baseSpectrum: 80 },
+    'pa01-infrastructure': { position: 'No federal involvement in local stormwater projects', baseSpectrum: 50 },
+    'pa01-housing': { position: 'Eliminate building regulations entirely', baseSpectrum: 50 },
+    'pa02-budget': { position: 'Strict matching requirements for all grants', baseSpectrum: 50 },
+    'pa02-transit': { position: 'No federal funding for local transit', baseSpectrum: 50 },
   },
 };
 
@@ -1154,6 +1179,25 @@ export const seedCandidates = async (): Promise<void> => {
 
     const fullTopIssues = generateAllIssuePositions(leaning, priorityIssues, customPositions);
 
+    // PLAN-10C: Generate quiz responses for this candidate's district
+    const QUIZ_QUESTION_IDS: Record<string, string[]> = {
+      'PA-01': ['trade-1', 'iran-1', 'inflation-1', 'borders-1', 'welfare-1', 'pa01-infrastructure-1', 'pa01-housing-1'],
+      'PA-02': ['trade-1', 'iran-1', 'inflation-1', 'borders-1', 'welfare-1', 'pa02-budget-1', 'pa02-transit-1'],
+    };
+    const QUESTION_ISSUE_MAP: Record<string, string> = {
+      'trade-1': 'trade', 'iran-1': 'iran', 'inflation-1': 'inflation',
+      'borders-1': 'borders', 'welfare-1': 'welfare',
+      'pa01-infrastructure-1': 'pa01-infrastructure', 'pa01-housing-1': 'pa01-housing',
+      'pa02-budget-1': 'pa02-budget', 'pa02-transit-1': 'pa02-transit',
+    };
+    const districtQuestionIds = QUIZ_QUESTION_IDS[district] || QUIZ_QUESTION_IDS['PA-01'];
+    const candidateQuizResponses: QuestionnaireResponse[] = districtQuestionIds.map((qId) => {
+      const issueId = QUESTION_ISSUE_MAP[qId];
+      const issuePosition = fullTopIssues.find((ti: any) => ti.issueId === issueId);
+      const spectrumVal = issuePosition ? issuePosition.spectrumPosition : 0;
+      return { questionId: qId, issueId, answer: spectrumVal };
+    });
+
     const userRef = doc(collection(db, Collections.USERS));
     const now = Timestamp.now();
 
@@ -1166,7 +1210,7 @@ export const seedCandidates = async (): Promise<void> => {
       state: 'verified' as const,
       verificationStatus: 'verified' as const,
       selectedIssues: priorityIssues,
-      questionnaireResponses: [],
+      questionnaireResponses: candidateQuizResponses,
       createdAt: now,
       updatedAt: now,
     });
@@ -1413,7 +1457,41 @@ export const getQuestions = async (issueIds: string[]): Promise<Question[]> => {
   }
 };
 
-// Update a single quiz response by issueId (auto-save from quiz screen)
+// Get quiz config for a district
+export const getQuizConfig = async (districtId: string): Promise<{ questionIds: string[]; version: number } | null> => {
+  try {
+    const docSnap = await getDoc(doc(db, Collections.QUIZ_CONFIG, districtId));
+    return docSnap.exists() ? (docSnap.data() as { questionIds: string[]; version: number }) : null;
+  } catch (error) {
+    console.warn('Error fetching quiz config:', error);
+    return null;
+  }
+};
+
+// Get active questions for a district (ordered by order field)
+export const getActiveQuestions = async (districtId: string): Promise<Question[]> => {
+  try {
+    const config = await getQuizConfig(districtId);
+    if (!config || !config.questionIds.length) return [];
+
+    const snapshot = await getDocs(collection(db, Collections.QUESTIONS));
+    const allQuestions = snapshot.docs.map((d) => d.data() as Question);
+
+    return allQuestions
+      .filter(
+        (q) =>
+          config.questionIds.includes(q.id) &&
+          q.isActive === true &&
+          q.editorialStatus === 'approved'
+      )
+      .sort((a, b) => (a.order || 0) - (b.order || 0));
+  } catch (error) {
+    console.warn('Error fetching active questions:', error);
+    return [];
+  }
+};
+
+// Update a single quiz response by questionId (auto-save from quiz screen)
 export const updateSingleQuizResponse = async (
   userId: string,
   response: QuestionnaireResponse
@@ -1425,8 +1503,8 @@ export const updateSingleQuizResponse = async (
   const userData = userSnap.data() as User;
   const existing = userData.questionnaireResponses || [];
 
-  // Replace existing response for this issueId, or append
-  const idx = existing.findIndex((r) => r.issueId === response.issueId);
+  // Replace existing response for this questionId, or append
+  const idx = existing.findIndex((r) => r.questionId === response.questionId);
   const updated = [...existing];
   if (idx >= 0) {
     updated[idx] = response;
@@ -1457,7 +1535,8 @@ export const ensureQuestionsExist = async (): Promise<void> => {
     if (snapshot.empty) {
       console.log('No questions found, seeding...');
       await seedQuestions();
-      console.log('Questions seeded!');
+      await seedQuizConfig();
+      console.log('Questions and quiz config seeded!');
     }
   } catch (error) {
     console.warn('Error checking questions:', error);
@@ -1492,6 +1571,7 @@ export const reseedAllData = async (): Promise<void> => {
   // Reseed everything
   await seedIssues();
   await seedQuestions();
+  await seedQuizConfig();
   await seedCandidates();
 
   console.log('All data reseeded successfully!');

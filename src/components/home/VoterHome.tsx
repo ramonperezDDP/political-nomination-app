@@ -11,12 +11,11 @@ import QuizCard from './QuizCard';
 import ContentCard from './ContentCard';
 import AboutContestCard from './AboutContestCard';
 
-// District issue IDs (must match quiz.tsx DISTRICT_ISSUES)
-const DISTRICT_ISSUE_IDS = [
-  'climate-change', 'economy', 'healthcare', 'education',
-  'gun-policy', 'infrastructure', 'housing',
-  'immigration', 'criminal-justice',
-];
+// PLAN-10C: New quiz question IDs by district
+const QUIZ_QUESTION_IDS: Record<string, string[]> = {
+  'PA-01': ['trade-1', 'iran-1', 'inflation-1', 'borders-1', 'welfare-1', 'pa01-infrastructure-1', 'pa01-housing-1'],
+  'PA-02': ['trade-1', 'iran-1', 'inflation-1', 'borders-1', 'welfare-1', 'pa02-budget-1', 'pa02-transit-1'],
+};
 
 export default function VoterHome() {
   const theme = useTheme();
@@ -25,14 +24,17 @@ export default function VoterHome() {
   const hasAccount = useUserStore(selectHasAccount);
   const [expandedFaq, setExpandedFaq] = useState<string | null>(null);
 
-  // Count only responses for district issues (not legacy questionnaire responses)
+  const selectedDistrict = useUserStore((s) => s.selectedBrowsingDistrict) || 'PA-01';
+  const districtQuestionIds = QUIZ_QUESTION_IDS[selectedDistrict] || QUIZ_QUESTION_IDS['PA-01'];
+
+  // Count only responses for quiz questions in the current district
   const completedIssueCount = useMemo(() => {
     if (!user?.questionnaireResponses?.length) return 0;
     return user.questionnaireResponses.filter((r) =>
-      DISTRICT_ISSUE_IDS.includes(r.issueId)
+      districtQuestionIds.includes(r.questionId)
     ).length;
-  }, [user?.questionnaireResponses]);
-  const totalIssues = 7;
+  }, [user?.questionnaireResponses, districtQuestionIds]);
+  const totalIssues = districtQuestionIds.length;
 
   const currentRoundId = useConfigStore(selectCurrentRoundId);
   const faqs = useMemo(() => getFaqsForRound(currentRoundId), [currentRoundId]);
