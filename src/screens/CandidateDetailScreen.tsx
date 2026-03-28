@@ -60,12 +60,21 @@ export default function CandidateProfileScreen() {
   const hasEndorsed = id ? hasEndorsedCandidate(id) : false;
 
   // Calculate alignment score and matching details (same algorithm as For You feed)
+  // District-scoped quiz issue IDs for shared policy matching
+  const QUIZ_ISSUE_IDS: Record<string, Set<string>> = {
+    'PA-01': new Set(['trade', 'iran', 'inflation', 'borders', 'welfare', 'pa01-infrastructure', 'pa01-housing']),
+    'PA-02': new Set(['trade', 'iran', 'inflation', 'borders', 'welfare', 'pa02-budget', 'pa02-transit']),
+  };
+
   const alignmentDetails = useMemo(() => {
     if (!candidate || !currentUser) {
-      return { score: null, matchedIssues: [], matchedIssueNames: [], userIssueCount: 0 };
+      return { score: null, sharedPolicies: [], totalQuizIssues: 0 };
     }
 
     const userIssues = currentUser.selectedIssues || [];
+    const userResponses = currentUser.questionnaireResponses || [];
+    const candidateDistrict = candidate.district || selectedDistrict;
+    const quizIssueIds = QUIZ_ISSUE_IDS[candidateDistrict] || QUIZ_ISSUE_IDS['PA-01'];
 
     // Use only priority issues (≤ 5), same as the For You feed
     const candidatePriorityIssues = (candidate.topIssues || [])
@@ -73,21 +82,32 @@ export default function CandidateProfileScreen() {
       .sort((a, b) => a.priority - b.priority);
     const candidateIssueIds = candidatePriorityIssues.map((ti) => ti.issueId);
 
-    const { score, matchedIssues } = calculateAlignmentScore({
+    const { score } = calculateAlignmentScore({
       candidateIssues: candidateIssueIds,
       userIssues,
       candidatePositions: candidatePriorityIssues,
       allCandidatePositions: candidate.topIssues || [],
-      userResponses: currentUser.questionnaireResponses || [],
+      userResponses,
     });
 
-    // Get matched issue names for display
-    const matchedIssueNames = matchedIssues.map(
-      (issueId) => issues.find((i) => i.id === issueId)?.name || issueId
-    );
+    // Compute shared policies using spectrum closeness (consistent with For You chips)
+    const allPositions = candidate.topIssues || [];
+    const sharedPolicies: { issueId: string; name: string }[] = [];
+    for (const cp of allPositions) {
+      if (!quizIssueIds.has(cp.issueId)) continue;
+      const userResp = userResponses.find((r) => r.issueId === cp.issueId);
+      if (!userResp) continue;
+      const userVal = Number(userResp.answer);
+      if (isNaN(userVal)) continue;
+      const closeness = 1 - Math.abs(userVal - cp.spectrumPosition) / 200;
+      if (closeness >= 0.5) {
+        const issue = issues.find((i) => i.id === cp.issueId);
+        if (issue) sharedPolicies.push({ issueId: cp.issueId, name: issue.name });
+      }
+    }
 
-    return { score, matchedIssues, matchedIssueNames, userIssueCount: userIssues.length };
-  }, [candidate, currentUser, issues]);
+    return { score, sharedPolicies, totalQuizIssues: quizIssueIds.size };
+  }, [candidate, currentUser, issues, selectedDistrict]);
 
   // Sync endorsement count when candidate loads
   useEffect(() => {
@@ -541,24 +561,24 @@ export default function CandidateProfileScreen() {
                   color={theme.colors.primary}
                 />
                 <Text variant="bodyMedium" style={{ marginLeft: 8, flex: 1 }}>
-                  <Text style={{ fontWeight: 'bold' }}>{alignmentDetails.matchedIssues.length}</Text> of{' '}
-                  <Text style={{ fontWeight: 'bold' }}>{alignmentDetails.userIssueCount || 0}</Text> priority issues match
+                  <Text style={{ fontWeight: 'bold' }}>{alignmentDetails.sharedPolicies.length}</Text> of{' '}
+                  <Text style={{ fontWeight: 'bold' }}>{alignmentDetails.totalQuizIssues}</Text> policy positions match
                 </Text>
               </View>
 
-              {alignmentDetails.matchedIssueNames.length > 0 && (
+              {alignmentDetails.sharedPolicies.length > 0 && (
                 <View style={styles.matchedIssuesList}>
                   <Text variant="labelMedium" style={{ color: theme.colors.outline, marginBottom: 8 }}>
-                    Matching Issues:
+                    Shared Positions:
                   </Text>
                   <View style={styles.issueChipsWrap}>
-                    {alignmentDetails.matchedIssueNames.map((name) => (
+                    {alignmentDetails.sharedPolicies.map((policy) => (
                       <Chip
-                        key={name}
-                        style={styles.matchedIssueChip}
+                        key={policy.issueId}
+                        style={[styles.matchedIssueChip, { backgroundColor: chipColor }]}
                         textStyle={{ fontSize: 12 }}
                       >
-                        {name}
+                        {policy.name}
                       </Chip>
                     ))}
                   </View>
@@ -570,7 +590,7 @@ export default function CandidateProfileScreen() {
             <Divider style={{ marginVertical: 16 }} />
 
             <Text variant="bodySmall" style={{ color: theme.colors.outline, textAlign: 'center' }}>
-              Score is based on shared policy priorities between you and this candidate.
+              Score is based on shared policy positions between you and this candidate.
             </Text>
           </Pressable>
         </Pressable>
