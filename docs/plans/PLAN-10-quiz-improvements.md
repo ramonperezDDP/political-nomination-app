@@ -1,8 +1,8 @@
 # PLAN-10: Quiz Improvements — REPLACED BY SUCCESSOR PLANS
 
-> **Updated 2026-03-28:** Round 2 feedback incorporated (`docs/feedback/Quiz Updates feedback 2.md`). 10A status corrected to blocked. 10C1 response model added. 10C2 expanded with confidence, ownership, and candidate answer stance. 10C3 editorial review gates added. Rotation policy split between 10C1 (structural) and 10C3 (UX).
+> **Updated 2026-03-28:** Round 3 feedback incorporated (`docs/feedback/Quiz Updates feedback 3.md`). **PLAN-10 APPROVED.** 10A: added "My Issues" semantics note. 10C1: added re-prompt rules. 10C2: added MVP confidence threshold, candidate filter behavior, coexistence migration rule, answer coverage metric. 10C3: added editorial enforcement mechanism.
 >
-> **Product decisions (confirmed):** Dealbreakers removed entirely. Quiz is standalone (`app/(main)/quiz.tsx`), NOT onboarding.
+> **Product decisions (confirmed):** Dealbreakers removed entirely. Quiz is standalone (`app/(main)/quiz.tsx`), NOT onboarding. Top Picks filter dropped (3 filters).
 
 ---
 
@@ -44,6 +44,7 @@
    - Remove `most_important` filter logic from `app/(main)/(feed)/index.tsx`
    - Remove `selectCanSeeDealbreakers` gating from ExperienceMenu
    - Update MassEndorseButton if it references the removed filter
+   - **"My Issues" meaning change:** Previously "My Issues" = overlap, "Top Picks" = overlap minus conflicts. With Top Picks gone, "My Issues" now represents **positive overlap only** and does not exclude conflicting positions. This must be documented in UX copy and understood by the team — otherwise users may misinterpret results and trust erodes.
 
 5. **Analytics/event taxonomy audit.** If any analytics events, logs, funnel names, or dashboard labels reference dealbreakers, top picks, most important, or dealbreaker completion — those become stale the moment 10A lands. Audit and update or remove to prevent distorted product/growth analysis.
 
@@ -87,7 +88,7 @@ This keeps 10B safely shippable and prevents it from becoming a dumping ground f
 
 ## PLAN-10C: Quiz v2 — New Matching Architecture
 
-> **Status: 🔴 NOT IMPLEMENTABLE YET.** This is not a content update — it is a new matching system. Needs foundational decisions before implementation planning.
+> **Status: 🟡 APPROVED, needs 2-3 final decisions before build.** This is not a content update — it is a new matching system. Core architecture is sound; remaining gaps are contained.
 
 ### What This Actually Is
 
@@ -115,6 +116,7 @@ The plan frames 10C as "new quiz question content + scope taxonomy," but the act
    - **If replace:** Need migration path for existing `questionnaireResponses`; current alignment scoring becomes obsolete; seeded candidate spectrum positions stop being primary matching asset
    - **If coexist:** Two incompatible answer systems; must define how each contributes to matching; risk confusing users with mixed question types
    - **Recommended default:** Coexistence only as a temporary bridge, with eventual replacement. This gives a migration path without breaking existing matching immediately.
+   - **Migration rule:** During coexistence, feed ranking continues to use spectrum scoring. Question-based scoring runs in parallel but is not used for ranking until full replacement (see 10C2 item 7).
 
 2. **Normalized data model.** Do NOT overload the Issue type further. Recommended separation:
    - **Issue** = stable policy topic (trade, inflation, borders). Has `id`, `name`, `scope`, `icon`.
@@ -139,6 +141,12 @@ The plan frames 10C as "new quiz question content + scope taxonomy," but the act
    - `questionSetVersion` on QuizConfig for change detection
    - Response validity rules: how long do answers to retired questions remain valid for matching?
    - Change detection: how does the app know new questions are available?
+
+7. **Re-prompt rules:** Define when the app prompts users to revisit the quiz:
+   - If user has answered < 50% of active questions → show quiz prompt on For You page
+   - If new questions added since last quiz visit → soft prompt (non-blocking banner, not modal)
+   - If question retired → no action required from user
+   - This prevents stale profiles without annoying forced updates
 
 **Implementation items (once decisions are made):**
 - Define Issue, Question, QuestionResponse, QuizConfig types
@@ -188,7 +196,27 @@ Without an explicit owner, scoring plans tend to stall or drift.
    - What replaces "Top Picks" if dealbreakers are gone (10A dependency)?
    - How do "My Issues" and "Top Picks" filters map to the new question-based matching?
 
-5. **Short label governance.** Labels like "Protection" or "Free Trade" are politically loaded compressions. Require:
+5. **MVP confidence threshold.** Default rule to prevent misleading match scores:
+   - ≥ 3 shared answered questions → show "Strong Match" labels
+   - < 3 shared answers → show score but display "Low Confidence" indicator
+   - This provides a consistent baseline without requiring perfection.
+
+6. **Candidate filter behavior for incomplete profiles.** When a candidate hasn't answered questions that a user has:
+   - Candidate is **included** in feed (not excluded)
+   - But: lower ranking, lower confidence, cannot qualify for "Strong Match" UI states
+   - This avoids unpredictable filtering while still rewarding complete profiles.
+
+7. **Coexistence migration rule.** During the temporary coexistence phase:
+   - Feed ranking continues to use **spectrum scoring** (existing system)
+   - Question-based scoring is introduced **in parallel but not used for ranking** until Phase 2 (full replacement)
+   - This avoids mid-transition instability and confusing users with inconsistent results.
+
+8. **Answer coverage metric.** Track candidate profile completeness:
+   - `answerCoverage = answeredQuestions / activeQuestions`
+   - Use for: profile display (e.g., "Answered 7/9 questions"), ranking boost, confidence calculation
+   - Low-cost, high-value addition that drives candidate engagement.
+
+9. **Short label governance.** Labels like "Protection" or "Free Trade" are politically loaded compressions. Require:
    - Word-limit and style rule
    - Consistency across questions
    - Review for bias/loaded phrasing
@@ -205,6 +233,11 @@ Without an explicit owner, scoring plans tend to stall or drift.
 - Editorial review of option wording (especially politically loaded pairs like Open/Close, Socialize/Privatize, Escalation/No Involvement)
 - Consistency review across districts
 - Short label review for bias
+
+**Enforcement mechanism:** No question goes live without passing editorial review. Options:
+- Admin UI flag on Question document (`editorialStatus: 'approved' | 'pending' | 'rejected'`) — only `approved` questions can be added to QuizConfig
+- Or: simple manual checklist process with sign-off before seed/deploy
+- Without enforcement, editorial review becomes aspirational.
 
 **Question Content** (from `docs/feedback/Possible Questions for App Module.md`):
 
@@ -264,9 +297,9 @@ Without an explicit owner, scoring plans tend to stall or drift.
 |----------|--------|-------------|
 | **10A** | ✅ Ready | Filter decision made: drop Top Picks to 3 filters |
 | **10B** | ✅ Safe whenever | None (presentation-only) |
-| **10C1** | 🔴 Blocked | Replacement-vs-coexistence decision, response model decision; 10A should land first |
-| **10C2** | 🔴 Blocked | Scoring model, candidate answer contract, ownership assignment; 10C1 |
-| **10C3** | 🔴 Blocked | 10C1 + 10C2 + editorial review |
+| **10C1** | 🟡 Nearly ready | Replacement-vs-coexistence decision (recommended: coexist → replace); 10A should land first |
+| **10C2** | 🟡 Nearly ready | Scoring model defaults defined; needs ownership assignment + final sign-off; 10C1 |
+| **10C3** | 🔴 Blocked | 10C1 + 10C2 + editorial review with enforcement |
 
 **Recommended sequence:** 10A → 10B → 10C1 → 10C2 → 10C3
 
