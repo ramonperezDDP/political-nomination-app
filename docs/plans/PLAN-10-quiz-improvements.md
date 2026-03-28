@@ -1,151 +1,234 @@
-# PLAN-10: Quiz Improvements — 🔴 REPLACED BY SUCCESSOR PLANS
+# PLAN-10: Quiz Improvements — REPLACED BY SUCCESSOR PLANS
 
-> **Updated 2026-03-28:** PLAN-10C updated with concrete question content from feedback document (`docs/feedback/Possible Questions for App Module.md`). Questions organized by scope (Global/National/Local) with district-specific local questions.
->
-> **Updated 2026-03-26:** Original plan archived. Replaced with 3 successor plan stubs below. Quiz deselect capability already exists (not part of remaining work).
+> **Updated 2026-03-28:** Comprehensive rewrite incorporating reviewer feedback (`docs/feedback/Quiz Updates feedback.md`). 10A expanded with audit requirements. 10B scoped to presentation-only. 10C split into 10C1/10C2/10C3 per reviewer recommendation — it is a new matching architecture, not a content refresh.
 >
 > **Product decisions (confirmed):** Dealbreakers removed entirely. Quiz is standalone (`app/(main)/quiz.tsx`), NOT onboarding.
 
-## Successor Plans
+---
 
-### PLAN-10A: Dealbreaker Removal Migration
+## PLAN-10A: Dealbreaker Removal Migration
 
-**Status:** Not yet written. Prerequisite for PLAN-12 (alignment explainer reuse).
+**Status:** Ready to implement after expanding scope per review.
 
-**Scope:** Cross-system migration removing all dealbreaker references from the product.
+**Scope:** Cross-system migration removing all dealbreaker references from the product. This is NOT just a cleanup — it is a silent product change that affects capability gating, feed filtering, alignment explanation, and user expectations.
 
-**Impact analysis required:**
-- Types: remove `dealbreakers` field from User type
-- Stores: remove `updateDealbreakers()`, `selectUserDealbreakers`, `selectDealbreakersComplete`
-- Alignment: remove `hasDealbreaker` from `calculateAlignmentScore()` in `src/utils/alignment.ts`
-- Feed: remove `no-dealbreakers` filter from `app/(main)/(feed)/index.tsx`
-- PSACard: remove dealbreaker badge display
-- Candidate detail: remove dealbreaker warnings from alignment explainer in `src/screens/CandidateDetailScreen.tsx`
-- Onboarding: remove `app/(auth)/onboarding/dealbreakers.tsx` and navigation to it
-- Profile: remove "Manage Dealbreakers" menu item from `app/(main)/(profile)/index.tsx`
-- Verification checklist: remove dealbreaker route from `src/components/ui/VerificationChecklist.tsx`
-- PLAN-01/05/06 capability selectors: audit for dealbreaker dependencies
+### Impact Inventory
 
-**Migration considerations:**
-- Existing user data with `dealbreakers` field: leave in Firestore (no harm), remove from reads
-- Alignment calculations must degrade gracefully for clients that haven't updated
-- `DEALBREAKER_MAP` in `src/utils/alignment.ts` can be deleted entirely
-- Rollout: single deploy, no phased rollout needed (field simply stops being read)
+| Area | Files | What to Remove |
+|------|-------|----------------|
+| Types | `src/types/index.ts` | `dealbreakers` field from User type |
+| Stores | `src/stores/userStore.ts` | `updateDealbreakers()`, `selectUserDealbreakers`, `selectDealbreakersComplete` |
+| Alignment | `src/utils/alignment.ts` | `hasDealbreaker` from `calculateAlignmentScore()`, entire `DEALBREAKER_MAP` |
+| Feed | `app/(main)/(feed)/index.tsx` | `no-dealbreakers` filter logic |
+| PSA Card | `src/components/feed/FullScreenPSA.tsx` | Dealbreaker badge display |
+| Candidate detail | `src/screens/CandidateDetailScreen.tsx` | Dealbreaker warnings from alignment explainer |
+| Onboarding | `app/(auth)/onboarding/dealbreakers.tsx` | Entire screen + navigation references |
+| Profile | `app/(main)/(profile)/index.tsx` | "Manage Dealbreakers" menu item |
+| Verification | `src/components/ui/VerificationChecklist.tsx` | Dealbreaker route |
+| Capability selectors | `src/stores/userStore.ts` | PLAN-01/05/06 selector audit |
+
+### Additional Requirements (from review)
+
+1. **Search-and-destroy string audit.** Find every user-facing string containing "dealbreaker," "top picks," or equivalent language across all screens, components, and constants.
+
+2. **Selector audit.** Ensure no capability logic or filter availability still references removed completion states (e.g., `selectDealbreakersComplete`, `selectCanSeeDealbreakers`).
+
+3. **Feed semantics rewrite.** Removing dealbreakers means "Most Important" / "Top Picks" either **disappears or gets redefined.** This is a product decision, not a code decision:
+   - Does the filter drop from 4 to 3?
+   - Does "Top Picks" get replaced with something else (e.g., "Best Match")?
+   - Does mass endorse behavior change when the exclusion filter is gone?
+   - **This is a blocker** — PLAN-05's experience menu depended on dealbreaker-based "Most Important" logic.
+
+4. **Saved filter/preference migration.** If users have stale local/UI state tied to removed filter IDs (e.g., `most_important` experience mode), handle gracefully.
+
+5. **Firestore data.** Leave existing `dealbreakers` field in Firestore (no harm), remove from all reads. Not a schema migration, but a product migration.
+
+### Rollout
+
+**Not a casual single deploy.** Despite being a "removal," this touches capability gating, feed filtering, alignment explanation, and user expectations. Recommend:
+- Full QA pass on all 4 tabs after removal
+- Verify no empty states reference dealbreakers
+- Verify feed filter count updates correctly (4→3 or renamed)
 
 ---
 
-### PLAN-10B: Standalone Quiz UX Cleanup
+## PLAN-10B: Standalone Quiz UX Cleanup
 
-**Status:** Not yet written. Low priority — quiz already works.
+**Status:** Safe to implement whenever. Low priority.
 
-**Scope:** UX improvements to the standalone quiz (`app/(main)/quiz.tsx`).
+**Scope:** Presentation-only improvements to the standalone quiz (`app/(main)/quiz.tsx`).
 
-**Potential items (to be confirmed):**
-- Direct quiz launch from home (currently already routes to `/quiz`)
+**Hard boundaries (from review):**
+- **NO data-model changes**
+- **NO scoring changes**
+- **NO question taxonomy changes**
+- **NO candidate-answer changes**
+
+This keeps 10B safely shippable and prevents it from becoming a dumping ground for unresolved 10C decisions.
+
+**Potential items:**
 - Quiz completion progress indicator improvements
 - Better empty state when no issues selected
+- Visual polish for question cards
 
 **Note:** Quiz deselect capability already exists — do not re-implement.
 
 ---
 
-### PLAN-10C: New Quiz Question Content + Scope Taxonomy
+## PLAN-10C: Quiz v2 — New Matching Architecture
 
-**Status:** Content finalized from feedback. Ready for implementation planning.
+> **Status: 🔴 NOT IMPLEMENTABLE YET.** This is not a content update — it is a new matching system. Needs foundational decisions before implementation planning.
+>
+> **Reviewer verdict:** "The product idea is good. I do not think it is implementable yet from this document."
 
-**Source:** `docs/feedback/Possible Questions for App Module.md`
+### What This Actually Is
 
-**Scope:** Replace or augment the current 7 spectrum-slider issues with a new multiple-choice question format organized by Global/National/Local scope, with district-specific local questions.
+The plan frames 10C as "new quiz question content + scope taxonomy," but the actual scope is:
+- New question format (multiple-choice replacing or coexisting with spectrum sliders)
+- New data model (Issue vs Question separation)
+- District-specific question activation
+- Candidate answer model
+- Alignment scoring redesign
+- Feed filter redesign
+- Adaptive rotation/versioning
+- Historical response handling
 
-#### Question Format Change
+**This is Quiz v2, not a content refresh.** Per reviewer recommendation, split into three sub-plans:
 
-The current quiz uses a **spectrum slider** (Progressive ↔ Conservative) for each issue. The new questions use a **multiple-choice format** with 2-3 options per question. Each option has a full description and a short label (in parentheses) used for display.
+---
 
-**Key design decision needed:** Do the new multiple-choice questions *replace* the existing spectrum sliders, or run alongside them? This affects alignment scoring, candidate matching, and the `questionnaireResponses` data model.
+### PLAN-10C1: Quiz Data Model and Activation
 
-#### Shared Questions (All Districts)
+**Scope:** Define the normalized data model and move configuration to Firestore. No scoring changes.
 
-**Global:**
+**Key decisions required before implementation:**
 
-| Question | Options |
-|----------|---------|
+1. **Replacement vs coexistence.** Do multiple-choice questions replace spectrum sliders or run alongside them? This is the core architectural fork:
+   - **If replace:** Need migration path for existing `questionnaireResponses`; current alignment scoring becomes obsolete; seeded candidate spectrum positions stop being primary matching asset
+   - **If coexist:** Two incompatible answer systems; must define how each contributes to matching; risk confusing users with mixed question types
+
+2. **Normalized data model.** Do NOT overload the Issue type further. Recommended separation:
+   - **Issue** = stable policy topic (trade, inflation, borders). Has `id`, `name`, `scope`, `icon`.
+   - **Question** = answerable prompt tied to an issue. Has `issueId`, `text`, `type`, `options[]`, `isActive`, `addedAt`, `retiredAt`, `districtFilter[]`.
+   - **QuizConfig** = active question set per district/version. Has `districtId`, `questionIds[]`, `version`.
+
+3. **District taxonomy.** Do NOT encode "red" or "blue" as the operating abstraction. Use explicit district IDs:
+   - `quizConfig/PA-01` → specific question IDs
+   - `quizConfig/PA-02` → specific question IDs
+   - This keeps the model usable when districts don't fit a partisan template.
+
+4. **Existing `questions` collection.** Decide explicitly: reuse with extended schema, or introduce new normalized model. Do not drift into half-migration where old and new question documents coexist without clear semantics.
+
+**Implementation items (once decisions are made):**
+- Define Issue, Question, QuizConfig types
+- Move `DISTRICT_ISSUES` from hardcoded `quiz.tsx` to Firestore `quizConfig` collection
+- Add `isActive` / `retiredAt` / `addedAt` to Question type
+- Add `questionSetVersion` to QuizConfig for change detection
+- Graceful handling of retired questions (preserve responses, exclude from quiz)
+
+---
+
+### PLAN-10C2: Matching and Scoring Redesign
+
+**Scope:** Define how multiple-choice maps to alignment, candidate answer model, feed/filter behavior, and migration from existing spectrum responses.
+
+**Key decisions required before implementation:**
+
+1. **Scoring model.** Engineering cannot build feed behavior without a scoring contract. Provisional model needed:
+   - Exact match = 1.0
+   - Adjacent/compatible option = 0.5
+   - Opposite option = 0.0
+   - Unanswered by candidate = excluded from denominator
+   - Unanswered by user = excluded from denominator
+   - Minimum-answer threshold before showing match confidence
+
+2. **Candidate answer contract:**
+   - Are candidate answers first-class campaign content or derived placeholders?
+   - Can a candidate skip a question?
+   - Are answers public on the candidate profile?
+   - Can answers change mid-contest?
+   - If a question rotates in later, do existing candidates need to backfill before remaining visible in Issues/My Issues filtering?
+   - What happens when a candidate hasn't answered an active question but a user has?
+
+3. **Feed filter behavior after dealbreaker removal:**
+   - What replaces "Top Picks" if dealbreakers are gone (10A dependency)?
+   - How do "My Issues" and "Top Picks" filters map to the new question-based matching?
+
+4. **Short label governance.** Labels like "Protection" or "Free Trade" are politically loaded compressions. Require:
+   - Word-limit and style rule
+   - Consistency across questions
+   - Review for bias/loaded phrasing
+   - Distinction between display shorthand and canonical answer text
+
+---
+
+### PLAN-10C3: Content Rollout
+
+**Scope:** Seed actual questions and candidate answers, update UI presentation. Only implementable after 10C1 and 10C2.
+
+**Question Content** (from `docs/feedback/Possible Questions for App Module.md`):
+
+**Global (all districts):**
+
+| Question | Options (short label) |
+|----------|-----------------------|
 | **Trade** — How should foreign goods be treated? | Free Trade, Limited Trade, Protection |
 | **Iran** — What should we do next with Iran? | Escalation, Limited Response, No Involvement |
 
-**National:**
+**National (all districts):**
 
-| Question | Options |
-|----------|---------|
+| Question | Options (short label) |
+|----------|-----------------------|
 | **Inflation** — What measures should be used to control the cost of living? | Regulation, Strengthen Production, Fiscal Policy |
 | **Borders** — How do we treat those here illegally and foreigners seeking to immigrate? | Open, Partially Close, Close |
 | **Welfare** — What should be done with Social Security and Medicare/Medicaid? | Socialize, Maintain, Privatize |
 
-#### District-Specific Local Questions
-
-**Majority Red Districts (e.g., PA-01):**
+**Local (PA-01):**
 
 | Question | Options |
 |----------|---------|
 | **Infrastructure** — Provide federal funding for flood mitigation and stormwater projects? | Yes, No |
 | **Housing** — Approve stricter environmental and preservation standards on new homes? | Yes, No |
 
-**Majority Blue Districts (e.g., PA-02):**
+**Local (PA-02):**
 
 | Question | Options |
 |----------|---------|
 | **Grants** — Increase funding for community-based violence prevention programs? | Yes, No |
 | **Transit** — Provide federal funding for safety improvements to light rail systems? | Yes, No |
 
-#### Implementation Requirements
+**Implementation items:**
+- Seed questions into Firestore using 10C1 data model
+- Seed candidate answers for all avatar candidates, varying by political lean
+- Update quiz UI to render multiple-choice (radio buttons) alongside or replacing spectrum sliders
+- Group questions under Global/National/Local section headers
+- Display short labels on candidate cards and feed tags
 
-1. **Data model:** Add `scope: 'global' | 'national' | 'local'` to the `Issue` type
-2. **Question format:** Add `questionType: 'spectrum' | 'multiple_choice'` and `options?: { label: string; shortLabel: string }[]` to the `Issue` type (or a new `Question` type)
-3. **District-specific questions:** Add `districtFilter?: string[]` to control which questions show for which districts (e.g., `['PA-01']` for red-district local questions)
-4. **Quiz UI:** Group questions under Global/National/Local section headers
-5. **Quiz UI:** Render multiple-choice questions as radio-button style selectors (not spectrum sliders)
-6. **Seed data:** Update `seedIssues()` or create new `seedQuestions()` with the content above
-7. **Alignment scoring:** Define how multiple-choice responses map to candidate matching (current system uses spectrum position — new system needs a different approach)
-8. **Short labels:** The parenthetical labels (e.g., "Free Trade", "Protection") should be stored and used for display on candidate cards and feed tags
-9. **Candidate answers:** All seed/avatar candidates must have responses to the new questions so users can filter and match on them. This means:
-   - Add a `questionResponses` (or extend existing `issuePositions`) field on the Candidate type to store multiple-choice answers
-   - Update `seedCandidates()` to generate plausible answers for each avatar candidate, varying by candidate's political lean
-   - Ensure the For You feed filters (Issues, Top Picks) work against the new question-based matching, not just the old spectrum positions
-   - Real candidates will answer these questions as part of their campaign profile setup
-10. **Feed integration:** The Experience Menu filters ("My Issues", "Top Picks") must support filtering candidates by match on the new multiple-choice questions — a user who picks "Free Trade" should see candidates who also picked "Free Trade" ranked higher
-11. **Adaptive question system:** Questions must be rotatable without code deploys as campaigns evolve and news cycles shift. This requires:
-    - **Move `DISTRICT_ISSUES` mapping to Firestore.** Currently hardcoded in `quiz.tsx` — this is the main bottleneck for adaptability. Create a `quizConfig` collection keyed by district that lists active question/issue IDs.
-    - **Add `isActive` flag to questions.** Old questions can be deactivated without deletion so existing user responses remain valid. New questions are added and activated via Firestore.
-    - **Add `addedAt` / `retiredAt` timestamps to questions.** Tracks when questions entered/left rotation for analytics and user experience (e.g., "3 new questions since your last visit").
-    - **Versioned question sets.** Consider a `questionSetVersion` on the quiz config so the app can detect when new questions are available and prompt users to revisit the quiz.
-    - **Graceful handling of retired questions.** If a user answered a question that's been retired, their response is preserved for historical matching but the question no longer appears in the quiz. Alignment scoring should handle responses to questions that no longer exist in the active set.
+**Question rotation policy (must be defined before rotation is enabled):**
+- Question sets may only rotate at round boundaries? Or event-driven? Or admin discretion?
+- No more than once every X days?
+- Retired questions continue contributing to matching for the current contest round?
+- How many unanswered new questions before "My Issues" becomes low confidence?
+- Do users get prompted to revisit the quiz after each rotation?
 
-#### Current System Capabilities (Reference)
-
-The existing architecture is already partially adaptive:
-- **Questions** are Firestore-driven (`questions` collection), auto-seeded on first load
-- **Issues** are Firestore-driven (`issues` collection), auto-seeded on first load
-- **Candidate positions** are generated from 5 political leaning templates with per-issue spectrum values (-100 to +100)
-- **Alignment scoring** (`src/utils/alignment.ts`) compares user spectrum answers to candidate spectrum positions
-- **Question types** already support `single_choice`, `multiple_choice`, `slider`, and `ranking`
-
-What's **NOT** adaptive today:
-- `DISTRICT_ISSUES` mapping in `quiz.tsx` is hardcoded (must move to Firestore)
-- No `isActive`/retirement concept for questions — all seeded questions are always shown
-- No mechanism to notify users of new questions
-- Alignment scoring only handles spectrum values, not exact-match multiple-choice
-
-#### Open Questions
-
-- How do multiple-choice answers map to alignment scoring? The current spectrum model uses a -1 to 1 range. Multiple-choice = exact match (1.0) vs mismatch (0.0)? Or weighted partial matches?
-- Should the 7 existing spectrum questions be removed, kept alongside, or migrated to multiple-choice?
-- How should candidate answer diversity be distributed in seed data? (e.g., random, correlated with existing spectrum positions, or manually curated per avatar)
-- What's the cadence for question rotation? Per-round? Event-driven? Admin-triggered?
-
-#### References
-
+**References:**
 - [Ballard, 2026 — YouGov party issue priorities](https://today.yougov.com/politics/articles/53958-the-issues-that-democrats-and-republicans-want-their-parties-to-focus-on-more)
 - [Marquette, 2026 — ICE approval survey](https://today.marquette.edu/2026/02/new-marquette-law-school-national-survey-finds-60-disapprove-of-the-work-of-ice-with-democrats-and-independents-opposed-to-ice-and-republicans-in-favor/)
 - [Orth, 2023 — Inflation blame survey](https://today.yougov.com/economy/articles/45890-more-americans-now-blame-inflation-corporations)
+
+---
+
+## Summary: What's Implementable Now
+
+| Sub-plan | Status | Dependencies |
+|----------|--------|-------------|
+| **10A** | Ready after scope expansion | PLAN-05 filter semantics decision (blocker) |
+| **10B** | Safe whenever | None (presentation-only) |
+| **10C1** | Blocked on replacement-vs-coexistence decision | 10A should land first |
+| **10C2** | Blocked on scoring model + candidate answer contract | 10C1 |
+| **10C3** | Blocked on 10C1 + 10C2 | Everything above |
+
+**Recommended sequence:** 10B → 10A → 10C1 → 10C2 → 10C3
 
 ---
 
