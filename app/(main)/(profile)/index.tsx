@@ -67,13 +67,6 @@ export default function ProfileScreen() {
           description: 'Update your name and contact details',
           onPress: () => router.push('/(main)/(profile)/personal-info' as any),
         },
-        {
-          id: 'policy-preferences',
-          icon: 'tune',
-          label: 'Policy Preferences',
-          description: 'Update your issues and questionnaire answers',
-          onPress: () => router.push('/(main)/(profile)/issues' as any),
-        },
       ],
     },
     {
@@ -85,13 +78,6 @@ export default function ProfileScreen() {
           label: 'My Endorsements',
           description: `${endorsements.length} candidate${endorsements.length !== 1 ? 's' : ''} endorsed`,
           onPress: () => router.push('/(main)/(profile)/endorsements' as any),
-        },
-        {
-          id: 'for-you',
-          icon: 'card-account-details',
-          label: 'Browse Candidates',
-          description: 'Discover candidates that match your values',
-          onPress: () => router.push('/(main)/(feed)' as any),
         },
       ],
     },
