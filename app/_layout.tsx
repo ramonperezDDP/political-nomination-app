@@ -122,12 +122,13 @@ export default function RootLayout() {
         const { convertEndorsementsToBookmarks } = useUserStore.getState();
         convertEndorsementsToBookmarks(user.id, prevRound).then((count) => {
           if (count > 0) console.log(`Converted ${count} endorsements from ${prevRound} to bookmarks`);
-          // Then fetch fresh data for the new round
-          fetchEndorsements(user.id, currentRoundId);
+          // Then fetch fresh data — load ALL active endorsements so icons work across rounds
+          fetchEndorsements(user.id);
           fetchBookmarks(user.id);
         });
       } else {
-        fetchEndorsements(user.id, currentRoundId);
+        // Load ALL active endorsements (not round-filtered) so heart icons work
+        fetchEndorsements(user.id);
         fetchBookmarks(user.id);
       }
 
