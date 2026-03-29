@@ -992,14 +992,20 @@ export const createEndorsement = async (
   candidateId: string,
   roundId?: string
 ): Promise<string> => {
+  // Check if user already has an active endorsement for this candidate (any round)
   const allEndorsements = await getDocs(collection(db, Collections.ENDORSEMENTS));
   const existing = allEndorsements.docs.find((d) => {
     const e = d.data() as Endorsement;
-    return e.odid === odid && e.candidateId === candidateId && e.isActive === true
-      && (!roundId || e.roundId === roundId);
+    return e.odid === odid && e.candidateId === candidateId && e.isActive === true;
   });
 
   if (existing) {
+    // If the existing endorsement is from a different round (or no round), update it
+    const existingData = existing.data() as Endorsement;
+    if (roundId && existingData.roundId !== roundId) {
+      await updateDoc(existing.ref, { roundId });
+      return existing.id;
+    }
     throw new Error('You have already endorsed this candidate');
   }
 

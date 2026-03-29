@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Stack, Slot } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -108,16 +108,32 @@ export default function RootLayout() {
     };
   }, [initializeAuth, initializeConfig]);
 
+  // Track previous round to detect round changes and convert endorsements → bookmarks
+  const prevRoundRef = useRef<string | null>(null);
+
   // Fetch endorsements (scoped to current round) and bookmarks when authenticated
   useEffect(() => {
     if (user?.id) {
-      fetchEndorsements(user.id, currentRoundId);
-      fetchBookmarks(user.id);
+      const prevRound = prevRoundRef.current;
+      const roundChanged = prevRound !== null && prevRound !== currentRoundId;
 
+      if (roundChanged) {
+        // Round advanced — convert old round's endorsements to bookmarks first
+        const { convertEndorsementsToBookmarks } = useUserStore.getState();
+        convertEndorsementsToBookmarks(user.id, prevRound).then((count) => {
+          if (count > 0) console.log(`Converted ${count} endorsements from ${prevRound} to bookmarks`);
+          // Then fetch fresh data for the new round
+          fetchEndorsements(user.id, currentRoundId);
+          fetchBookmarks(user.id);
+        });
+      } else {
+        fetchEndorsements(user.id, currentRoundId);
+        fetchBookmarks(user.id);
+      }
+
+      prevRoundRef.current = currentRoundId;
 
       const unsubProfile = useUserStore.getState().subscribeToProfile(user.id);
-
-
       return () => unsubProfile();
     }
   }, [user?.id, currentRoundId, fetchEndorsements, fetchBookmarks]);
