@@ -6,13 +6,18 @@ import {
   getUserEndorsements,
   createEndorsement as createEndorsementInFirestore,
   revokeEndorsement as revokeEndorsementInFirestore,
+  getUserBookmarks,
+  addBookmark as addBookmarkInFirestore,
+  removeBookmark as removeBookmarkInFirestore,
+  convertEndorsementsToBookmarks as convertEndorsementsToBookmarksInFirestore,
 } from '@/services/firebase/firestore';
-import type { User, Endorsement, QuestionnaireResponse } from '@/types';
+import type { User, Endorsement, Bookmark, QuestionnaireResponse } from '@/types';
 
 interface UserState {
   // State
   userProfile: User | null;
   endorsements: Endorsement[];
+  bookmarks: Bookmark[];
   isLoading: boolean;
   error: string | null;
   selectedBrowsingDistrict: string; // 'PA-01' | 'PA-02' — for browsing only
@@ -29,10 +34,16 @@ interface UserState {
     userId: string,
     responses: QuestionnaireResponse[]
   ) => Promise<boolean>;
-  fetchEndorsements: (odid: string) => Promise<void>;
-  endorseCandidate: (odid: string, candidateId: string) => Promise<boolean>;
-  revokeEndorsement: (odid: string, candidateId: string) => Promise<boolean>;
+  fetchEndorsements: (odid: string, roundId?: string) => Promise<void>;
+  endorseCandidate: (odid: string, candidateId: string, roundId?: string) => Promise<boolean>;
+  revokeEndorsement: (odid: string, candidateId: string, roundId?: string) => Promise<boolean>;
   hasEndorsedCandidate: (candidateId: string) => boolean;
+  fetchBookmarks: (odid: string) => Promise<void>;
+  bookmarkCandidate: (odid: string, candidateId: string, convertedFromRoundId?: string) => Promise<boolean>;
+  removeBookmark: (odid: string, candidateId: string) => Promise<boolean>;
+  hasBookmarkedCandidate: (candidateId: string) => boolean;
+  convertEndorsementsToBookmarks: (odid: string, roundId: string) => Promise<number>;
+  reEndorseFromBookmark: (odid: string, candidateId: string, roundId?: string) => Promise<boolean>;
   setSelectedBrowsingDistrict: (district: string) => void;
   setError: (error: string | null) => void;
   reset: () => void;
@@ -42,6 +53,7 @@ export const useUserStore = create<UserState>((set, get) => ({
   // Initial state
   userProfile: null,
   endorsements: [],
+  bookmarks: [],
   isLoading: false,
   error: null,
   selectedBrowsingDistrict: 'PA-01',
@@ -103,12 +115,12 @@ export const useUserStore = create<UserState>((set, get) => ({
     return get().updateProfile(userId, updates);
   },
 
-  // Fetch user endorsements
-  fetchEndorsements: async (odid: string) => {
+  // Fetch user endorsements (optionally scoped to a round)
+  fetchEndorsements: async (odid: string, roundId?: string) => {
     set({ isLoading: true, error: null });
 
     try {
-      const endorsements = await getUserEndorsements(odid);
+      const endorsements = await getUserEndorsements(odid, roundId);
       set({ endorsements, isLoading: false });
     } catch (error: any) {
       set({ error: error.message, isLoading: false });
@@ -116,20 +128,34 @@ export const useUserStore = create<UserState>((set, get) => ({
   },
 
   // Endorse a candidate and update local state
-  endorseCandidate: async (odid: string, candidateId: string) => {
+  endorseCandidate: async (odid: string, candidateId: string, roundId?: string) => {
     // Check if already endorsed locally
     if (get().hasEndorsedCandidate(candidateId)) {
       return true; // Already endorsed
     }
 
+    // Store-level verification gate (defense-in-depth, see PLAN-18)
+    const profile = get().userProfile;
+    if (!profile || profile.isAnonymous) {
+      set({ error: 'Create an account to endorse' });
+      return false;
+    }
+    if (profile.verification?.email !== 'verified' ||
+        profile.verification?.voterRegistration !== 'verified' ||
+        profile.verification?.photoId !== 'verified') {
+      set({ error: 'Complete verification to endorse' });
+      return false;
+    }
+
     try {
-      const endorsementId = await createEndorsementInFirestore(odid, candidateId);
+      const endorsementId = await createEndorsementInFirestore(odid, candidateId, roundId);
 
       // Add to local endorsements list
       const newEndorsement: Endorsement = {
         id: endorsementId,
         odid,
         candidateId,
+        roundId,
         isActive: true,
         createdAt: new Date() as any,
       };
@@ -147,14 +173,14 @@ export const useUserStore = create<UserState>((set, get) => ({
   },
 
   // Revoke an endorsement and update local state
-  revokeEndorsement: async (odid: string, candidateId: string) => {
+  revokeEndorsement: async (odid: string, candidateId: string, roundId?: string) => {
     // Check if endorsed locally
     if (!get().hasEndorsedCandidate(candidateId)) {
       return true; // Already not endorsed
     }
 
     try {
-      await revokeEndorsementInFirestore(odid, candidateId);
+      await revokeEndorsementInFirestore(odid, candidateId, roundId);
 
       // Remove from local endorsements list (mark as inactive)
       set((state) => ({
@@ -178,6 +204,98 @@ export const useUserStore = create<UserState>((set, get) => ({
     );
   },
 
+  // Fetch user bookmarks
+  fetchBookmarks: async (odid: string) => {
+    try {
+      const bookmarks = await getUserBookmarks(odid);
+      set({ bookmarks });
+    } catch (error: any) {
+      console.warn('Error fetching bookmarks:', error);
+    }
+  },
+
+  // Bookmark a candidate
+  bookmarkCandidate: async (odid: string, candidateId: string, convertedFromRoundId?: string) => {
+    if (get().hasBookmarkedCandidate(candidateId)) {
+      return true; // Already bookmarked
+    }
+
+    try {
+      const bookmarkId = await addBookmarkInFirestore(odid, candidateId, convertedFromRoundId);
+
+      const newBookmark: Bookmark = {
+        id: bookmarkId,
+        candidateId,
+        convertedFromRoundId,
+        bookmarkedAt: new Date() as any,
+      };
+
+      set((state) => ({
+        bookmarks: [...state.bookmarks, newBookmark],
+      }));
+
+      return true;
+    } catch (error: any) {
+      console.error('Error bookmarking candidate:', error);
+      set({ error: error.message });
+      return false;
+    }
+  },
+
+  // Remove a bookmark
+  removeBookmark: async (odid: string, candidateId: string) => {
+    if (!get().hasBookmarkedCandidate(candidateId)) {
+      return true; // Already not bookmarked
+    }
+
+    try {
+      await removeBookmarkInFirestore(odid, candidateId);
+
+      set((state) => ({
+        bookmarks: state.bookmarks.filter((b) => b.candidateId !== candidateId),
+      }));
+
+      return true;
+    } catch (error: any) {
+      console.error('Error removing bookmark:', error);
+      set({ error: error.message });
+      return false;
+    }
+  },
+
+  // Check if user has bookmarked a specific candidate
+  hasBookmarkedCandidate: (candidateId: string) => {
+    return get().bookmarks.some((b) => b.candidateId === candidateId);
+  },
+
+  // Convert all endorsements from a round to bookmarks
+  convertEndorsementsToBookmarks: async (odid: string, roundId: string) => {
+    try {
+      const count = await convertEndorsementsToBookmarksInFirestore(odid, roundId);
+      // Refresh both lists
+      await get().fetchEndorsements(odid);
+      await get().fetchBookmarks(odid);
+      return count;
+    } catch (error: any) {
+      console.error('Error converting endorsements to bookmarks:', error);
+      return 0;
+    }
+  },
+
+  // Re-endorse from bookmark: endorse for current round + remove bookmark
+  reEndorseFromBookmark: async (odid: string, candidateId: string, roundId?: string) => {
+    try {
+      const endorsed = await get().endorseCandidate(odid, candidateId, roundId);
+      if (endorsed) {
+        await get().removeBookmark(odid, candidateId);
+      }
+      return endorsed;
+    } catch (error: any) {
+      console.error('Error re-endorsing from bookmark:', error);
+      return false;
+    }
+  },
+
   // Set browsing district (available to all users including anonymous)
   setSelectedBrowsingDistrict: (district: string) => {
     set({ selectedBrowsingDistrict: district });
@@ -198,6 +316,7 @@ export const useUserStore = create<UserState>((set, get) => ({
     set({
       userProfile: null,
       endorsements: [],
+      bookmarks: [],
       isLoading: false,
       error: null,
       selectedBrowsingDistrict: 'PA-01',
@@ -325,3 +444,14 @@ export const selectHasCompletedOnboarding = (state: UserState) =>
   selectQuestionnaireComplete(state);
 export const selectEndorsedCandidateIds = (state: UserState) =>
   state.endorsements.filter((e) => e.isActive).map((e) => e.candidateId);
+
+// ─── Bookmark Selectors ───
+
+export const selectBookmarks = (state: UserState) => state.bookmarks;
+
+export const selectBookmarkedCandidateIds = (state: UserState) =>
+  state.bookmarks.map((b) => b.candidateId);
+
+export const selectHasBookmarkedCandidate = (candidateId: string) =>
+  (state: UserState): boolean =>
+    state.bookmarks.some((b) => b.candidateId === candidateId);

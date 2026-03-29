@@ -5,7 +5,7 @@ import { Text } from 'react-native-paper';
 import { Video, ResizeMode } from 'expo-av';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useAuthStore, useConfigStore } from '@/stores';
+import { useAuthStore, useConfigStore, selectCurrentRoundId } from '@/stores';
 import { useUserStore, selectCanSeeAlignment, selectEndorseLockReason, selectHasAccount } from '@/stores';
 
 const DISTRICT_COLORS: Record<string, string> = {
@@ -35,12 +35,17 @@ export default function FullScreenPSA({ feedItem, isActive, height }: FullScreen
 
   const currentUser = useAuthStore((s) => s.user);
   const { issues } = useConfigStore();
+  const currentRoundId = useConfigStore(selectCurrentRoundId);
   const canSeeAlignment = useUserStore(selectCanSeeAlignment);
   const hasAccount = useUserStore(selectHasAccount);
   const endorseCandidate = useUserStore((s) => s.endorseCandidate);
   const revokeEndorsement = useUserStore((s) => s.revokeEndorsement);
   const hasEndorsedCandidate = useUserStore((s) => s.hasEndorsedCandidate);
   const hasEndorsed = hasEndorsedCandidate(candidate.id);
+  const bookmarkCandidate = useUserStore((s) => s.bookmarkCandidate);
+  const removeBookmark = useUserStore((s) => s.removeBookmark);
+  const hasBookmarkedCandidate = useUserStore((s) => s.hasBookmarkedCandidate);
+  const isBookmarked = hasBookmarkedCandidate(candidate.id);
   const lockReasonSelector = useMemo(() => selectEndorseLockReason(candidate.district), [candidate.district]);
   const lockReason = useUserStore(lockReasonSelector);
   const canEndorse = lockReason === null;
@@ -75,8 +80,14 @@ export default function FullScreenPSA({ feedItem, isActive, height }: FullScreen
       return;
     }
     if (!currentUser?.id) return;
-    if (hasEndorsed) revokeEndorsement(currentUser.id, candidate.id);
-    else endorseCandidate(currentUser.id, candidate.id);
+    if (hasEndorsed) revokeEndorsement(currentUser.id, candidate.id, currentRoundId);
+    else endorseCandidate(currentUser.id, candidate.id, currentRoundId);
+  };
+
+  const handleBookmarkPress = () => {
+    if (!currentUser?.id) return;
+    if (isBookmarked) removeBookmark(currentUser.id, candidate.id);
+    else bookmarkCandidate(currentUser.id, candidate.id);
   };
 
   const hasVideo = psa.videoUrl && psa.videoUrl.length > 0;
@@ -162,6 +173,18 @@ export default function FullScreenPSA({ feedItem, isActive, height }: FullScreen
           />
           <Text style={styles.actionLabel}>
             {candidate.endorsementCount}
+          </Text>
+        </Pressable>
+
+        {/* Bookmark */}
+        <Pressable onPress={handleBookmarkPress} style={styles.actionButton}>
+          <MaterialCommunityIcons
+            name={isBookmarked ? 'bookmark' : 'bookmark-outline'}
+            size={28}
+            color={isBookmarked ? '#ffd700' : '#fff'}
+          />
+          <Text style={styles.actionLabel}>
+            {isBookmarked ? 'Saved' : 'Save'}
           </Text>
         </Pressable>
 

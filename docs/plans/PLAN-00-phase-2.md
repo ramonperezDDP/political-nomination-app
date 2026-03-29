@@ -1,6 +1,6 @@
 # PLAN-00 Phase 2: Round-Scoped Endorsements, Bookmarks, and Candidate Elimination
 
-> **Status:** Ready for review.
+> **Status:** Revised after PM review (2026-03-28). Ready for implementation.
 >
 > **Depends on:** PLAN-00 Phase 1 (complete), PLAN-10 (complete)
 >
@@ -26,28 +26,38 @@ Implement round-scoped endorsements with automatic conversion to bookmarks at ro
 
 5. **Mass endorse:** Client-side for beta (no Cloud Function batch endpoint needed). Server-side hardening deferred to production.
 
+## PM Review Findings (2026-03-28)
+
+Reviewed by OpenAI PM Review MCP. Key revisions incorporated below:
+
+1. **Document ID collision (HIGH):** Changed endorsement doc ID from `{candidateId}` to `{roundId}_{candidateId}` so endorsements for the same candidate across different rounds don't collide.
+2. **Scalability (HIGH):** Conversion function now uses paged batching with 500-doc batch limit. For beta scale this is sufficient; Cloud Tasks sharding documented for production.
+3. **Migration (MEDIUM):** Added Step 0 — migration script to backfill `roundId` on existing endorsements.
+4. **Race condition (MEDIUM):** Conversion is idempotent — checks for existing bookmark before creating, skips already-converted docs. Cron sets a `roundTransitionInProgress` flag to prevent new endorsements during transition.
+5. **Threshold config (MEDIUM):** Endorsement threshold stored per-round in `contestRounds/{roundId}.eliminationThreshold`. Surfaced to client via existing config store round data.
+
 ## Data Model Changes
 
 ### Endorsement (existing, modified)
 
-Currently endorsements are stored as a subcollection `users/{userId}/endorsements/{candidateId}`. Add round scoping:
+Endorsements stored as subcollection `users/{userId}/endorsements/{roundId}_{candidateId}`. **Document ID is `{roundId}_{candidateId}`** to allow the same candidate to be endorsed in multiple rounds without collision.
 
 ```ts
 interface Endorsement {
   candidateId: string;
-  roundId: string;       // NEW: which round this endorsement was made in
+  roundId: string;       // which round this endorsement was made in
   endorsedAt: Timestamp;
 }
 ```
 
 ### Bookmark (new)
 
-Store as a subcollection `users/{userId}/bookmarks/{candidateId}`:
+Store as subcollection `users/{userId}/bookmarks/{candidateId}`. Document ID is `{candidateId}` — bookmarks are not round-scoped; re-bookmarking the same candidate updates the existing doc.
 
 ```ts
 interface Bookmark {
   candidateId: string;
-  convertedFromRoundId?: string;  // which round's endorsement this came from (null if manually bookmarked)
+  convertedFromRoundId?: string;  // which round's endorsement this came from (undefined if manually bookmarked)
   bookmarkedAt: Timestamp;
 }
 ```
@@ -60,9 +70,29 @@ Add to `Candidate` type:
 contestStatus: 'active' | 'eliminated';
 ```
 
-Set by the round advancement cron after evaluating endorsement counts against the round's threshold.
+Set by the round advancement cron after evaluating endorsement counts against the round's `eliminationThreshold`.
+
+### ContestRound — `eliminationThreshold` (new field)
+
+Add to `ContestRound` type:
+
+```ts
+eliminationThreshold?: number;  // minimum endorsement count to survive this round
+```
+
+Stored in `contestRounds/{roundId}` Firestore documents. Surfaced to client for the cutoff line on the leaderboard.
 
 ## Implementation
+
+### 0. Migration Script (`scripts/migrateEndorsements.ts`)
+
+Backfill `roundId` on existing endorsements and re-key documents from `{candidateId}` to `{roundId}_{candidateId}`:
+
+- Query all `users/{uid}/endorsements` documents missing `roundId`
+- Set `roundId` to the current `currentRoundId` from contest config
+- Re-create each doc with the new `{roundId}_{candidateId}` key, delete the old `{candidateId}` key
+- Run as a one-time script via `npx ts-node scripts/migrateEndorsements.ts`
+- Idempotent: skips docs that already have the correct key format
 
 ### 1. Types (`src/types/index.ts` and `index.web.ts`)
 
@@ -87,16 +117,16 @@ Set by the round advancement cron after evaluating endorsement counts against th
 ### 3. Firestore Functions (`src/services/firebase/firestore.ts` and `firestore.web.ts`)
 
 **New functions:**
-- `addBookmark(userId, candidateId, fromRoundId?)` — create bookmark document
+- `addBookmark(userId, candidateId, fromRoundId?)` — create bookmark doc at `bookmarks/{candidateId}`
 - `removeBookmark(userId, candidateId)` — delete bookmark document
 - `getBookmarks(userId)` → `Bookmark[]`
-- `convertEndorsementsToBookmarks(userId, roundId)` — batch: create bookmarks from endorsements, delete endorsements
-- `eliminateCandidates(roundId, threshold)` — mark candidates below threshold as `contestStatus: 'eliminated'`
+- `convertEndorsementsToBookmarks(userId, roundId)` — paged batch (≤500 writes per batch): for each endorsement with matching `roundId`, check if bookmark already exists (idempotent), create bookmark if not, delete endorsement. Returns count of converted docs.
+- `eliminateCandidates(roundId, threshold)` — query candidates with endorsement count < threshold, set `contestStatus: 'eliminated'` in batches of 500
 
 **Modified functions:**
-- `endorseCandidate` → include `roundId` in endorsement document
-- `getEndorsementLeaderboard` → only count endorsements for current round
-- `getCandidatesForFeed` → filter out eliminated candidates
+- `endorseCandidate` → write to doc ID `{roundId}_{candidateId}`, include `roundId` field
+- `getEndorsementLeaderboard` → only count endorsements where `roundId` matches current round
+- `getCandidatesForFeed` → filter out candidates where `contestStatus === 'eliminated'`
 
 ### 4. Feed (`app/(main)/(feed)/index.tsx`)
 
@@ -139,9 +169,16 @@ Redesign with two tabs:
 
 The existing cron already advances `currentRoundId` daily. Add:
 
-1. **Eliminate candidates** below the outgoing round's endorsement threshold
-2. **Convert all endorsements to bookmarks** for all users
-3. **Reset endorsement counts** on candidate documents for the new round (or keep cumulative and track per-round separately)
+1. **Set `roundTransitionInProgress: true`** on contest config (prevents client-side endorsements during transition)
+2. **Eliminate candidates** below the outgoing round's `eliminationThreshold`
+3. **Convert all endorsements to bookmarks** for all users — paged: query users with endorsements for outgoing round, process in batches. Each conversion is idempotent (check-before-write).
+4. **Advance `currentRoundId`** to next round
+5. **Set `roundTransitionInProgress: false`**
+6. **Reset per-round endorsement counts** on candidate documents (new round starts at 0)
+
+**Idempotency:** If the function retries (e.g., timeout), it checks `roundTransitionInProgress` and the current round ID to determine where to resume. Already-converted endorsements are skipped (bookmark exists check).
+
+**Scale notes:** For beta (~100 users, ~50 candidates), single function execution is sufficient. For production (>10K users), refactor to fan-out via Cloud Tasks — one task per user batch.
 
 ### 9. Config Store
 

@@ -78,6 +78,7 @@ export interface Candidate {
   id: string;
   userId: string;
   status: CandidateStatus;
+  contestStatus?: CandidateContestStatus;
   signatureDocUrl: string;
   declarationData: EncryptedData;
   reasonForRunning: string;
@@ -162,8 +163,17 @@ export interface Endorsement {
   id: string;
   odid: string;
   candidateId: string;
+  roundId?: string;
   createdAt: Timestamp;
   isActive: boolean;
+}
+
+// Bookmark Types
+export interface Bookmark {
+  id: string;
+  candidateId: string;
+  convertedFromRoundId?: string;
+  bookmarkedAt: Timestamp;
 }
 
 // Message Types
@@ -246,6 +256,7 @@ export interface LeaderboardEntry {
   rank: number;
   alignmentScore?: number;
   averageSpectrum: number; // -100 to 100, calculated from topIssues
+  contestStatus?: CandidateContestStatus;
 }
 
 // Feed Types
@@ -329,6 +340,7 @@ export interface ContestRound {
   isEndorsementRound: boolean;
   candidatesEntering: number | null;
   candidatesAdvancing: number | null;
+  eliminationThreshold?: number;
   startDate: Timestamp | null;
   endDate: Timestamp | null;
   tieBreakPolicy: TieBreakPolicy;

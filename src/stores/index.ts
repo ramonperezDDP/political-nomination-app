@@ -27,6 +27,10 @@ export {
   selectCompletionPercent,
   // Plan 02: Browsing district
   selectBrowsingDistrict,
+  // PLAN-00 Phase 2: Bookmark selectors
+  selectBookmarks,
+  selectBookmarkedCandidateIds,
+  selectHasBookmarkedCandidate,
 } from './userStore';
 export {
   useConfigStore,
@@ -47,5 +51,7 @@ export {
   selectContestTimeline,
   selectRoundStatus,
   selectContestMode,
+  // PLAN-00 Phase 2: Elimination threshold
+  selectEliminationThreshold,
 } from './configStore';
 export { useCandidateStore, selectIsApprovedCandidate, selectHasPendingApplication, selectPublishedPSAs, selectDraftPSAs } from './candidateStore';

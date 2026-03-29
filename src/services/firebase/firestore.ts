@@ -9,6 +9,7 @@ import type {
   PSA,
   Issue,
   Endorsement,
+  Bookmark,
   Conversation,
   Message,
   Notification,
@@ -1200,25 +1201,32 @@ export const seedCandidates = async (): Promise<void> => {
 
 export const createEndorsement = async (
   odid: string,
-  candidateId: string
+  candidateId: string,
+  roundId?: string
 ): Promise<string> => {
-  // Check if user already endorsed this candidate (filter in memory to avoid index)
+  // Check if user already endorsed this candidate in this round (filter in memory to avoid index)
   const allEndorsements = await getCollection<Endorsement>(Collections.ENDORSEMENTS).get();
   const existing = (allEndorsements?.docs || []).find((doc) => {
     const e = doc.data() as Endorsement;
-    return e.odid === odid && e.candidateId === candidateId && e.isActive === true;
+    return e.odid === odid && e.candidateId === candidateId && e.isActive === true
+      && (!roundId || e.roundId === roundId);
   });
 
   if (existing) {
     throw new Error('You have already endorsed this candidate');
   }
 
-  const docRef = await getCollection<Endorsement>(Collections.ENDORSEMENTS).add({
+  const endorsementData: Record<string, any> = {
     odid,
     candidateId,
     isActive: true,
     createdAt: firestore.Timestamp.now(),
-  } as Endorsement);
+  };
+  if (roundId) endorsementData.roundId = roundId;
+
+  const docRef = await getCollection<Endorsement>(Collections.ENDORSEMENTS).add(
+    endorsementData as Endorsement
+  );
   await docRef.update({ id: docRef.id });
 
   // Increment candidate's endorsement count
@@ -1231,13 +1239,15 @@ export const createEndorsement = async (
 
 export const revokeEndorsement = async (
   odid: string,
-  candidateId: string
+  candidateId: string,
+  roundId?: string
 ): Promise<void> => {
   // Filter in memory to avoid composite index requirement
   const allEndorsements = await getCollection<Endorsement>(Collections.ENDORSEMENTS).get();
   const matchingDoc = (allEndorsements?.docs || []).find((doc) => {
     const e = doc.data() as Endorsement;
-    return e.odid === odid && e.candidateId === candidateId && e.isActive === true;
+    return e.odid === odid && e.candidateId === candidateId && e.isActive === true
+      && (!roundId || e.roundId === roundId);
   });
 
   if (matchingDoc) {
@@ -1249,13 +1259,17 @@ export const revokeEndorsement = async (
   }
 };
 
-export const getUserEndorsements = async (odid: string): Promise<Endorsement[]> => {
+export const getUserEndorsements = async (
+  odid: string,
+  roundId?: string
+): Promise<Endorsement[]> => {
   try {
     // Filter in memory to avoid composite index requirement
     const snapshot = await getCollection<Endorsement>(Collections.ENDORSEMENTS).get();
     return (snapshot?.docs || [])
       .map((doc) => doc.data() as Endorsement)
-      .filter((e) => e.odid === odid && e.isActive === true);
+      .filter((e) => e.odid === odid && e.isActive === true
+        && (!roundId || e.roundId === roundId));
   } catch (error) {
     console.warn('Error fetching user endorsements:', error);
     return [];
@@ -1264,7 +1278,8 @@ export const getUserEndorsements = async (odid: string): Promise<Endorsement[]> 
 
 export const hasUserEndorsedCandidate = async (
   odid: string,
-  candidateId: string
+  candidateId: string,
+  roundId?: string
 ): Promise<boolean> => {
   try {
     // Fetch all endorsements and filter in memory to avoid composite index
@@ -1274,7 +1289,8 @@ export const hasUserEndorsedCandidate = async (
       return (
         endorsement.odid === odid &&
         endorsement.candidateId === candidateId &&
-        endorsement.isActive === true
+        endorsement.isActive === true &&
+        (!roundId || endorsement.roundId === roundId)
       );
     });
     return hasEndorsed;
@@ -1282,6 +1298,94 @@ export const hasUserEndorsedCandidate = async (
     console.warn('Error checking endorsement status:', error);
     return false;
   }
+};
+
+// ==================== BOOKMARK OPERATIONS ====================
+
+export const addBookmark = async (
+  odid: string,
+  candidateId: string,
+  convertedFromRoundId?: string
+): Promise<string> => {
+  // Check if already bookmarked
+  const snapshot = await getCollection<Bookmark>(Collections.BOOKMARKS).get();
+  const existing = (snapshot?.docs || []).find((doc) => {
+    const b = doc.data() as Bookmark;
+    return b.candidateId === candidateId && b.id?.startsWith?.(odid);
+  });
+  // Use odid_candidateId as doc ID for uniqueness
+  const docId = `${odid}_${candidateId}`;
+  const existingDoc = await getCollection<Bookmark>(Collections.BOOKMARKS).doc(docId).get();
+
+  if (existingDoc.exists) {
+    return docId; // Already bookmarked, idempotent
+  }
+
+  await getCollection<Bookmark>(Collections.BOOKMARKS).doc(docId).set({
+    id: docId,
+    candidateId,
+    ...(convertedFromRoundId ? { convertedFromRoundId } : {}),
+    bookmarkedAt: firestore.Timestamp.now(),
+  } as Bookmark);
+
+  return docId;
+};
+
+export const removeBookmark = async (
+  odid: string,
+  candidateId: string
+): Promise<void> => {
+  const docId = `${odid}_${candidateId}`;
+  await getCollection<Bookmark>(Collections.BOOKMARKS).doc(docId).delete();
+};
+
+export const getUserBookmarks = async (odid: string): Promise<Bookmark[]> => {
+  try {
+    const snapshot = await getCollection<Bookmark>(Collections.BOOKMARKS).get();
+    return (snapshot?.docs || [])
+      .map((doc) => doc.data() as Bookmark)
+      .filter((b) => b.id?.startsWith(`${odid}_`));
+  } catch (error) {
+    console.warn('Error fetching user bookmarks:', error);
+    return [];
+  }
+};
+
+export const hasUserBookmarkedCandidate = async (
+  odid: string,
+  candidateId: string
+): Promise<boolean> => {
+  try {
+    const docId = `${odid}_${candidateId}`;
+    const doc = await getCollection<Bookmark>(Collections.BOOKMARKS).doc(docId).get();
+    return doc.exists;
+  } catch (error) {
+    console.warn('Error checking bookmark status:', error);
+    return false;
+  }
+};
+
+export const convertEndorsementsToBookmarks = async (
+  odid: string,
+  roundId: string
+): Promise<number> => {
+  // Get all active endorsements for this user in this round
+  const endorsements = await getUserEndorsements(odid, roundId);
+  let converted = 0;
+
+  for (const endorsement of endorsements) {
+    // Idempotent: addBookmark checks for existing
+    await addBookmark(odid, endorsement.candidateId, roundId);
+    // Soft-delete the endorsement
+    const allDocs = await getCollection<Endorsement>(Collections.ENDORSEMENTS).get();
+    const matchingDoc = (allDocs?.docs || []).find((doc) => doc.id === endorsement.id);
+    if (matchingDoc) {
+      await matchingDoc.ref.update({ isActive: false });
+    }
+    converted++;
+  }
+
+  return converted;
 };
 
 // ==================== CONVERSATION/MESSAGE OPERATIONS ====================
@@ -1623,6 +1727,7 @@ export const getEndorsementLeaderboard = async (
       trendingScore: candidate.trendingScore,
       rank: index + 1,
       averageSpectrum,
+      contestStatus: candidate.contestStatus,
     };
   });
 };
@@ -1636,22 +1741,29 @@ export const getTrendingLeaderboard = async (
     .limit(limit)
     .get();
 
-  return snapshot.docs.map((doc, index) => {
-    const candidate = doc.data() as Candidate;
-    const averageSpectrum = candidate.topIssues?.length
-      ? candidate.topIssues.reduce((sum, i) => sum + (i.spectrumPosition || 0), 0) / candidate.topIssues.length
-      : 0;
-    return {
-      candidateId: candidate.id,
-      candidateName: '',
-      photoUrl: undefined,
-      endorsementCount: candidate.endorsementCount,
-      profileViews: candidate.profileViews,
-      trendingScore: candidate.trendingScore,
-      rank: index + 1,
-      averageSpectrum,
-    };
-  });
+  // Filter out eliminated candidates from trending
+  return snapshot.docs
+    .filter((doc) => {
+      const candidate = doc.data() as Candidate;
+      return candidate.contestStatus !== 'eliminated';
+    })
+    .map((doc, index) => {
+      const candidate = doc.data() as Candidate;
+      const averageSpectrum = candidate.topIssues?.length
+        ? candidate.topIssues.reduce((sum, i) => sum + (i.spectrumPosition || 0), 0) / candidate.topIssues.length
+        : 0;
+      return {
+        candidateId: candidate.id,
+        candidateName: '',
+        photoUrl: undefined,
+        endorsementCount: candidate.endorsementCount,
+        profileViews: candidate.profileViews,
+        trendingScore: candidate.trendingScore,
+        rank: index + 1,
+        averageSpectrum,
+        contestStatus: candidate.contestStatus,
+      };
+    });
 };
 
 // ==================== METRICS OPERATIONS ====================

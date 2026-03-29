@@ -151,7 +151,11 @@ export default function ForYouScreen() {
         const normalizedUserResponses = (user?.questionnaireResponses || [])
           .map((r) => ({ questionId: r.questionId, issueId: r.issueId, answer: Number(r.answer) }))
           .filter((r) => !isNaN(r.answer));
-        const items = candidatesData.map(({ candidate, user: candidateUser }) =>
+        // Filter out eliminated candidates
+        const activeCandidates = candidatesData.filter(
+          ({ candidate }) => candidate.contestStatus !== 'eliminated'
+        );
+        const items = activeCandidates.map(({ candidate, user: candidateUser }) =>
           generateFeedItem(candidate, candidateUser, issues, normalizedUserResponses)
         );
         setFeedItems(items);

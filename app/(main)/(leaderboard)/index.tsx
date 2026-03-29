@@ -78,6 +78,8 @@ export default function LeaderboardScreen() {
 
   const renderCandidateTile = ({ item, index }: { item: LeaderboardEntry; index: number }) => {
     const isAboveCutoff = cutoffIndex === -1 || index < cutoffIndex;
+    const isEliminated = item.contestStatus === 'eliminated';
+    const isDimmed = leaderboardType === 'endorsements' && (!isAboveCutoff || isEliminated);
     const showCutoffLine = index === cutoffIndex && leaderboardType === 'endorsements';
 
     return (
@@ -100,7 +102,7 @@ export default function LeaderboardScreen() {
           style={({ pressed }) => [{ opacity: pressed ? 0.8 : 1 }]}
         >
           <Card
-            style={(!isAboveCutoff && leaderboardType === 'endorsements')
+            style={isDimmed
               ? [styles.candidateTile, styles.belowCutoff]
               : styles.candidateTile}
           >
@@ -114,9 +116,16 @@ export default function LeaderboardScreen() {
                 size={48}
               />
               <View style={styles.candidateInfo}>
-                <Text variant="titleMedium" style={styles.candidateName}>
-                  {item.candidateName}
-                </Text>
+                <View style={styles.nameRow}>
+                  <Text variant="titleMedium" style={styles.candidateName}>
+                    {item.candidateName}
+                  </Text>
+                  {isEliminated && (
+                    <Text variant="labelSmall" style={[styles.eliminatedBadge, { color: theme.colors.error }]}>
+                      Eliminated
+                    </Text>
+                  )}
+                </View>
                 <View style={styles.statsRow}>
                   {leaderboardType === 'endorsements' ? (
                     <>
@@ -316,8 +325,17 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 12,
   },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   candidateName: {
     fontWeight: '600',
+  },
+  eliminatedBadge: {
+    fontWeight: '600',
+    fontSize: 10,
   },
   statsRow: {
     flexDirection: 'row',

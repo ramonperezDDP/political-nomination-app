@@ -13,7 +13,9 @@ import {
   inferGenderFromName,
   getActiveQuestions,
 } from '@/services/firebase/firestore';
-import { useAuthStore, useConfigStore, useUserStore } from '@/stores';
+import { useAuthStore, useConfigStore, useUserStore, selectCurrentRoundId } from '@/stores';
+import { selectEndorseLockReason, selectHasAccount } from '@/stores';
+import EndorseLockModal from '@/components/feed/EndorseLockModal';
 
 const DISTRICT_COLORS: Record<string, string> = {
   'PA-01': '#FFB6C1',
@@ -45,6 +47,7 @@ export default function CandidateProfileScreen() {
   const { user: currentUser } = useAuthStore();
   const { issues } = useConfigStore();
   const { hasEndorsedCandidate, endorseCandidate, revokeEndorsement } = useUserStore();
+  const currentRoundId = useConfigStore(selectCurrentRoundId);
   const selectedDistrict = useUserStore((s) => s.selectedBrowsingDistrict) || 'PA-01';
   const chipColor = DISTRICT_COLORS[selectedDistrict] || '#E0E0E0';
 
@@ -56,9 +59,17 @@ export default function CandidateProfileScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [isEndorsing, setIsEndorsing] = useState(false);
   const [displayedEndorsementCount, setDisplayedEndorsementCount] = useState(0);
+  const [showLockModal, setShowLockModal] = useState(false);
 
-  // Check endorsement status from global store
+  // Check endorsement status and lock state
   const hasEndorsed = id ? hasEndorsedCandidate(id) : false;
+  const hasAccount = useUserStore(selectHasAccount);
+  const lockReasonSelector = useMemo(
+    () => selectEndorseLockReason(candidate?.district || selectedDistrict),
+    [candidate?.district, selectedDistrict]
+  );
+  const lockReason = useUserStore(lockReasonSelector);
+  const canEndorse = lockReason === null;
 
   // Calculate alignment score and matching details (same algorithm as For You feed)
   // PLAN-10E: Pure quiz-based matching using questionnaireResponses
@@ -153,18 +164,24 @@ export default function CandidateProfileScreen() {
   const handleEndorseToggle = async () => {
     if (!currentUser?.id || !id || isEndorsing) return;
 
+    // Check lock before endorsing (allow revocation even if locked)
+    if (!hasEndorsed && !canEndorse) {
+      setShowLockModal(true);
+      return;
+    }
+
     setIsEndorsing(true);
     try {
       if (hasEndorsed) {
         // Remove endorsement
-        const success = await revokeEndorsement(currentUser.id, id);
+        const success = await revokeEndorsement(currentUser.id, id, currentRoundId);
         if (success) {
           // Decrement the displayed count immediately for visual feedback
           setDisplayedEndorsementCount((prev) => Math.max(0, prev - 1));
         }
       } else {
         // Add endorsement
-        const success = await endorseCandidate(currentUser.id, id);
+        const success = await endorseCandidate(currentUser.id, id, currentRoundId);
         if (success) {
           // Increment the displayed count immediately for visual feedback
           setDisplayedEndorsementCount((prev) => prev + 1);
@@ -584,12 +601,19 @@ export default function CandidateProfileScreen() {
             <PrimaryButton
               onPress={handleEndorseToggle}
               loading={isEndorsing}
-              icon={hasEndorsed ? 'check' : 'thumb-up'}
+              icon={!canEndorse && !hasEndorsed ? 'lock' : hasEndorsed ? 'check' : 'thumb-up'}
               style={[
                 styles.endorseButton,
                 hasEndorsed && { backgroundColor: theme.colors.surfaceVariant },
+                !canEndorse && !hasEndorsed && { backgroundColor: theme.colors.surfaceDisabled || '#e0e0e0' },
               ] as any}
-              labelStyle={hasEndorsed ? { color: theme.colors.onSurfaceVariant } : undefined}
+              labelStyle={
+                hasEndorsed
+                  ? { color: theme.colors.onSurfaceVariant }
+                  : !canEndorse
+                    ? { color: theme.colors.onSurfaceDisabled || '#999' }
+                    : undefined
+              }
             >
               {hasEndorsed ? 'Endorsed' : 'Endorse'}
             </PrimaryButton>
@@ -622,6 +646,16 @@ export default function CandidateProfileScreen() {
         {activeTab === 'psas' && renderPSAsTab()}
       </ScrollView>
 
+      {showLockModal && (
+        <EndorseLockModal
+          visible={showLockModal}
+          reason={lockReason}
+          hasAccount={hasAccount}
+          onDismiss={() => setShowLockModal(false)}
+          onSignUp={() => router.push('/(auth)/register')}
+          onVerify={() => router.push('/(auth)/verify-identity' as any)}
+        />
+      )}
     </SafeAreaView>
   );
 }

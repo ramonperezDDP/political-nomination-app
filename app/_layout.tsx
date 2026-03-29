@@ -16,7 +16,7 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { enableScreens } from 'react-native-screens';
-import { useAuthStore, useConfigStore, useUserStore } from '@/stores';
+import { useAuthStore, useConfigStore, useUserStore, selectCurrentRoundId } from '@/stores';
 import { amspLightTheme } from '@/constants/theme';
 
 // Suppress known React 18 + Zustand/Firebase subscription warning
@@ -85,6 +85,8 @@ export default function RootLayout() {
   const user = useAuthStore((state) => state.user);
   const initializeConfig = useConfigStore((state) => state.initialize);
   const fetchEndorsements = useUserStore((state) => state.fetchEndorsements);
+  const fetchBookmarks = useUserStore((state) => state.fetchBookmarks);
+  const currentRoundId = useConfigStore(selectCurrentRoundId);
 
   const [fontsLoaded] = useFonts({
     NunitoSans_400Regular,
@@ -106,14 +108,15 @@ export default function RootLayout() {
     };
   }, [initializeAuth, initializeConfig]);
 
-  // Fetch endorsements and subscribe to user profile when authenticated
+  // Fetch endorsements (scoped to current round) and bookmarks when authenticated
   useEffect(() => {
     if (user?.id) {
-      fetchEndorsements(user.id);
+      fetchEndorsements(user.id, currentRoundId);
+      fetchBookmarks(user.id);
       const unsubProfile = useUserStore.getState().subscribeToProfile(user.id);
       return () => unsubProfile();
     }
-  }, [user?.id, fetchEndorsements]);
+  }, [user?.id, currentRoundId, fetchEndorsements, fetchBookmarks]);
 
   useEffect(() => {
     if (isAuthInitialized && fontsLoaded) {

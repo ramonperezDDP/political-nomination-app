@@ -18,9 +18,17 @@ service cloud.firestore {
       return isAuthenticated() && getUserRole() == 'admin';
     }
 
+    /** @deprecated Use isFullyVerified(). Kept during transition. */
     function isVerified() {
+      return isFullyVerified();
+    }
+
+    function isFullyVerified() {
+      let userData = get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
       return isAuthenticated() &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.verificationStatus == 'verified';
+        userData.verification.email == 'verified' &&
+        userData.verification.voterRegistration == 'verified' &&
+        userData.verification.photoId == 'verified';
     }
 
     function isCandidate() {
@@ -79,10 +87,18 @@ service cloud.firestore {
     // Endorsements collection
     match /endorsements/{endorsementId} {
       allow read: if isAuthenticated();
-      allow create: if isVerified() &&
+      allow create: if isFullyVerified() &&
         request.resource.data.odid == request.auth.uid;
-      allow update: if isOwner(resource.data.odid);
-      allow delete: if isOwner(resource.data.odid) || isAdmin();
+      allow update: if request.auth.uid == resource.data.odid;
+      allow delete: if request.auth.uid == resource.data.odid || isAdmin();
+    }
+
+    // Bookmarks collection (PLAN-00 Phase 2)
+    match /bookmarks/{bookmarkId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated();
+      allow delete: if isAuthenticated() || isAdmin();
     }
 
     // Conversations collection
@@ -138,6 +154,39 @@ service cloud.firestore {
     // Audit Log collection
     match /auditLog/{logId} {
       allow read: if isAdmin();
+      allow write: if isAdmin();
+    }
+
+    // Contest Rounds collection (PLAN-00)
+    match /contestRounds/{roundId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Contest Transitions collection (PLAN-00)
+    match /contestTransitions/{transitionId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // Votes collection (PLAN-00)
+    match /votes/{voteId} {
+      allow read: if isAuthenticated();
+      allow create: if isFullyVerified() &&
+        request.resource.data.odid == request.auth.uid;
+      allow update: if false;
+      allow delete: if isAdmin();
+    }
+
+    // Quiz Config collection
+    match /quizConfig/{configId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Config collection (partyConfig lives here)
+    match /config/{configId} {
+      allow read: if true;
       allow write: if isAdmin();
     }
   }

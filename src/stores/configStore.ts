@@ -234,6 +234,9 @@ export const selectIssueById = (state: ConfigState, issueId: string) =>
 export const selectEndorsementCutoffs = (state: ConfigState) =>
   state.partyConfig?.endorsementCutoffs || [];
 
+export const selectEliminationThreshold = (state: ConfigState): number | undefined =>
+  state.currentRound?.eliminationThreshold;
+
 // Default config for fallback
 export const defaultPartyConfig: PartyConfig = {
   id: 'default',

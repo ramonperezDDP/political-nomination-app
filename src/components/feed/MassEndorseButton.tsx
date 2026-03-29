@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
 import { Button } from 'react-native-paper';
-import { useAuthStore } from '@/stores';
+import { useAuthStore, useConfigStore, selectCurrentRoundId } from '@/stores';
 import { useUserStore, selectFullyVerified, selectHasAccount } from '@/stores';
 import { ConfirmModal } from '@/components/ui/Modal';
 import type { FeedItem } from '@/types';
@@ -29,6 +29,7 @@ export default function MassEndorseButton({
   const userDistrictIds = useMemo(() => districts?.map((d) => d.id) || [], [districts]);
   const endorseCandidate = useUserStore((s) => s.endorseCandidate);
   const hasEndorsedCandidate = useUserStore((s) => s.hasEndorsedCandidate);
+  const currentRoundId = useConfigStore(selectCurrentRoundId);
 
   // Mass endorse available on all filters
   if (filteredItems.length === 0) return null;
@@ -44,7 +45,9 @@ export default function MassEndorseButton({
   const handleMassEndorse = async () => {
     setIsEndorsing(true);
     for (const item of endorsableCandidates) {
-      await endorseCandidate(userId, item.candidate.id);
+      // Defense-in-depth: skip candidates outside user's districts
+      if (!userDistrictIds.includes(item.candidate.district)) continue;
+      await endorseCandidate(userId, item.candidate.id, currentRoundId);
     }
     setIsEndorsing(false);
     setShowConfirm(false);

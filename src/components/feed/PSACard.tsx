@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useMemo } from 'react';
 import { StyleSheet, View, Pressable, Dimensions, Platform } from 'react-native';
 import { Text, useTheme, IconButton } from 'react-native-paper';
 import { router } from 'expo-router';
@@ -6,7 +6,9 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Video, ResizeMode, AVPlaybackStatus } from 'expo-av';
 
 import { Card, CandidateAvatar, AlignmentBadge, Chip, PrimaryButton } from '@/components/ui';
-import { useAuthStore, useUserStore } from '@/stores';
+import { useAuthStore, useUserStore, useConfigStore, selectCurrentRoundId } from '@/stores';
+import { selectEndorseLockReason, selectHasAccount } from '@/stores';
+import EndorseLockModal from './EndorseLockModal';
 import type { FeedItem, Issue } from '@/types';
 
 interface PSACardProps {
@@ -20,6 +22,7 @@ export default function PSACard({ feedItem, isActive = true, selectedIssueId, is
   const theme = useTheme();
   const { user } = useAuthStore();
   const { hasEndorsedCandidate, endorseCandidate, revokeEndorsement } = useUserStore();
+  const currentRoundId = useConfigStore(selectCurrentRoundId);
   const videoRef = useRef<Video>(null);
 
   const [isPlaying, setIsPlaying] = useState(false);
@@ -29,8 +32,13 @@ export default function PSACard({ feedItem, isActive = true, selectedIssueId, is
 
   const { psa, candidate, alignmentScore, alignedQuestionIds, candidateResponses } = feedItem;
 
-  // Check endorsement status from global store
+  // Check endorsement status and lock state
   const hasEndorsed = hasEndorsedCandidate(candidate.id);
+  const hasAccount = useUserStore(selectHasAccount);
+  const lockReasonSelector = useMemo(() => selectEndorseLockReason(candidate.district), [candidate.district]);
+  const lockReason = useUserStore(lockReasonSelector);
+  const canEndorse = lockReason === null;
+  const [showLockModal, setShowLockModal] = useState(false);
 
   // Get display content for the selected issue, if any
   const getSelectedIssueContent = () => {
@@ -83,18 +91,23 @@ export default function PSACard({ feedItem, isActive = true, selectedIssueId, is
   const handleEndorseToggle = async () => {
     if (!user?.id || isEndorsing) return;
 
+    if (!hasEndorsed && !canEndorse) {
+      setShowLockModal(true);
+      return;
+    }
+
     setIsEndorsing(true);
     try {
       if (hasEndorsed) {
         // Remove endorsement
-        const success = await revokeEndorsement(user.id, candidate.id);
+        const success = await revokeEndorsement(user.id, candidate.id, currentRoundId);
         if (success) {
           // Decrement the displayed count immediately for visual feedback
           setDisplayedEndorsementCount((prev) => Math.max(0, prev - 1));
         }
       } else {
         // Add endorsement
-        const success = await endorseCandidate(user.id, candidate.id);
+        const success = await endorseCandidate(user.id, candidate.id, currentRoundId);
         if (success) {
           // Increment the displayed count immediately for visual feedback
           setDisplayedEndorsementCount((prev) => prev + 1);
@@ -123,6 +136,7 @@ export default function PSACard({ feedItem, isActive = true, selectedIssueId, is
   };
 
   return (
+    <>
     <Card style={styles.card}>
       {/* Video/Media Area */}
       <Pressable onPress={handlePlayPause} style={styles.videoContainer}>
@@ -227,12 +241,19 @@ export default function PSACard({ feedItem, isActive = true, selectedIssueId, is
           <PrimaryButton
             onPress={handleEndorseToggle}
             loading={isEndorsing}
-            icon={hasEndorsed ? 'check' : 'thumb-up'}
+            icon={!canEndorse && !hasEndorsed ? 'lock' : hasEndorsed ? 'check' : 'thumb-up'}
             style={[
               styles.endorseButton,
               hasEndorsed && { backgroundColor: theme.colors.surfaceVariant },
+              !canEndorse && !hasEndorsed && { backgroundColor: theme.colors.surfaceDisabled || '#e0e0e0' },
             ] as any}
-            labelStyle={hasEndorsed ? { color: theme.colors.onSurfaceVariant } : undefined}
+            labelStyle={
+              hasEndorsed
+                ? { color: theme.colors.onSurfaceVariant }
+                : !canEndorse
+                  ? { color: theme.colors.onSurfaceDisabled || '#999' }
+                  : undefined
+            }
           >
             {hasEndorsed ? 'Endorsed' : 'Endorse'}
           </PrimaryButton>
@@ -250,6 +271,18 @@ export default function PSACard({ feedItem, isActive = true, selectedIssueId, is
       </View>
 
     </Card>
+
+    {showLockModal && (
+      <EndorseLockModal
+        visible={showLockModal}
+        reason={lockReason}
+        hasAccount={hasAccount}
+        onDismiss={() => setShowLockModal(false)}
+        onSignUp={() => router.push('/(auth)/register')}
+        onVerify={() => router.push('/(auth)/verify-identity' as any)}
+      />
+    )}
+    </>
   );
 }
 

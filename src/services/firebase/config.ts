@@ -36,6 +36,7 @@ export const Collections = {
   CONTEST_TRANSITIONS: 'contestTransitions',
   VOTES: 'votes',
   QUIZ_CONFIG: 'quizConfig',
+  BOOKMARKS: 'bookmarks',
 } as const;
 
 // Storage paths

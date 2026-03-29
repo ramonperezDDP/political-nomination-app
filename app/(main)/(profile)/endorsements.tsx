@@ -1,33 +1,53 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, FlatList, Pressable, Platform } from 'react-native';
-import { Text, useTheme, IconButton } from 'react-native-paper';
+import { Text, useTheme, IconButton, SegmentedButtons, Button } from 'react-native-paper';
 import { router } from 'expo-router';
 import { SafeAreaView as NativeSafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
-import { useAuthStore, useUserStore } from '@/stores';
+import { useAuthStore, useUserStore, useConfigStore } from '@/stores';
+import { selectCurrentRoundId } from '@/stores/configStore';
 import { Card, UserAvatar, EmptyState, LoadingScreen, Chip } from '@/components/ui';
 import { getCandidate, getUser } from '@/services/firebase/firestore';
-import type { Candidate, User, Endorsement } from '@/types';
+import type { Candidate, User, Endorsement, Bookmark } from '@/types';
 
 const SafeAreaView = Platform.OS === 'web' ? View : NativeSafeAreaView;
 
-interface EndorsedCandidateInfo {
-  endorsement: Endorsement;
+type TabValue = 'endorsements' | 'bookmarks';
+
+interface CandidateInfo {
   candidate: Candidate | null;
   user: User | null;
+}
+
+interface EndorsedCandidateInfo extends CandidateInfo {
+  endorsement: Endorsement;
+}
+
+interface BookmarkedCandidateInfo extends CandidateInfo {
+  bookmark: Bookmark;
 }
 
 export default function MyEndorsementsScreen() {
   const theme = useTheme();
   const { user: currentUser } = useAuthStore();
-  const { endorsements, revokeEndorsement } = useUserStore();
+  const { endorsements, bookmarks, revokeEndorsement, removeBookmark, reEndorseFromBookmark, fetchBookmarks } = useUserStore();
+  const currentRoundId = useConfigStore(selectCurrentRoundId);
 
+  const [activeTab, setActiveTab] = useState<TabValue>('endorsements');
   const [endorsedCandidates, setEndorsedCandidates] = useState<EndorsedCandidateInfo[]>([]);
+  const [bookmarkedCandidates, setBookmarkedCandidates] = useState<BookmarkedCandidateInfo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [removingId, setRemovingId] = useState<string | null>(null);
+  const [actionId, setActionId] = useState<string | null>(null);
 
-  // Fetch candidate details for each endorsement
+  // Fetch bookmarks on mount
+  useEffect(() => {
+    if (currentUser?.id) {
+      fetchBookmarks(currentUser.id);
+    }
+  }, [currentUser?.id]);
+
+  // Fetch candidate details for endorsements
   useEffect(() => {
     const fetchEndorsedCandidates = async () => {
       setIsLoading(true);
@@ -51,16 +71,53 @@ export default function MyEndorsementsScreen() {
     fetchEndorsedCandidates();
   }, [endorsements]);
 
+  // Fetch candidate details for bookmarks
+  useEffect(() => {
+    const fetchBookmarkedCandidates = async () => {
+      try {
+        const results = await Promise.all(
+          bookmarks.map(async (bookmark) => {
+            const candidate = await getCandidate(bookmark.candidateId);
+            const user = candidate ? await getUser(candidate.userId) : null;
+            return { bookmark, candidate, user };
+          })
+        );
+        setBookmarkedCandidates(results);
+      } catch (error) {
+        console.error('Error fetching bookmarked candidates:', error);
+      }
+    };
+
+    fetchBookmarkedCandidates();
+  }, [bookmarks]);
+
   const handleRemoveEndorsement = async (candidateId: string) => {
     if (!currentUser?.id) return;
-
-    setRemovingId(candidateId);
+    setActionId(candidateId);
     try {
-      await revokeEndorsement(currentUser.id, candidateId);
-    } catch (error) {
-      console.error('Error removing endorsement:', error);
+      await revokeEndorsement(currentUser.id, candidateId, currentRoundId);
     } finally {
-      setRemovingId(null);
+      setActionId(null);
+    }
+  };
+
+  const handleRemoveBookmark = async (candidateId: string) => {
+    if (!currentUser?.id) return;
+    setActionId(candidateId);
+    try {
+      await removeBookmark(currentUser.id, candidateId);
+    } finally {
+      setActionId(null);
+    }
+  };
+
+  const handleReEndorse = async (candidateId: string) => {
+    if (!currentUser?.id) return;
+    setActionId(candidateId);
+    try {
+      await reEndorseFromBookmark(currentUser.id, candidateId, currentRoundId);
+    } finally {
+      setActionId(null);
     }
   };
 
@@ -96,10 +153,10 @@ export default function MyEndorsementsScreen() {
               <MaterialCommunityIcons
                 name="thumb-up"
                 size={14}
-                color={theme.colors.outline}
+                color={theme.colors.primary}
               />
-              <Text variant="bodySmall" style={{ color: theme.colors.outline, marginLeft: 4 }}>
-                {item.candidate.endorsementCount?.toLocaleString() || 0} endorsements
+              <Text variant="bodySmall" style={{ color: theme.colors.primary, marginLeft: 4, fontWeight: '600' }}>
+                Endorsed
               </Text>
             </View>
             <View style={styles.issueChips}>
@@ -118,19 +175,91 @@ export default function MyEndorsementsScreen() {
             iconColor={theme.colors.error}
             size={24}
             onPress={() => handleRemoveEndorsement(item.candidate!.id)}
-            loading={removingId === item.candidate!.id}
-            disabled={removingId !== null}
+            loading={actionId === item.candidate!.id}
+            disabled={actionId !== null}
           />
         </Pressable>
       </Card>
     );
   };
 
+  const renderBookmarkItem = ({ item }: { item: BookmarkedCandidateInfo }) => {
+    if (!item.candidate) return null;
+
+    const isEliminated = item.candidate.contestStatus === 'eliminated';
+    const topIssues = item.candidate.topIssues?.slice(0, 3) || [];
+
+    return (
+      <Card style={[styles.candidateCard, isEliminated && styles.eliminatedCard]}>
+        <Pressable
+          onPress={() => handleViewCandidate(item.candidate!.id)}
+          style={styles.cardContent}
+        >
+          <UserAvatar
+            photoUrl={item.user?.photoUrl}
+            displayName={item.user?.displayName || 'Candidate'}
+            size={56}
+          />
+          <View style={styles.candidateInfo}>
+            <View style={styles.nameRow}>
+              <Text variant="titleMedium" style={[styles.candidateName, isEliminated && { color: theme.colors.outline }]}>
+                {item.user?.displayName || 'Unknown Candidate'}
+              </Text>
+              {isEliminated && (
+                <Text variant="labelSmall" style={{ color: theme.colors.error, fontWeight: '600' }}>
+                  Eliminated
+                </Text>
+              )}
+            </View>
+            {item.bookmark.convertedFromRoundId && (
+              <Text variant="bodySmall" style={{ color: theme.colors.outline, marginTop: 2 }}>
+                Endorsed in {item.bookmark.convertedFromRoundId.replace(/_/g, ' ')}
+              </Text>
+            )}
+            <View style={styles.issueChips}>
+              {topIssues.map((issue) => (
+                <Chip
+                  key={issue.issueId}
+                  label={issue.issueId.replace(/-/g, ' ')}
+                  variant="info"
+                  style={styles.chip}
+                />
+              ))}
+            </View>
+          </View>
+          <View style={styles.bookmarkActions}>
+            {!isEliminated && (
+              <Button
+                mode="outlined"
+                compact
+                onPress={() => handleReEndorse(item.candidate!.id)}
+                loading={actionId === item.candidate!.id}
+                disabled={actionId !== null}
+                style={styles.reEndorseButton}
+                labelStyle={styles.reEndorseLabel}
+              >
+                Re-endorse
+              </Button>
+            )}
+            <IconButton
+              icon="bookmark-remove"
+              iconColor={theme.colors.outline}
+              size={20}
+              onPress={() => handleRemoveBookmark(item.candidate!.id)}
+              disabled={actionId !== null}
+            />
+          </View>
+        </Pressable>
+      </Card>
+    );
+  };
+
   if (isLoading) {
-    return <LoadingScreen message="Loading endorsements..." />;
+    return <LoadingScreen message="Loading..." />;
   }
 
   const activeEndorsements = endorsedCandidates.filter(e => e.candidate !== null);
+  const activeBookmarks = bookmarkedCandidates.filter(b => b.candidate !== null);
 
   return (
     <SafeAreaView
@@ -138,28 +267,59 @@ export default function MyEndorsementsScreen() {
       edges={['bottom']}
     >
       <View style={styles.header}>
-        <Text variant="bodyMedium" style={{ color: theme.colors.outline }}>
-          You have endorsed {activeEndorsements.length} candidate{activeEndorsements.length !== 1 ? 's' : ''}.
-          You can remove an endorsement at any time.
-        </Text>
+        <SegmentedButtons
+          value={activeTab}
+          onValueChange={(value) => setActiveTab(value as TabValue)}
+          buttons={[
+            {
+              value: 'endorsements',
+              label: `Endorsements (${activeEndorsements.length})`,
+              icon: 'thumb-up',
+            },
+            {
+              value: 'bookmarks',
+              label: `Bookmarks (${activeBookmarks.length})`,
+              icon: 'bookmark',
+            },
+          ]}
+          style={styles.segmentedButtons}
+        />
       </View>
 
-      {activeEndorsements.length === 0 ? (
-        <EmptyState
-          icon="thumb-up-outline"
-          title="No endorsements yet"
-          message="Browse candidates and endorse the ones you support"
-          actionLabel="Browse Candidates"
-          onAction={() => router.push('/(main)/(feed)' as any)}
-        />
+      {activeTab === 'endorsements' ? (
+        activeEndorsements.length === 0 ? (
+          <EmptyState
+            icon="thumb-up-outline"
+            title="No endorsements this round"
+            message="You haven't endorsed anyone this round yet. Browse candidates and endorse the ones you support."
+            actionLabel="Browse Candidates"
+            onAction={() => router.push('/(main)/(feed)' as any)}
+          />
+        ) : (
+          <FlatList
+            data={activeEndorsements}
+            renderItem={renderEndorsementItem}
+            keyExtractor={(item) => item.endorsement.id}
+            contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
+          />
+        )
       ) : (
-        <FlatList
-          data={activeEndorsements}
-          renderItem={renderEndorsementItem}
-          keyExtractor={(item) => item.endorsement.id}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-        />
+        activeBookmarks.length === 0 ? (
+          <EmptyState
+            icon="bookmark-outline"
+            title="No bookmarks yet"
+            message="Bookmarks are created when endorsements carry over between rounds, or when you manually bookmark a candidate."
+          />
+        ) : (
+          <FlatList
+            data={activeBookmarks}
+            renderItem={renderBookmarkItem}
+            keyExtractor={(item) => item.bookmark.id}
+            contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
+          />
+        )
       )}
     </SafeAreaView>
   );
@@ -170,8 +330,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    padding: 24,
+    padding: 16,
     paddingBottom: 8,
+  },
+  segmentedButtons: {
+    marginBottom: 4,
   },
   listContent: {
     padding: 16,
@@ -179,6 +342,9 @@ const styles = StyleSheet.create({
   },
   candidateCard: {
     marginBottom: 12,
+  },
+  eliminatedCard: {
+    opacity: 0.6,
   },
   cardContent: {
     flexDirection: 'row',
@@ -188,6 +354,11 @@ const styles = StyleSheet.create({
   candidateInfo: {
     flex: 1,
     marginLeft: 12,
+  },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   candidateName: {
     fontWeight: '600',
@@ -205,5 +376,14 @@ const styles = StyleSheet.create({
   },
   chip: {
     marginRight: 0,
+  },
+  bookmarkActions: {
+    alignItems: 'center',
+  },
+  reEndorseButton: {
+    borderRadius: 16,
+  },
+  reEndorseLabel: {
+    fontSize: 11,
   },
 });

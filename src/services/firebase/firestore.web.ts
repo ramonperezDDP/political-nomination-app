@@ -7,6 +7,7 @@ import {
   setDoc,
   updateDoc,
   addDoc,
+  deleteDoc,
   query,
   where,
   orderBy,
@@ -24,6 +25,7 @@ import type {
   PSA,
   Issue,
   Endorsement,
+  Bookmark,
   Conversation,
   Message,
   Notification,
@@ -987,24 +989,29 @@ export const seedCandidates = async (): Promise<void> => {
 
 export const createEndorsement = async (
   odid: string,
-  candidateId: string
+  candidateId: string,
+  roundId?: string
 ): Promise<string> => {
   const allEndorsements = await getDocs(collection(db, Collections.ENDORSEMENTS));
   const existing = allEndorsements.docs.find((d) => {
     const e = d.data() as Endorsement;
-    return e.odid === odid && e.candidateId === candidateId && e.isActive === true;
+    return e.odid === odid && e.candidateId === candidateId && e.isActive === true
+      && (!roundId || e.roundId === roundId);
   });
 
   if (existing) {
     throw new Error('You have already endorsed this candidate');
   }
 
-  const docRef = await addDoc(collection(db, Collections.ENDORSEMENTS), {
+  const endorsementData: Record<string, any> = {
     odid,
     candidateId,
     isActive: true,
     createdAt: Timestamp.now(),
-  });
+  };
+  if (roundId) endorsementData.roundId = roundId;
+
+  const docRef = await addDoc(collection(db, Collections.ENDORSEMENTS), endorsementData);
   await updateDoc(docRef, { id: docRef.id });
 
   await updateCandidate(candidateId, {
@@ -1016,12 +1023,14 @@ export const createEndorsement = async (
 
 export const revokeEndorsement = async (
   odid: string,
-  candidateId: string
+  candidateId: string,
+  roundId?: string
 ): Promise<void> => {
   const allEndorsements = await getDocs(collection(db, Collections.ENDORSEMENTS));
   const matchingDoc = allEndorsements.docs.find((d) => {
     const e = d.data() as Endorsement;
-    return e.odid === odid && e.candidateId === candidateId && e.isActive === true;
+    return e.odid === odid && e.candidateId === candidateId && e.isActive === true
+      && (!roundId || e.roundId === roundId);
   });
 
   if (matchingDoc) {
@@ -1032,12 +1041,16 @@ export const revokeEndorsement = async (
   }
 };
 
-export const getUserEndorsements = async (odid: string): Promise<Endorsement[]> => {
+export const getUserEndorsements = async (
+  odid: string,
+  roundId?: string
+): Promise<Endorsement[]> => {
   try {
     const snapshot = await getDocs(collection(db, Collections.ENDORSEMENTS));
     return snapshot.docs
       .map((d) => d.data() as Endorsement)
-      .filter((e) => e.odid === odid && e.isActive === true);
+      .filter((e) => e.odid === odid && e.isActive === true
+        && (!roundId || e.roundId === roundId));
   } catch (error) {
     console.warn('Error fetching user endorsements:', error);
     return [];
@@ -1046,7 +1059,8 @@ export const getUserEndorsements = async (odid: string): Promise<Endorsement[]> 
 
 export const hasUserEndorsedCandidate = async (
   odid: string,
-  candidateId: string
+  candidateId: string,
+  roundId?: string
 ): Promise<boolean> => {
   try {
     const snapshot = await getDocs(collection(db, Collections.ENDORSEMENTS));
@@ -1055,13 +1069,94 @@ export const hasUserEndorsedCandidate = async (
       return (
         endorsement.odid === odid &&
         endorsement.candidateId === candidateId &&
-        endorsement.isActive === true
+        endorsement.isActive === true &&
+        (!roundId || endorsement.roundId === roundId)
       );
     });
   } catch (error) {
     console.warn('Error checking endorsement status:', error);
     return false;
   }
+};
+
+// ==================== BOOKMARK OPERATIONS ====================
+
+export const addBookmark = async (
+  odid: string,
+  candidateId: string,
+  convertedFromRoundId?: string
+): Promise<string> => {
+  const docId = `${odid}_${candidateId}`;
+  const docRef = doc(db, Collections.BOOKMARKS, docId);
+  const existingDoc = await getDoc(docRef);
+
+  if (existingDoc.exists()) {
+    return docId; // Already bookmarked, idempotent
+  }
+
+  await setDoc(docRef, {
+    id: docId,
+    candidateId,
+    convertedFromRoundId: convertedFromRoundId || null,
+    bookmarkedAt: Timestamp.now(),
+  });
+
+  return docId;
+};
+
+export const removeBookmark = async (
+  odid: string,
+  candidateId: string
+): Promise<void> => {
+  const docId = `${odid}_${candidateId}`;
+  await deleteDoc(doc(db, Collections.BOOKMARKS, docId));
+};
+
+export const getUserBookmarks = async (odid: string): Promise<Bookmark[]> => {
+  try {
+    const snapshot = await getDocs(collection(db, Collections.BOOKMARKS));
+    return snapshot.docs
+      .map((d) => ({ ...d.data(), id: d.id }) as Bookmark)
+      .filter((b) => b.id.startsWith(`${odid}_`));
+  } catch (error) {
+    console.warn('Error fetching user bookmarks:', error);
+    return [];
+  }
+};
+
+export const hasUserBookmarkedCandidate = async (
+  odid: string,
+  candidateId: string
+): Promise<boolean> => {
+  try {
+    const docId = `${odid}_${candidateId}`;
+    const docSnap = await getDoc(doc(db, Collections.BOOKMARKS, docId));
+    return docSnap.exists();
+  } catch (error) {
+    console.warn('Error checking bookmark status:', error);
+    return false;
+  }
+};
+
+export const convertEndorsementsToBookmarks = async (
+  odid: string,
+  roundId: string
+): Promise<number> => {
+  const endorsements = await getUserEndorsements(odid, roundId);
+  let converted = 0;
+
+  for (const endorsement of endorsements) {
+    await addBookmark(odid, endorsement.candidateId, roundId);
+    // Soft-delete the endorsement
+    const allDocs = await getDocs(collection(db, Collections.ENDORSEMENTS));
+    const matchingDoc = allDocs.docs.find((d) => d.id === endorsement.id);
+    if (matchingDoc) {
+      await updateDoc(matchingDoc.ref, { isActive: false });
+    }
+    converted++;
+  }
+
+  return converted;
 };
 
 // ==================== CONVERSATION/MESSAGE OPERATIONS ====================
@@ -1380,6 +1475,7 @@ export const getEndorsementLeaderboard = async (
       trendingScore: candidate.trendingScore,
       rank: index + 1,
       averageSpectrum,
+      contestStatus: candidate.contestStatus,
     };
   });
 };
@@ -1395,22 +1491,29 @@ export const getTrendingLeaderboard = async (
   );
   const snapshot = await getDocs(q);
 
-  return snapshot.docs.map((d, index) => {
-    const candidate = d.data() as Candidate;
-    const averageSpectrum = candidate.topIssues?.length
-      ? candidate.topIssues.reduce((sum, i) => sum + (i.spectrumPosition || 0), 0) / candidate.topIssues.length
-      : 0;
-    return {
-      candidateId: candidate.id,
-      candidateName: '',
-      photoUrl: undefined,
-      endorsementCount: candidate.endorsementCount,
-      profileViews: candidate.profileViews,
-      trendingScore: candidate.trendingScore,
-      rank: index + 1,
-      averageSpectrum,
-    };
-  });
+  // Filter out eliminated candidates from trending
+  return snapshot.docs
+    .filter((d) => {
+      const candidate = d.data() as Candidate;
+      return candidate.contestStatus !== 'eliminated';
+    })
+    .map((d, index) => {
+      const candidate = d.data() as Candidate;
+      const averageSpectrum = candidate.topIssues?.length
+        ? candidate.topIssues.reduce((sum, i) => sum + (i.spectrumPosition || 0), 0) / candidate.topIssues.length
+        : 0;
+      return {
+        candidateId: candidate.id,
+        candidateName: '',
+        photoUrl: undefined,
+        endorsementCount: candidate.endorsementCount,
+        profileViews: candidate.profileViews,
+        trendingScore: candidate.trendingScore,
+        rank: index + 1,
+        averageSpectrum,
+        contestStatus: candidate.contestStatus,
+      };
+    });
 };
 
 // ==================== METRICS OPERATIONS ====================
