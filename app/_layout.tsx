@@ -113,7 +113,11 @@ export default function RootLayout() {
     if (user?.id) {
       fetchEndorsements(user.id, currentRoundId);
       fetchBookmarks(user.id);
+
+
       const unsubProfile = useUserStore.getState().subscribeToProfile(user.id);
+
+
       return () => unsubProfile();
     }
   }, [user?.id, currentRoundId, fetchEndorsements, fetchBookmarks]);
