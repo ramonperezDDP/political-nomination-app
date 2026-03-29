@@ -1212,13 +1212,13 @@ export const createEndorsement = async (
   });
 
   if (existing) {
-    // If the existing endorsement is from a different round (or no round), update it
     const existingData = existing.data() as Endorsement;
+    // If the existing endorsement is from a different round (or has no round), update it to the current round
     if (roundId && existingData.roundId !== roundId) {
       await existing.ref.update({ roundId });
-      return existing.id;
     }
-    throw new Error('You have already endorsed this candidate');
+    // Return the existing ID — not an error, just already endorsed
+    return existing.id;
   }
 
   const endorsementData: Record<string, any> = {
