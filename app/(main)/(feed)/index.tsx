@@ -229,7 +229,7 @@ export default function ForYouScreen() {
       <MassEndorseButton
         filteredItems={filteredItems}
         experienceFilter={experienceFilter}
-        style={{ top: 48 }}
+        style={{ top: 118 }}
       />
 
       <FlatList
