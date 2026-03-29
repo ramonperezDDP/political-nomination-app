@@ -1,5 +1,8 @@
 # PLAN-00: Contest Round Architecture (Foundation)
 
+> **Phase 1: ✅ COMPLETE.** Contest rounds, configStore, selectors, timeline display.
+> **Phase 2: Ready for review** — see [PLAN-00-phase-2.md](./PLAN-00-phase-2.md) for round-scoped endorsements, bookmarks, and candidate elimination.
+
 ## Summary
 
 This is the foundational plan that defines the **contest round** state model. Every other plan that references contest rounds, FAQs, candidate elimination, voting methods, or round-specific UI behavior depends on this architecture.

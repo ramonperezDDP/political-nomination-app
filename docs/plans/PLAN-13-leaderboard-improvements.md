@@ -14,9 +14,9 @@ The endorsement threshold cutoff line was showing on BOTH the Endorsements and T
 
 ---
 
-## PLAN-13B: Issue Filtering + Mass Endorse — 🔴 BLOCKED
+## PLAN-13B: Mass Endorse — 🟡 PARTIALLY UNBLOCKED
 
-> **Blocked on:** Backend batch endpoint, finalized filter model, PLAN-00 Phase 2 (round-scoped endorsements, `contestStatus` filtering).
+> **Updated 2026-03-28:** Issue filtering deferred. Mass endorse stays client-side for beta (no Cloud Function needed). Blocked on PLAN-00 Phase 2 (round-scoped endorsements) which is now written and ready for review.
 
 **Do NOT implement the code examples from the original plan.** They contain:
 - Client-side sequential `for (...) await endorseCandidate()` loop (will partially succeed, create race conditions)
