@@ -28,7 +28,9 @@ export default function MassEndorseButton({
   const districts = useUserStore((s) => s.userProfile?.districts);
   const userDistrictIds = useMemo(() => districts?.map((d) => d.id) || [], [districts]);
   const endorseCandidate = useUserStore((s) => s.endorseCandidate);
-  const hasEndorsedCandidate = useUserStore((s) => s.hasEndorsedCandidate);
+  const endorsedCandidateIds = useUserStore((s) =>
+    s.endorsements.filter((e) => e.isActive).map((e) => e.candidateId)
+  );
   const currentRoundId = useConfigStore(selectCurrentRoundId);
 
   // Mass endorse available on all filters
@@ -36,7 +38,7 @@ export default function MassEndorseButton({
   if (!userId || !hasAccount || !fullyVerified) return null;
 
   const endorsableCandidates = filteredItems.filter((item) => {
-    if (hasEndorsedCandidate(item.candidate.id)) return false;
+    if (endorsedCandidateIds.includes(item.candidate.id)) return false;
     return userDistrictIds.includes(item.candidate.district);
   });
 

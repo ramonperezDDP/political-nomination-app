@@ -40,12 +40,14 @@ export default function FullScreenPSA({ feedItem, isActive, height }: FullScreen
   const hasAccount = useUserStore(selectHasAccount);
   const endorseCandidate = useUserStore((s) => s.endorseCandidate);
   const revokeEndorsement = useUserStore((s) => s.revokeEndorsement);
-  const hasEndorsedCandidate = useUserStore((s) => s.hasEndorsedCandidate);
-  const hasEndorsed = hasEndorsedCandidate(candidate.id);
+  const hasEndorsed = useUserStore((s) => s.endorsements.some(
+    (e) => e.candidateId === candidate.id && e.isActive
+  ));
   const bookmarkCandidate = useUserStore((s) => s.bookmarkCandidate);
   const removeBookmark = useUserStore((s) => s.removeBookmark);
-  const hasBookmarkedCandidate = useUserStore((s) => s.hasBookmarkedCandidate);
-  const isBookmarked = hasBookmarkedCandidate(candidate.id);
+  const isBookmarked = useUserStore((s) => s.bookmarks.some(
+    (b) => b.candidateId === candidate.id
+  ));
   const lockReasonSelector = useMemo(() => selectEndorseLockReason(candidate.district), [candidate.district]);
   const lockReason = useUserStore(lockReasonSelector);
   const canEndorse = lockReason === null;

@@ -21,7 +21,7 @@ interface PSACardProps {
 export default function PSACard({ feedItem, isActive = true, selectedIssueId, issues = [] }: PSACardProps) {
   const theme = useTheme();
   const { user } = useAuthStore();
-  const { hasEndorsedCandidate, endorseCandidate, revokeEndorsement } = useUserStore();
+  const { endorseCandidate, revokeEndorsement } = useUserStore();
   const currentRoundId = useConfigStore(selectCurrentRoundId);
   const videoRef = useRef<Video>(null);
 
@@ -33,7 +33,9 @@ export default function PSACard({ feedItem, isActive = true, selectedIssueId, is
   const { psa, candidate, alignmentScore, alignedQuestionIds, candidateResponses } = feedItem;
 
   // Check endorsement status and lock state
-  const hasEndorsed = hasEndorsedCandidate(candidate.id);
+  const hasEndorsed = useUserStore((s) => s.endorsements.some(
+    (e) => e.candidateId === candidate.id && e.isActive
+  ));
   const hasAccount = useUserStore(selectHasAccount);
   const lockReasonSelector = useMemo(() => selectEndorseLockReason(candidate.district), [candidate.district]);
   const lockReason = useUserStore(lockReasonSelector);

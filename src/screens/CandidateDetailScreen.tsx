@@ -46,7 +46,7 @@ export default function CandidateProfileScreen() {
   const theme = useTheme();
   const { user: currentUser } = useAuthStore();
   const { issues } = useConfigStore();
-  const { hasEndorsedCandidate, endorseCandidate, revokeEndorsement } = useUserStore();
+  const { endorseCandidate, revokeEndorsement } = useUserStore();
   const currentRoundId = useConfigStore(selectCurrentRoundId);
   const selectedDistrict = useUserStore((s) => s.selectedBrowsingDistrict) || 'PA-01';
   const chipColor = DISTRICT_COLORS[selectedDistrict] || '#E0E0E0';
@@ -62,7 +62,9 @@ export default function CandidateProfileScreen() {
   const [showLockModal, setShowLockModal] = useState(false);
 
   // Check endorsement status and lock state
-  const hasEndorsed = id ? hasEndorsedCandidate(id) : false;
+  const hasEndorsed = useUserStore((s) =>
+    id ? s.endorsements.some((e) => e.candidateId === id && e.isActive) : false
+  );
   const hasAccount = useUserStore(selectHasAccount);
   const lockReasonSelector = useMemo(
     () => selectEndorseLockReason(candidate?.district || selectedDistrict),

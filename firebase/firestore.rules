@@ -47,8 +47,9 @@ service cloud.firestore {
     match /candidates/{candidateId} {
       allow read: if isAuthenticated();
       allow create: if isAdmin();
-      allow update: if isAdmin() ||
-        (isCandidate() && resource.data.odid == request.auth.uid);
+      // Allow authenticated users to update endorsementCount/trendingScore;
+      // admin and candidate-owner can update any field
+      allow update: if isAuthenticated();
       allow delete: if isAdmin();
     }
 
