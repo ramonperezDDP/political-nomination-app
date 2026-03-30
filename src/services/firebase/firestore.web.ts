@@ -1053,16 +1053,10 @@ export const getUserEndorsements = async (
 ): Promise<Endorsement[]> => {
   try {
     const snapshot = await getDocs(collection(db, Collections.ENDORSEMENTS));
-    const allEndorsements = snapshot.docs.map((d) => d.data() as Endorsement);
-    const filtered = allEndorsements.filter((e) => e.odid === odid && e.isActive === true
+    return snapshot.docs
+      .map((d) => d.data() as Endorsement)
+      .filter((e) => e.odid === odid && e.isActive === true
         && (!roundId || e.roundId === roundId));
-    console.log(`[getUserEndorsements] odid=${odid}, roundId=${roundId || 'any'}, total=${allEndorsements.length}, active for user=${filtered.length}`);
-    if (filtered.length === 0 && allEndorsements.length > 0) {
-      // Debug: show what odids exist
-      const odids = [...new Set(allEndorsements.filter(e => e.isActive).map(e => e.odid))];
-      console.log(`[getUserEndorsements] Active endorsement odids in DB:`, odids);
-    }
-    return filtered;
   } catch (error) {
     console.warn('Error fetching user endorsements:', error);
     return [];
@@ -1156,23 +1150,18 @@ export const convertEndorsementsToBookmarks = async (
 ): Promise<number> => {
   // Get ALL active endorsements (not round-filtered) so we catch everything
   const endorsements = await getUserEndorsements(odid);
-  console.log(`[convert] Found ${endorsements.length} active endorsements for ${odid}`);
   let converted = 0;
 
   for (const endorsement of endorsements) {
-    console.log(`[convert] Converting endorsement ${endorsement.id} (candidate: ${endorsement.candidateId})`);
     await addBookmark(odid, endorsement.candidateId, roundId);
     // Soft-delete the endorsement
     const allDocs = await getDocs(collection(db, Collections.ENDORSEMENTS));
     const matchingDoc = allDocs.docs.find((d) => d.id === endorsement.id);
     if (matchingDoc) {
       await updateDoc(matchingDoc.ref, { isActive: false });
-      console.log(`[convert] Soft-deleted endorsement ${endorsement.id}`);
     }
     converted++;
   }
-
-  console.log(`[convert] Done. Converted ${converted} endorsements to bookmarks`);
   return converted;
 };
 

@@ -168,9 +168,7 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
         const userState = useUserStore.getState();
         const userId = userState.userProfile?.id;
         if (userId) {
-          console.log(`[setDebugRound] Round changed ${prevRoundId} → ${roundId}, converting endorsements...`);
           userState.convertEndorsementsToBookmarks(userId, prevRoundId).then((count: number) => {
-            console.log(`[setDebugRound] Converted ${count} endorsements to bookmarks`);
             userState.fetchEndorsements(userId);
             userState.fetchBookmarks(userId);
           });
