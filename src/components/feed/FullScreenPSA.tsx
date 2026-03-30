@@ -13,6 +13,7 @@ const DISTRICT_COLORS: Record<string, string> = {
   'PA-02': '#ADD8E6',
 };
 import AlignmentCircle from './AlignmentCircle';
+import AlignmentExplainerModal from './AlignmentExplainerModal';
 import EndorseLockModal from './EndorseLockModal';
 import type { FeedItem } from '@/types';
 
@@ -31,7 +32,7 @@ export default function FullScreenPSA({ feedItem, isActive, height }: FullScreen
   const [isPaused, setIsPaused] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
 
-  const { candidate, psa, alignmentScore, alignedQuestionIds, candidateResponses } = feedItem;
+  const { candidate, psa, alignmentScore, alignedQuestionIds, candidateResponses, sharedCount, exactMatchIds, closeMatchIds, notMatchedIds } = feedItem;
 
   const currentUser = useAuthStore((s) => s.user);
   const { issues } = useConfigStore();
@@ -75,6 +76,32 @@ export default function FullScreenPSA({ feedItem, isActive, height }: FullScreen
   }, [alignedQuestionIds, candidateResponses, issues]);
 
   const [showLockModal, setShowLockModal] = useState(false);
+  const [showAlignmentModal, setShowAlignmentModal] = useState(false);
+
+  // Derive alignment breakdown from feedItem IDs for the explainer modal
+  const alignmentBreakdown = useMemo(() => {
+    const questionToIssue = new Map<string, string>();
+    for (const r of candidateResponses || []) {
+      questionToIssue.set(r.questionId, r.issueId);
+    }
+    const mapToNames = (ids: string[]) => {
+      const seen = new Set<string>();
+      const result: { issueId: string; name: string }[] = [];
+      for (const qId of ids) {
+        const issueId = questionToIssue.get(qId);
+        if (!issueId || seen.has(issueId)) continue;
+        seen.add(issueId);
+        const issue = issues.find((i) => i.id === issueId);
+        if (issue) result.push({ issueId, name: issue.name });
+      }
+      return result;
+    };
+    return {
+      exactMatches: mapToNames(exactMatchIds || []),
+      closeMatches: mapToNames(closeMatchIds || []),
+      notMatched: mapToNames(notMatchedIds || []),
+    };
+  }, [exactMatchIds, closeMatchIds, notMatchedIds, candidateResponses, issues]);
 
   const handleEndorsePress = () => {
     if (!canEndorse) {
@@ -137,10 +164,11 @@ export default function FullScreenPSA({ feedItem, isActive, height }: FullScreen
       {/* Gradient overlay at bottom for readability */}
       <View style={styles.bottomGradient} pointerEvents="none" />
 
-      {/* Alignment circle — top left */}
+      {/* Alignment circle — top left, tappable to show breakdown */}
       <AlignmentCircle
         score={canSeeAlignment ? alignmentScore : null}
         style={[styles.alignmentCircle, { top: insets.top + 8 }]}
+        onPress={canSeeAlignment ? () => setShowAlignmentModal(true) : undefined}
       />
 
       {/* Right-side action buttons (TikTok style) */}
@@ -241,6 +269,20 @@ export default function FullScreenPSA({ feedItem, isActive, height }: FullScreen
           </>
         )}
       </View>
+
+      {/* Alignment explainer modal — tappable from alignment circle */}
+      {showAlignmentModal && (
+        <AlignmentExplainerModal
+          visible={showAlignmentModal}
+          onDismiss={() => setShowAlignmentModal(false)}
+          score={alignmentScore}
+          sharedCount={sharedCount}
+          exactMatches={alignmentBreakdown.exactMatches}
+          closeMatches={alignmentBreakdown.closeMatches}
+          notMatched={alignmentBreakdown.notMatched}
+          candidateName={candidate.displayName}
+        />
+      )}
 
       {/* Lock modal for endorsement gating — only mount when needed to avoid Portal blocking tab bar */}
       {showLockModal && (

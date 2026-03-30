@@ -1,11 +1,12 @@
 import React from 'react';
-import { View, StyleSheet, StyleProp, ViewStyle } from 'react-native';
+import { View, Pressable, StyleSheet, StyleProp, ViewStyle } from 'react-native';
 import { Text } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 interface AlignmentCircleProps {
   score: number | null;
   style?: StyleProp<ViewStyle>;
+  onPress?: () => void;
 }
 
 function getAlignmentColor(score: number): string {
@@ -14,12 +15,15 @@ function getAlignmentColor(score: number): string {
   return '#ff9800';
 }
 
-export default function AlignmentCircle({ score, style }: AlignmentCircleProps) {
+export default function AlignmentCircle({ score, style, onPress }: AlignmentCircleProps) {
+  const Wrapper = onPress ? Pressable : View;
+  const wrapperProps = onPress ? { onPress } : {};
+
   if (score === null) {
     return (
-      <View style={[styles.circle, { borderColor: 'rgba(255,255,255,0.4)' }, style]}>
+      <Wrapper {...wrapperProps} style={[styles.circle, { borderColor: 'rgba(255,255,255,0.4)' }, style] as any}>
         <Text style={[styles.scoreText, { color: 'rgba(255,255,255,0.6)' }]}>?</Text>
-      </View>
+      </Wrapper>
     );
   }
 
@@ -29,17 +33,17 @@ export default function AlignmentCircle({ score, style }: AlignmentCircleProps) 
 
   if (isPerfect) {
     return (
-      <View style={[styles.perfectContainer, style]}>
+      <Wrapper {...wrapperProps} style={[styles.perfectContainer, style] as any}>
         <MaterialCommunityIcons name="check-circle" size={20} color="#00e676" />
         <Text style={styles.perfectText}>Perfectly{'\n'}Aligned</Text>
-      </View>
+      </Wrapper>
     );
   }
 
   return (
-    <View style={[styles.circle, { borderColor: color }, style]}>
+    <Wrapper {...wrapperProps} style={[styles.circle, { borderColor: color }, style] as any}>
       <Text style={[styles.scoreText, { color }]}>{roundedScore}%</Text>
-    </View>
+    </Wrapper>
   );
 }
 
