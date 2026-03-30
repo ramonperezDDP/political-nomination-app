@@ -1,6 +1,6 @@
 # PLAN-12: For You Page Improvements — 🟡 Partially Implemented
 
-> **Status:** Partially implemented. Bookmarks complete (PLAN-00 Phase 2). Remaining: extract alignment explainer to reusable modal component.
+> **Status:** ✅ Implemented (2026-03-29). Bookmarks (PLAN-00 Phase 2), alignment explainer modal, tappable alignment circle on feed.
 >
 > **Blocked on:** PLAN-00 Phase 2 (written, ready for review). ~~Bookmark domain spec~~ — resolved in PLAN-00 Phase 2 (bookmarks = converted endorsements, subcollection). ~~dealbreaker removal (PLAN-10)~~ — resolved 2026-03-28.
 
