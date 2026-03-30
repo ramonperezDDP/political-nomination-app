@@ -136,13 +136,19 @@ export default function ForYouScreen() {
       setIsLoading(true);
       try {
         let candidatesData = await getCandidatesForFeed(selectedDistrict);
+        // Check if candidates need reseeding (data migration checks)
         const needsReseed = candidatesData.length === 0 ||
           candidatesData.some(({ candidate }) => !candidate.zone) ||
           // Reseed if candidates have wrong-district local issues (PLAN-10C migration)
           candidatesData.some(({ candidate }) =>
             candidate.district === 'PA-02' &&
             candidate.topIssues?.some((ti: any) => ti.issueId === 'pa01-infrastructure')
-          );
+          ) ||
+          // Reseed if candidate quiz answers use non-snapped spectrum values (PLAN-10E fix)
+          candidatesData.some(({ user: candUser }) => {
+            const resp = candUser?.questionnaireResponses?.find((r) => r.questionId === 'trade-1');
+            return resp && ![-80, 0, 80].includes(Number(resp.answer));
+          });
         if (needsReseed) {
           await reseedAllData();
           candidatesData = await getCandidatesForFeed(selectedDistrict);

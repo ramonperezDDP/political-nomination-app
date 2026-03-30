@@ -935,12 +935,36 @@ export const seedCandidates = async (): Promise<void> => {
       'pa01-infrastructure-1': 'pa01-infrastructure', 'pa01-housing-1': 'pa01-housing',
       'pa02-budget-1': 'pa02-budget', 'pa02-transit-1': 'pa02-transit',
     };
+    // Quiz option spectrum values per question — candidates snap to the nearest option
+    const QUESTION_OPTIONS: Record<string, number[]> = {
+      'trade-1': [-80, 0, 80],
+      'iran-1': [80, 0, -80],
+      'inflation-1': [-80, 0, 80],
+      'borders-1': [80, 0, -80],
+      'welfare-1': [-80, 0, 80],
+      'pa01-infrastructure-1': [-80, 0, 80],
+      'pa01-housing-1': [-80, 0, 80],
+      'pa02-budget-1': [80, 0, -80],
+      'pa02-transit-1': [-80, 0, 80],
+    };
+    const snapToOption = (val: number, options: number[]): number => {
+      let closest = options[0];
+      let minDist = Math.abs(val - closest);
+      for (const opt of options) {
+        const dist = Math.abs(val - opt);
+        if (dist < minDist) { closest = opt; minDist = dist; }
+      }
+      return closest;
+    };
+
     const districtQuestionIds = QUIZ_QUESTION_IDS[district] || QUIZ_QUESTION_IDS['PA-01'];
     const candidateQuizResponses: QuestionnaireResponse[] = districtQuestionIds.map((qId) => {
       const issueId = QUESTION_ISSUE_MAP[qId];
       const issuePosition = fullTopIssues.find((ti: any) => ti.issueId === issueId);
-      const spectrumVal = issuePosition ? issuePosition.spectrumPosition : 0;
-      return { questionId: qId, issueId, answer: spectrumVal };
+      const rawVal = issuePosition ? issuePosition.spectrumPosition : 0;
+      const options = QUESTION_OPTIONS[qId] || [-80, 0, 80];
+      const snappedVal = snapToOption(rawVal, options);
+      return { questionId: qId, issueId, answer: snappedVal };
     });
 
     const userRef = doc(collection(db, Collections.USERS));
