@@ -56,6 +56,19 @@ export default function LeaderboardScreen() {
     setIsSeeding(false);
   };
 
+  const handleReseedData = async () => {
+    setIsSeeding(true);
+    try {
+      const { reseedAllData } = await import('@/services/firebase/firestore');
+      await reseedAllData();
+      Alert.alert('Success', 'All data reseeded with corrected quiz values!');
+      fetchLeaderboard();
+    } catch (error: any) {
+      Alert.alert('Error', error.message);
+    }
+    setIsSeeding(false);
+  };
+
   // Get endorsement cutoffs from config
   const cutoffs = partyConfig?.endorsementCutoffs || [
     { stage: 1, threshold: 1000 },
@@ -245,13 +258,26 @@ export default function LeaderboardScreen() {
           </Button>
         </View>
       ) : (
-        <FlatList
-          data={leaderboard}
-          renderItem={renderCandidateTile}
-          keyExtractor={(item) => item.candidateId}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-        />
+        <>
+          <FlatList
+            data={leaderboard}
+            renderItem={renderCandidateTile}
+            keyExtractor={(item) => item.candidateId}
+            contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
+          />
+          <Button
+            mode="text"
+            compact
+            onPress={handleReseedData}
+            loading={isSeeding}
+            disabled={isSeeding}
+            style={{ marginBottom: 8 }}
+            labelStyle={{ fontSize: 11 }}
+          >
+            Reseed Sample Data
+          </Button>
+        </>
       )}
     </SafeAreaView>
   );
