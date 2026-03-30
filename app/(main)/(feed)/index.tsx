@@ -136,19 +136,12 @@ export default function ForYouScreen() {
       setIsLoading(true);
       try {
         let candidatesData = await getCandidatesForFeed(selectedDistrict);
-        // Check if candidates need reseeding (data migration checks)
         const needsReseed = candidatesData.length === 0 ||
           candidatesData.some(({ candidate }) => !candidate.zone) ||
-          // Reseed if candidates have wrong-district local issues (PLAN-10C migration)
           candidatesData.some(({ candidate }) =>
             candidate.district === 'PA-02' &&
             candidate.topIssues?.some((ti: any) => ti.issueId === 'pa01-infrastructure')
-          ) ||
-          // Reseed if candidate quiz answers use non-snapped spectrum values (PLAN-10E fix)
-          candidatesData.some(({ user: candUser }) => {
-            const resp = candUser?.questionnaireResponses?.find((r) => r.questionId === 'trade-1');
-            return resp && ![-80, 0, 80].includes(Number(resp.answer));
-          });
+          );
         if (needsReseed) {
           await reseedAllData();
           candidatesData = await getCandidatesForFeed(selectedDistrict);
@@ -176,12 +169,16 @@ export default function ForYouScreen() {
   // Apply experience filter — use stable references, not entire user object
   const filteredItems = useMemo(() => {
     switch (experienceFilter) {
-      case 'issues':
-        // Show all candidates sorted by alignment score (best matches first).
-        // Differentiates from Explore which shows random order.
-        return [...feedItems]
-          .filter((item) => item.alignmentScore != null)
-          .sort((a, b) => (b.alignmentScore ?? 0) - (a.alignmentScore ?? 0));
+      case 'issues': {
+        // Show candidates sorted by alignment score (best matches first).
+        // Include candidates with null scores at the end (no shared quiz answers yet).
+        const withScore = feedItems.filter((item) => item.alignmentScore != null);
+        const withoutScore = feedItems.filter((item) => item.alignmentScore == null);
+        return [
+          ...withScore.sort((a, b) => (b.alignmentScore ?? 0) - (a.alignmentScore ?? 0)),
+          ...withoutScore,
+        ];
+      }
 
       case 'location':
         if (!selectedLocation) return feedItems;
