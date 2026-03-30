@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
-import { StyleSheet, View, Image, Pressable } from 'react-native';
-import { Text, useTheme, Menu } from 'react-native-paper';
+import { StyleSheet, View, Image, Pressable, Platform } from 'react-native';
+import { Text, useTheme } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useConfigStore, selectCurrentRoundLabel } from '@/stores';
@@ -77,37 +77,42 @@ export default function AppHeader({ hideDistrictPicker }: AppHeaderProps = {}) {
       </Pressable>
 
       {!hideDistrictPicker ? (
-        <Menu
-          visible={menuVisible}
-          onDismiss={() => setMenuVisible(false)}
-          anchor={
-            <Pressable
-              onPress={() => setMenuVisible(true)}
-              style={[
-                styles.districtButton,
-                { backgroundColor: DISTRICT_COLORS[selectedDistrict] || '#E0E0E0' },
-              ]}
-            >
-              <MaterialCommunityIcons name="map-marker" size={14} color="#333" />
-              <Text variant="labelMedium" style={styles.districtText}>
-                {selectedDistrict}
-              </Text>
-              <MaterialCommunityIcons name="chevron-down" size={14} color="#333" />
-            </Pressable>
-          }
-        >
-          {AVAILABLE_DISTRICTS.map((district) => (
-            <Menu.Item
-              key={district}
-              onPress={() => {
-                setDistrict(district);
-                setMenuVisible(false);
-              }}
-              title={district}
-              leadingIcon={selectedDistrict === district ? 'check' : undefined}
-            />
-          ))}
-        </Menu>
+        <View>
+          <Pressable
+            onPress={() => setMenuVisible(!menuVisible)}
+            style={[
+              styles.districtButton,
+              { backgroundColor: DISTRICT_COLORS[selectedDistrict] || '#E0E0E0' },
+            ]}
+          >
+            <MaterialCommunityIcons name="map-marker" size={14} color="#333" />
+            <Text variant="labelMedium" style={styles.districtText}>
+              {selectedDistrict}
+            </Text>
+            <MaterialCommunityIcons name="chevron-down" size={14} color="#333" />
+          </Pressable>
+          {menuVisible && (
+            <View style={[styles.dropdown, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant }]}>
+              {AVAILABLE_DISTRICTS.map((district) => (
+                <Pressable
+                  key={district}
+                  onPress={() => {
+                    setDistrict(district);
+                    setMenuVisible(false);
+                  }}
+                  style={[styles.dropdownItem, selectedDistrict === district && { backgroundColor: theme.colors.secondaryContainer }]}
+                >
+                  {selectedDistrict === district && (
+                    <MaterialCommunityIcons name="check" size={16} color={theme.colors.primary} />
+                  )}
+                  <Text variant="bodyMedium" style={{ marginLeft: selectedDistrict === district ? 4 : 20 }}>
+                    {district}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          )}
+        </View>
       ) : <View style={{ width: 80 }} />}
     </View>
   );
@@ -140,5 +145,27 @@ const styles = StyleSheet.create({
   },
   districtText: {
     fontWeight: '600',
+  },
+  dropdown: {
+    position: 'absolute',
+    top: '100%',
+    right: 0,
+    marginTop: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+    paddingVertical: 4,
+    minWidth: 120,
+    zIndex: 1000,
+    ...Platform.select({
+      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 4 },
+      android: { elevation: 4 },
+      default: { boxShadow: '0 2px 8px rgba(0,0,0,0.15)' },
+    }) as any,
+  },
+  dropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
   },
 });
