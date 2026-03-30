@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
 import { Stack, Slot } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -16,7 +16,7 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { enableScreens } from 'react-native-screens';
-import { useAuthStore, useConfigStore, useUserStore, selectCurrentRoundId } from '@/stores';
+import { useAuthStore, useConfigStore, useUserStore } from '@/stores';
 import { amspLightTheme } from '@/constants/theme';
 
 // Suppress known React 18 + Zustand/Firebase subscription warning
@@ -86,7 +86,6 @@ export default function RootLayout() {
   const initializeConfig = useConfigStore((state) => state.initialize);
   const fetchEndorsements = useUserStore((state) => state.fetchEndorsements);
   const fetchBookmarks = useUserStore((state) => state.fetchBookmarks);
-  const currentRoundId = useConfigStore(selectCurrentRoundId);
 
   const [fontsLoaded] = useFonts({
     NunitoSans_400Regular,
@@ -108,36 +107,15 @@ export default function RootLayout() {
     };
   }, [initializeAuth, initializeConfig]);
 
-  // Track previous round to detect round changes and convert endorsements → bookmarks
-  const prevRoundRef = useRef<string | null>(null);
-
-  // Fetch endorsements (scoped to current round) and bookmarks when authenticated
+  // Fetch endorsements and bookmarks when authenticated
   useEffect(() => {
     if (user?.id) {
-      const prevRound = prevRoundRef.current;
-      const roundChanged = prevRound !== null && prevRound !== currentRoundId;
-
-      if (roundChanged) {
-        // Round advanced — convert old round's endorsements to bookmarks first
-        const { convertEndorsementsToBookmarks } = useUserStore.getState();
-        convertEndorsementsToBookmarks(user.id, prevRound).then((count) => {
-          if (count > 0) console.log(`Converted ${count} endorsements from ${prevRound} to bookmarks`);
-          // Then fetch fresh data — load ALL active endorsements so icons work across rounds
-          fetchEndorsements(user.id);
-          fetchBookmarks(user.id);
-        });
-      } else {
-        // Load ALL active endorsements (not round-filtered) so heart icons work
-        fetchEndorsements(user.id);
-        fetchBookmarks(user.id);
-      }
-
-      prevRoundRef.current = currentRoundId;
-
+      fetchEndorsements(user.id);
+      fetchBookmarks(user.id);
       const unsubProfile = useUserStore.getState().subscribeToProfile(user.id);
       return () => unsubProfile();
     }
-  }, [user?.id, currentRoundId, fetchEndorsements, fetchBookmarks]);
+  }, [user?.id, fetchEndorsements, fetchBookmarks]);
 
   useEffect(() => {
     if (isAuthInitialized && fontsLoaded) {

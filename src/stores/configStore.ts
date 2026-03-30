@@ -144,8 +144,11 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
   },
 
   // Debug: override the current round locally (bypasses Firestore listener)
+  // Also converts endorsements → bookmarks when advancing rounds
   setDebugRound: (roundId: string | null) => {
-    const { contestRounds, partyConfig } = get();
+    const { contestRounds, partyConfig, debugRoundOverride } = get();
+    const prevRoundId = debugRoundOverride || partyConfig?.currentRoundId || 'pre_nomination';
+
     if (!roundId) {
       // Clear override — revert to Firestore value
       set({
@@ -158,6 +161,21 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
         debugRoundOverride: roundId,
         currentRound: round,
       });
+
+      // Convert endorsements → bookmarks when round changes
+      if (roundId !== prevRoundId) {
+        const { useUserStore } = require('./userStore');
+        const userState = useUserStore.getState();
+        const userId = userState.userProfile?.id;
+        if (userId) {
+          console.log(`[setDebugRound] Round changed ${prevRoundId} → ${roundId}, converting endorsements...`);
+          userState.convertEndorsementsToBookmarks(userId, prevRoundId).then((count: number) => {
+            console.log(`[setDebugRound] Converted ${count} endorsements to bookmarks`);
+            userState.fetchEndorsements(userId);
+            userState.fetchBookmarks(userId);
+          });
+        }
+      }
     }
   },
 }));

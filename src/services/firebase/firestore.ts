@@ -1377,9 +1377,11 @@ export const convertEndorsementsToBookmarks = async (
   // Get ALL active endorsements for this user (not round-filtered)
   // so we catch endorsements regardless of their roundId
   const endorsements = await getUserEndorsements(odid);
+  console.log(`[convert] Found ${endorsements.length} active endorsements for ${odid}`);
   let converted = 0;
 
   for (const endorsement of endorsements) {
+    console.log(`[convert] Converting endorsement ${endorsement.id} (candidate: ${endorsement.candidateId})`);
     // Idempotent: addBookmark checks for existing
     await addBookmark(odid, endorsement.candidateId, roundId);
     // Soft-delete the endorsement
@@ -1387,10 +1389,12 @@ export const convertEndorsementsToBookmarks = async (
     const matchingDoc = (allDocs?.docs || []).find((doc) => doc.id === endorsement.id);
     if (matchingDoc) {
       await matchingDoc.ref.update({ isActive: false });
+      console.log(`[convert] Soft-deleted endorsement ${endorsement.id}`);
     }
     converted++;
   }
 
+  console.log(`[convert] Done. Converted ${converted} endorsements to bookmarks`);
   return converted;
 };
 
