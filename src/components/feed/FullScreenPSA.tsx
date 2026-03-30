@@ -165,9 +165,10 @@ export default function FullScreenPSA({ feedItem, isActive, height }: FullScreen
       <View style={styles.bottomGradient} pointerEvents="none" />
 
       {/* Alignment circle — top left, tappable to show breakdown */}
+      {/* On web, insets.top is 0 but AppHeader is outside the card, so use a fixed offset */}
       <AlignmentCircle
         score={canSeeAlignment ? alignmentScore : null}
-        style={[styles.alignmentCircle, { top: insets.top + 8 }]}
+        style={[styles.alignmentCircle, { top: isWeb ? 40 : insets.top + 8 }]}
         onPress={canSeeAlignment ? () => setShowAlignmentModal(true) : undefined}
       />
 
@@ -317,7 +318,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: 200,
+    height: Platform.OS === 'web' ? 180 : 200,
     backgroundColor: 'rgba(0,0,0,0.4)',
   },
   alignmentCircle: {
@@ -327,9 +328,9 @@ const styles = StyleSheet.create({
   rightActions: {
     position: 'absolute',
     right: 12,
-    bottom: 55,
+    bottom: Platform.OS === 'web' ? 16 : 55,
     alignItems: 'center',
-    gap: 20,
+    gap: Platform.OS === 'web' ? 12 : 20,
   },
   actionButton: {
     alignItems: 'center',
@@ -340,9 +341,9 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   avatarCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: Platform.OS === 'web' ? 40 : 48,
+    height: Platform.OS === 'web' ? 40 : 48,
+    borderRadius: Platform.OS === 'web' ? 20 : 24,
     backgroundColor: 'rgba(255,255,255,0.2)',
     justifyContent: 'center',
     alignItems: 'center',
