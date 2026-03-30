@@ -243,7 +243,7 @@ export default function FullScreenPSA({ feedItem, isActive, height }: FullScreen
       {/* Bottom info overlay */}
       <View style={styles.bottomInfo}>
         <Text style={styles.candidateName}>{candidate.displayName}</Text>
-        {sharedPolicies.length > 0 ? (
+        {sharedPolicies.length > 0 && (
           <>
             <Text style={styles.psaTitle}>Shares my position on:</Text>
             <View style={styles.issueTags}>
@@ -253,17 +253,6 @@ export default function FullScreenPSA({ feedItem, isActive, height }: FullScreen
                   style={[styles.sharedPolicyChip, { backgroundColor: DISTRICT_COLORS[candidate.district] || '#FFB6C1' }]}
                 >
                   <Text style={styles.sharedPolicyText}>{policy.name}</Text>
-                </View>
-              ))}
-            </View>
-          </>
-        ) : (
-          <>
-            <Text style={styles.psaTitle}>Top issues:</Text>
-            <View style={styles.issueTags}>
-              {candidate.topIssues.slice(0, 3).map((issue) => (
-                <View key={issue} style={[styles.sharedPolicyChip, { backgroundColor: DISTRICT_COLORS[candidate.district] || '#FFB6C1' }]}>
-                  <Text style={styles.sharedPolicyText}>{issue}</Text>
                 </View>
               ))}
             </View>

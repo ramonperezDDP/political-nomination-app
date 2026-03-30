@@ -147,16 +147,14 @@ export default function ForYouScreen() {
           candidatesData = await getCandidatesForFeed(selectedDistrict);
         }
         // Fix candidate quiz responses: snap old spectrum values to discrete options
-        // Check first candidate — if their trade-1 answer isn't snapped, fix all
-        if (candidatesData.length > 0) {
-          const firstCandUser = candidatesData[0].user;
-          const tradeResp = firstCandUser?.questionnaireResponses?.find((r) => r.questionId === 'trade-1');
-          if (tradeResp && ![-80, 0, 80].includes(Number(tradeResp.answer))) {
-            const fixed = await fixCandidateQuizResponses();
-            if (fixed > 0) {
-              // Reload with fixed data
-              candidatesData = await getCandidatesForFeed(selectedDistrict);
-            }
+        const hasUnsnapped = candidatesData.some(({ user: cu }) => {
+          const resp = cu?.questionnaireResponses?.find((r) => r.questionId === 'trade-1');
+          return resp && ![-80, 0, 80].includes(Number(resp.answer));
+        });
+        if (hasUnsnapped) {
+          const fixed = await fixCandidateQuizResponses();
+          if (fixed > 0) {
+            candidatesData = await getCandidatesForFeed(selectedDistrict);
           }
         }
         // Normalize current user's quiz responses to numeric answers for alignment
