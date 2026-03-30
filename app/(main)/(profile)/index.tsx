@@ -70,7 +70,7 @@ export default function ProfileScreen() {
         {
           id: 'endorsements',
           icon: 'thumb-up',
-          label: 'My Endorsements',
+          label: 'My Endorsements & Bookmarks',
           description: `${endorsements.length} candidate${endorsements.length !== 1 ? 's' : ''} endorsed`,
           onPress: () => router.push('/(main)/(profile)/endorsements' as any),
         },
