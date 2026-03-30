@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { getPartyConfig, subscribeToPartyConfig, getIssues, ensureQuestionsExist, seedIssues, getContestRounds, seedContestRounds } from '@/services/firebase/firestore';
+import { useUserStore } from './userStore';
 import type { PartyConfig, Issue, ContestStage, ContestRound, ContestRoundId, VotingMethod, ContestMode } from '@/types';
 
 interface ConfigState {
@@ -164,7 +165,6 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
 
       // Convert endorsements → bookmarks when round changes
       if (roundId !== prevRoundId) {
-        const { useUserStore } = require('./userStore');
         const userState = useUserStore.getState();
         const userId = userState.userProfile?.id;
         if (userId) {
