@@ -23,7 +23,11 @@ const ROUND_IDS = [
   'final_results',
 ];
 
-export default function AppHeader() {
+interface AppHeaderProps {
+  hideDistrictPicker?: boolean;
+}
+
+export default function AppHeader({ hideDistrictPicker }: AppHeaderProps = {}) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const roundLabel = useConfigStore(selectCurrentRoundLabel);
@@ -72,37 +76,39 @@ export default function AppHeader() {
         </Text>
       </Pressable>
 
-      <Menu
-        visible={menuVisible}
-        onDismiss={() => setMenuVisible(false)}
-        anchor={
-          <Pressable
-            onPress={() => setMenuVisible(true)}
-            style={[
-              styles.districtButton,
-              { backgroundColor: DISTRICT_COLORS[selectedDistrict] || '#E0E0E0' },
-            ]}
-          >
-            <MaterialCommunityIcons name="map-marker" size={14} color="#333" />
-            <Text variant="labelMedium" style={styles.districtText}>
-              {selectedDistrict}
-            </Text>
-            <MaterialCommunityIcons name="chevron-down" size={14} color="#333" />
-          </Pressable>
-        }
-      >
-        {AVAILABLE_DISTRICTS.map((district) => (
-          <Menu.Item
-            key={district}
-            onPress={() => {
-              setDistrict(district);
-              setMenuVisible(false);
-            }}
-            title={district}
-            leadingIcon={selectedDistrict === district ? 'check' : undefined}
-          />
-        ))}
-      </Menu>
+      {!hideDistrictPicker ? (
+        <Menu
+          visible={menuVisible}
+          onDismiss={() => setMenuVisible(false)}
+          anchor={
+            <Pressable
+              onPress={() => setMenuVisible(true)}
+              style={[
+                styles.districtButton,
+                { backgroundColor: DISTRICT_COLORS[selectedDistrict] || '#E0E0E0' },
+              ]}
+            >
+              <MaterialCommunityIcons name="map-marker" size={14} color="#333" />
+              <Text variant="labelMedium" style={styles.districtText}>
+                {selectedDistrict}
+              </Text>
+              <MaterialCommunityIcons name="chevron-down" size={14} color="#333" />
+            </Pressable>
+          }
+        >
+          {AVAILABLE_DISTRICTS.map((district) => (
+            <Menu.Item
+              key={district}
+              onPress={() => {
+                setDistrict(district);
+                setMenuVisible(false);
+              }}
+              title={district}
+              leadingIcon={selectedDistrict === district ? 'check' : undefined}
+            />
+          ))}
+        </Menu>
+      ) : <View style={{ width: 80 }} />}
     </View>
   );
 }

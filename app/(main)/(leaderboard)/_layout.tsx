@@ -5,7 +5,7 @@ export default function LeaderboardLayout() {
   return (
     <Stack screenOptions={{ header: () => <AppHeader /> }}>
       <Stack.Screen name="index" />
-      <Stack.Screen name="candidate/[id]" options={{ headerShown: true, headerTitle: 'Candidate Profile', headerBackTitle: 'Back' }} />
+      <Stack.Screen name="candidate/[id]" options={{ header: () => <AppHeader hideDistrictPicker />, headerTitle: 'Candidate Profile', headerBackTitle: 'Back' }} />
     </Stack>
   );
 }
