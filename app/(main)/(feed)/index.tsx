@@ -164,7 +164,7 @@ export default function ForYouScreen() {
       setIsLoading(false);
     };
     loadFeed();
-  }, [issuesReady, userId, selectedDistrict]);
+  }, [issuesReady, userId, selectedDistrict, userResponses]);
 
   // Apply experience filter — use stable references, not entire user object
   const filteredItems = useMemo(() => {
