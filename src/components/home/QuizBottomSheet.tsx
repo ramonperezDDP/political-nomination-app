@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { StyleSheet, View, Pressable, Modal, ScrollView, Animated } from 'react-native';
+import { StyleSheet, View, Pressable, Modal, ScrollView, Animated, Platform } from 'react-native';
 import { Text, useTheme, RadioButton } from 'react-native-paper';
 
 import type { Question } from '@/types';
@@ -51,6 +51,97 @@ export default function QuizBottomSheet({
     onAnswer(spectrumValue);
   };
 
+  const sheetContent = (
+    <View style={Platform.OS === 'web' ? styles.webBackdrop : styles.backdrop}>
+      <Animated.View style={[styles.backdropOverlay, { opacity: backdropAnim }]}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={onDismiss} />
+      </Animated.View>
+      <Animated.View
+        style={[styles.sheet, { backgroundColor: theme.colors.surface, transform: [{ translateY: slideAnim }] }]}
+      >
+        <View style={[styles.handle, { backgroundColor: theme.colors.outlineVariant }]} />
+
+        <Text
+          variant="titleMedium"
+          style={[styles.questionText, { color: theme.colors.onSurface }]}
+        >
+          {question.text}
+        </Text>
+
+        {error ? (
+          <Text variant="bodySmall" style={styles.errorText}>
+            {error}
+          </Text>
+        ) : null}
+
+        <ScrollView style={styles.optionsScroll} bounces={false}>
+          {question.options?.map((option) => {
+            const isSelected = currentAnswer === option.spectrumValue;
+            return (
+              <Pressable
+                key={option.id}
+                onPress={() => handleOptionPress(option.spectrumValue)}
+                disabled={saving}
+                style={[
+                  styles.optionCard,
+                  {
+                    backgroundColor: isSelected
+                      ? theme.colors.primaryContainer
+                      : theme.colors.surfaceVariant,
+                    borderColor: isSelected ? theme.colors.primary : 'transparent',
+                    opacity: saving && !isSelected ? 0.5 : 1,
+                  },
+                ]}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: isSelected }}
+                accessibilityLabel={`${option.shortLabel}: ${option.text}`}
+              >
+                <RadioButton
+                  value={String(option.spectrumValue)}
+                  status={isSelected ? 'checked' : 'unchecked'}
+                  onPress={() => handleOptionPress(option.spectrumValue)}
+                  disabled={saving}
+                />
+                <View style={styles.optionContent}>
+                  <Text
+                    variant="labelLarge"
+                    style={[styles.optionLabel, { color: theme.colors.onSurface }]}
+                  >
+                    {option.shortLabel}
+                  </Text>
+                  <Text
+                    variant="bodySmall"
+                    style={{ color: theme.colors.onSurfaceVariant }}
+                  >
+                    {option.text}
+                  </Text>
+                </View>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+
+        {currentAnswer !== undefined && onClear && (
+          <Pressable
+            onPress={() => { if (!saving) onClear(); }}
+            disabled={saving}
+            style={[styles.clearButton, { opacity: saving ? 0.5 : 1 }]}
+          >
+            <Text variant="labelMedium" style={{ color: theme.colors.error }}>
+              Clear answer
+            </Text>
+          </Pressable>
+        )}
+      </Animated.View>
+    </View>
+  );
+
+  // On web, Modal renders outside the phone frame via Portal. Use inline overlay instead.
+  if (Platform.OS === 'web') {
+    if (!visible) return null;
+    return sheetContent;
+  }
+
   return (
     <Modal
       visible={visible}
@@ -58,88 +149,7 @@ export default function QuizBottomSheet({
       transparent={true}
       onRequestClose={onDismiss}
     >
-      <View style={styles.backdrop}>
-        <Animated.View style={[styles.backdropOverlay, { opacity: backdropAnim }]}>
-          <Pressable style={StyleSheet.absoluteFill} onPress={onDismiss} />
-        </Animated.View>
-        <Animated.View
-          style={[styles.sheet, { backgroundColor: theme.colors.surface, transform: [{ translateY: slideAnim }] }]}
-        >
-          <View style={[styles.handle, { backgroundColor: theme.colors.outlineVariant }]} />
-
-          <Text
-            variant="titleMedium"
-            style={[styles.questionText, { color: theme.colors.onSurface }]}
-          >
-            {question.text}
-          </Text>
-
-          {error ? (
-            <Text variant="bodySmall" style={styles.errorText}>
-              {error}
-            </Text>
-          ) : null}
-
-          <ScrollView style={styles.optionsScroll} bounces={false}>
-            {question.options?.map((option) => {
-              const isSelected = currentAnswer === option.spectrumValue;
-              return (
-                <Pressable
-                  key={option.id}
-                  onPress={() => handleOptionPress(option.spectrumValue)}
-                  disabled={saving}
-                  style={[
-                    styles.optionCard,
-                    {
-                      backgroundColor: isSelected
-                        ? theme.colors.primaryContainer
-                        : theme.colors.surfaceVariant,
-                      borderColor: isSelected ? theme.colors.primary : 'transparent',
-                      opacity: saving && !isSelected ? 0.5 : 1,
-                    },
-                  ]}
-                  accessibilityRole="radio"
-                  accessibilityState={{ selected: isSelected }}
-                  accessibilityLabel={`${option.shortLabel}: ${option.text}`}
-                >
-                  <RadioButton
-                    value={String(option.spectrumValue)}
-                    status={isSelected ? 'checked' : 'unchecked'}
-                    onPress={() => handleOptionPress(option.spectrumValue)}
-                    disabled={saving}
-                  />
-                  <View style={styles.optionContent}>
-                    <Text
-                      variant="labelLarge"
-                      style={[styles.optionLabel, { color: theme.colors.onSurface }]}
-                    >
-                      {option.shortLabel}
-                    </Text>
-                    <Text
-                      variant="bodySmall"
-                      style={{ color: theme.colors.onSurfaceVariant }}
-                    >
-                      {option.text}
-                    </Text>
-                  </View>
-                </Pressable>
-              );
-            })}
-          </ScrollView>
-
-          {currentAnswer !== undefined && onClear && (
-            <Pressable
-              onPress={() => { if (!saving) onClear(); }}
-              disabled={saving}
-              style={[styles.clearButton, { opacity: saving ? 0.5 : 1 }]}
-            >
-              <Text variant="labelMedium" style={{ color: theme.colors.error }}>
-                Clear answer
-              </Text>
-            </Pressable>
-          )}
-        </Animated.View>
-      </View>
+      {sheetContent}
     </Modal>
   );
 }
@@ -148,6 +158,15 @@ const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
     justifyContent: 'flex-end',
+  },
+  webBackdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'flex-end',
+    zIndex: 9999,
   },
   backdropOverlay: {
     ...StyleSheet.absoluteFillObject,
