@@ -2,7 +2,7 @@
 
 > **Replaces:** PLAN-07 (title bar), PLAN-08 (footer persistence), PLAN-15 (back button)
 >
-> **Status:** ✅ Ready for implementation — SHIP FIRST, everything else depends on it
+> **Status:** ✅ Implemented. Persistent AppHeader, nested tab groups, shared CandidateDetailScreen, back navigation.
 >
 > **Depends on:** [PLAN-00](./PLAN-00-contest-round-architecture.md) Phase 1 (complete) — uses `selectCurrentRoundLabel`, `selectBrowsingDistrict`
 

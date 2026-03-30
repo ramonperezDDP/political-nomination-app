@@ -1,6 +1,6 @@
-# PLAN-12: For You Page Improvements — 🔴 BLOCKED (Spec Draft)
+# PLAN-12: For You Page Improvements — 🟡 Partially Implemented
 
-> **Updated 2026-03-25:** This is a spec draft, not an implementation plan. Needs a dedicated Bookmark Domain Spec before it becomes actionable.
+> **Status:** Partially implemented. Bookmarks complete (PLAN-00 Phase 2). Remaining: extract alignment explainer to reusable modal component.
 >
 > **Blocked on:** PLAN-00 Phase 2 (written, ready for review). ~~Bookmark domain spec~~ — resolved in PLAN-00 Phase 2 (bookmarks = converted endorsements, subcollection). ~~dealbreaker removal (PLAN-10)~~ — resolved 2026-03-28.
 

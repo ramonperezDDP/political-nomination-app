@@ -1,6 +1,6 @@
 # PLAN-13: Leaderboard Improvements — SPLIT INTO 13A + 13B
 
-> **Updated 2026-03-25:** Split per round 3 review. Original plan bundled a safe quick fix with blocked features.
+> **Status:** 13A complete (hide cutoff on trending). 13B partially complete (MassEndorseButton client-side working; server-side batch endpoint deferred to production).
 
 ## PLAN-13A: Hide Cutoff Line on Trending Tab ✅ COMPLETE (2026-03-27)
 

@@ -1,6 +1,6 @@
 # PLAN: Update "About the Contest" Section — COMPLETE
 
-> **Completed 2026-03-27.** Dynamic contest timeline implemented and all 10 test items verified.
+> **Status:** ✅ Implemented. AboutContestCard with dynamic timeline, voting methods, round status.
 >
 > **Updated 2026-03-25:** Status reset after branch reset. AboutContestCard exists with a HARDCODED static timeline. Needs conversion to dynamic Firestore-driven timeline. PLAN-00 selectors (`selectContestTimeline`, `selectRoundStatus`) are now available.
 >

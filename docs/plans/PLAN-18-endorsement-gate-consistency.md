@@ -1,6 +1,6 @@
 # PLAN-18: Endorsement Gate Consistency
 
-> **Status:** Revised after two PM reviews (2026-03-29). Ready for implementation.
+> **Status:** ✅ Implemented (2026-03-29). Store-level gate, UI lock modals, MassEndorseButton district filter, Firestore rules fixed. Remaining: restore isFullyVerified() in deployed Firestore rules after debugging nested field access.
 >
 > **Priority:** High — unverified users can currently endorse via candidate detail and PSACard
 >

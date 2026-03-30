@@ -1,6 +1,6 @@
 # PLAN-00 Phase 2: Round-Scoped Endorsements, Bookmarks, and Candidate Elimination
 
-> **Status:** Revised after PM review (2026-03-28). Ready for implementation.
+> **Status:** ✅ Implemented (2026-03-28/29). Round-scoped endorsements, bookmarks, elimination, Cloud Function.
 >
 > **Depends on:** PLAN-00 Phase 1 (complete), PLAN-10 (complete)
 >
