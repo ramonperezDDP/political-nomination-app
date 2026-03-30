@@ -1148,7 +1148,8 @@ export const convertEndorsementsToBookmarks = async (
   odid: string,
   roundId: string
 ): Promise<number> => {
-  const endorsements = await getUserEndorsements(odid, roundId);
+  // Get ALL active endorsements (not round-filtered) so we catch everything
+  const endorsements = await getUserEndorsements(odid);
   let converted = 0;
 
   for (const endorsement of endorsements) {
