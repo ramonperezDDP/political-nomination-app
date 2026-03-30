@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View, ScrollView } from 'react-native';
+import { StyleSheet, View, ScrollView, Platform } from 'react-native';
 import { useTheme } from 'react-native-paper';
 
 import { useAuthStore, selectIsCandidate } from '@/stores';
