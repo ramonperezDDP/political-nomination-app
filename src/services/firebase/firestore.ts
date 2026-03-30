@@ -1221,6 +1221,65 @@ export const seedCandidates = async (): Promise<void> => {
   console.log(`Seeded ${candidates.length} candidates with full issue positions successfully!`);
 };
 
+// ==================== CANDIDATE QUIZ RESPONSE FIX ====================
+
+const SNAP_QUESTION_OPTIONS: Record<string, number[]> = {
+  'trade-1': [-80, 0, 80],
+  'iran-1': [80, 0, -80],
+  'inflation-1': [-80, 0, 80],
+  'borders-1': [80, 0, -80],
+  'welfare-1': [-80, 0, 80],
+  'pa01-infrastructure-1': [-80, 0, 80],
+  'pa01-housing-1': [-80, 0, 80],
+  'pa02-budget-1': [80, 0, -80],
+  'pa02-transit-1': [-80, 0, 80],
+};
+
+const snapVal = (val: number, options: number[]): number => {
+  let closest = options[0];
+  let minDist = Math.abs(val - closest);
+  for (const opt of options) {
+    const dist = Math.abs(val - opt);
+    if (dist < minDist) { closest = opt; minDist = dist; }
+  }
+  return closest;
+};
+
+/** Fix candidate user quiz responses: snap raw spectrum values to discrete option values */
+export const fixCandidateQuizResponses = async (): Promise<number> => {
+  const candidatesSnap = await getCollection<Candidate>(Collections.CANDIDATES).get();
+  let fixed = 0;
+
+  for (const candidateDoc of candidatesSnap.docs) {
+    const candidate = candidateDoc.data() as Candidate;
+    const userDoc = await getCollection<User>(Collections.USERS).doc(candidate.userId).get();
+    if (!userDoc.exists) continue;
+
+    const userData = userDoc.data() as User;
+    const responses = userData.questionnaireResponses || [];
+    let needsFix = false;
+
+    const fixedResponses = responses.map((r) => {
+      const options = SNAP_QUESTION_OPTIONS[r.questionId];
+      if (!options) return r;
+      const numAnswer = Number(r.answer);
+      if (isNaN(numAnswer)) return r;
+      const snapped = snapVal(numAnswer, options);
+      if (snapped !== numAnswer) needsFix = true;
+      return { ...r, answer: snapped };
+    });
+
+    if (needsFix) {
+      await getCollection<User>(Collections.USERS).doc(candidate.userId).update({
+        questionnaireResponses: fixedResponses,
+      } as any);
+      fixed++;
+    }
+  }
+
+  return fixed;
+};
+
 // ==================== ENDORSEMENT OPERATIONS ====================
 
 export const createEndorsement = async (

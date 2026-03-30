@@ -11,7 +11,7 @@ import type { LayoutChangeEvent } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore, useConfigStore } from '@/stores';
 import { useUserStore, selectCanSeeAlignment, selectBrowsingDistrict } from '@/stores';
-import { getCandidatesForFeed, reseedAllData, inferGenderFromName } from '@/services/firebase/firestore';
+import { getCandidatesForFeed, reseedAllData, inferGenderFromName, fixCandidateQuizResponses } from '@/services/firebase/firestore';
 import { calculateAlignmentScore } from '@/utils/alignment';
 import FullScreenPSA from '@/components/feed/FullScreenPSA';
 import ExperienceMenu from '@/components/feed/ExperienceMenu';
@@ -145,6 +145,19 @@ export default function ForYouScreen() {
         if (needsReseed) {
           await reseedAllData();
           candidatesData = await getCandidatesForFeed(selectedDistrict);
+        }
+        // Fix candidate quiz responses: snap old spectrum values to discrete options
+        // Check first candidate — if their trade-1 answer isn't snapped, fix all
+        if (candidatesData.length > 0) {
+          const firstCandUser = candidatesData[0].user;
+          const tradeResp = firstCandUser?.questionnaireResponses?.find((r) => r.questionId === 'trade-1');
+          if (tradeResp && ![-80, 0, 80].includes(Number(tradeResp.answer))) {
+            const fixed = await fixCandidateQuizResponses();
+            if (fixed > 0) {
+              // Reload with fixed data
+              candidatesData = await getCandidatesForFeed(selectedDistrict);
+            }
+          }
         }
         // Normalize current user's quiz responses to numeric answers for alignment
         const normalizedUserResponses = (user?.questionnaireResponses || [])
