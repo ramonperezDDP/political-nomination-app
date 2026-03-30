@@ -1053,10 +1053,16 @@ export const getUserEndorsements = async (
 ): Promise<Endorsement[]> => {
   try {
     const snapshot = await getDocs(collection(db, Collections.ENDORSEMENTS));
-    return snapshot.docs
-      .map((d) => d.data() as Endorsement)
-      .filter((e) => e.odid === odid && e.isActive === true
+    const allEndorsements = snapshot.docs.map((d) => d.data() as Endorsement);
+    const filtered = allEndorsements.filter((e) => e.odid === odid && e.isActive === true
         && (!roundId || e.roundId === roundId));
+    console.log(`[getUserEndorsements] odid=${odid}, roundId=${roundId || 'any'}, total=${allEndorsements.length}, active for user=${filtered.length}`);
+    if (filtered.length === 0 && allEndorsements.length > 0) {
+      // Debug: show what odids exist
+      const odids = [...new Set(allEndorsements.filter(e => e.isActive).map(e => e.odid))];
+      console.log(`[getUserEndorsements] Active endorsement odids in DB:`, odids);
+    }
+    return filtered;
   } catch (error) {
     console.warn('Error fetching user endorsements:', error);
     return [];
