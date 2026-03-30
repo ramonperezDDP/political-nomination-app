@@ -168,7 +168,7 @@ export default function FullScreenPSA({ feedItem, isActive, height }: FullScreen
       {/* On web, insets.top is 0 but AppHeader is outside the card, so use a fixed offset */}
       <AlignmentCircle
         score={canSeeAlignment ? alignmentScore : null}
-        style={[styles.alignmentCircle, { top: isWeb ? 40 : insets.top + 8 }]}
+        style={[styles.alignmentCircle, { top: isWeb ? 52 : insets.top + 8 }]}
         onPress={canSeeAlignment ? () => setShowAlignmentModal(true) : undefined}
       />
 
