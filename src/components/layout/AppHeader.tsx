@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { StyleSheet, View, Image, Pressable, Platform } from 'react-native';
 import { Text, useTheme } from 'react-native-paper';
+import { useRouter, useNavigation } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useConfigStore, selectCurrentRoundLabel } from '@/stores';
@@ -25,9 +26,11 @@ const ROUND_IDS = [
 
 interface AppHeaderProps {
   hideDistrictPicker?: boolean;
+  showBack?: boolean;
 }
 
-export default function AppHeader({ hideDistrictPicker }: AppHeaderProps = {}) {
+export default function AppHeader({ hideDistrictPicker, showBack }: AppHeaderProps = {}) {
+  const router = useRouter();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const roundLabel = useConfigStore(selectCurrentRoundLabel);
@@ -53,11 +56,17 @@ export default function AppHeader({ hideDistrictPicker }: AppHeaderProps = {}) {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + 8, backgroundColor: theme.colors.surface, borderBottomColor: theme.colors.outlineVariant }]}>
-      <Image
-        source={require('../../../assets/amsp-logo.png')}
-        style={styles.logo}
-        resizeMode="contain"
-      />
+      {showBack ? (
+        <Pressable onPress={() => router.back()} style={styles.backButton}>
+          <MaterialCommunityIcons name="arrow-left" size={24} color={theme.colors.onSurface} />
+        </Pressable>
+      ) : (
+        <Image
+          source={require('../../../assets/amsp-logo.png')}
+          style={styles.logo}
+          resizeMode="contain"
+        />
+      )}
 
       <Pressable
         style={styles.roundContainer}
@@ -130,6 +139,10 @@ const styles = StyleSheet.create({
   logo: {
     width: 120,
     height: 36,
+  },
+  backButton: {
+    width: 120,
+    paddingVertical: 6,
   },
   roundContainer: {
     flex: 1,
