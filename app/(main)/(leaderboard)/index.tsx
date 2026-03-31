@@ -266,7 +266,8 @@ export default function LeaderboardScreen() {
             contentContainerStyle={styles.listContent}
             showsVerticalScrollIndicator={false}
           />
-          <Button
+          {/* Reseed button — hidden for now, enable by changing false to true */}
+          {false && <Button
             mode="text"
             compact
             onPress={handleReseedData}
@@ -276,7 +277,7 @@ export default function LeaderboardScreen() {
             labelStyle={{ fontSize: 11 }}
           >
             Reseed Sample Data
-          </Button>
+          </Button>}
         </>
       )}
     </SafeAreaView>
