@@ -18,9 +18,9 @@ export interface AlignmentInput {
 export interface AlignmentResult {
   score: number | null;              // 0-100, null if no shared answers
   sharedCount: number;               // how many questions both answered
-  exactMatchIds: string[];           // questionIds where closeness >= 0.75
-  closeMatchIds: string[];           // questionIds where closeness 0.5–0.74
-  notMatchedIds: string[];           // questionIds where closeness < 0.5
+  exactMatchIds: string[];           // questionIds where closeness >= 0.75 (same answer)
+  closeMatchIds: string[];           // questionIds where closeness 0.25–0.74 (adjacent answer)
+  notMatchedIds: string[];           // questionIds where closeness < 0.25 (opposite answer)
   // Legacy alias for feed chips (exact matches)
   alignedQuestionIds: string[];
 }
@@ -51,13 +51,16 @@ export function calculateAlignmentScore({
     if (candidateVal === undefined) continue;
 
     // Both answered this question
-    const closeness = 1 - Math.abs(userVal - candidateVal) / 200;
+    // Max possible difference is 160 (from -80 to +80), not 200
+    const closeness = Math.max(0, 1 - Math.abs(userVal - candidateVal) / 160);
     closenessTotal += closeness;
     sharedCount++;
 
+    // Thresholds aligned to 3 quiz options (-80/0/80):
+    // exact: diff=0 → 1.0, close: diff=80 → 0.5, mismatch: diff=160 → 0.0
     if (closeness >= 0.75) {
       exactMatchIds.push(ur.questionId);
-    } else if (closeness >= 0.5) {
+    } else if (closeness >= 0.25) {
       closeMatchIds.push(ur.questionId);
     } else {
       notMatchedIds.push(ur.questionId);
