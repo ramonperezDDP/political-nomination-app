@@ -486,22 +486,7 @@ export default function CandidateProfileScreen() {
       edges={['bottom']}
     >
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Back button for web (no Stack header) */}
-        {Platform.OS === 'web' && (
-          <Pressable
-            onPress={() => {
-              if (from) {
-                router.replace(from as any);
-              } else {
-                router.back();
-              }
-            }}
-            style={styles.webBackButton}
-          >
-            <MaterialCommunityIcons name="arrow-left" size={20} color="#5a3977" />
-            <Text variant="bodyMedium" style={styles.webBackText}>Back</Text>
-          </Pressable>
-        )}
+        {/* Back button now handled by AppHeader showBack prop */}
 
         {/* Profile Header */}
         <View style={styles.header}>
