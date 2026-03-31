@@ -59,10 +59,9 @@ export default function LeaderboardScreen() {
   const handleReseedData = async () => {
     setIsSeeding(true);
     try {
-      const { reseedAllData, fixCandidateQuizResponses } = await import('@/services/firebase/firestore');
-      // Fix existing candidate quiz responses in-place (no delete needed, avoids permission issues)
-      const fixed = await fixCandidateQuizResponses();
-      Alert.alert('Success', `Fixed quiz responses for ${fixed} candidates!`);
+      const { reseedAllData } = await import('@/services/firebase/firestore');
+      await reseedAllData();
+      Alert.alert('Success', 'All data reseeded!');
       fetchLeaderboard();
     } catch (error: any) {
       Alert.alert('Error', error.message);
