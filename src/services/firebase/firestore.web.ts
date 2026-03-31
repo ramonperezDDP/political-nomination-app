@@ -957,13 +957,16 @@ export const seedCandidates = async (): Promise<void> => {
       return closest;
     };
 
+    // Use candidate's average spectrum position to pick quiz answers.
+    const avgSpectrum = fullTopIssues.length > 0
+      ? fullTopIssues.reduce((sum: number, ti: any) => sum + (ti.spectrumPosition || 0), 0) / fullTopIssues.length
+      : 0;
+
     const districtQuestionIds = QUIZ_QUESTION_IDS[district] || QUIZ_QUESTION_IDS['PA-01'];
     const candidateQuizResponses: QuestionnaireResponse[] = districtQuestionIds.map((qId) => {
       const issueId = QUESTION_ISSUE_MAP[qId];
-      const issuePosition = fullTopIssues.find((ti: any) => ti.issueId === issueId);
-      const rawVal = issuePosition ? issuePosition.spectrumPosition : 0;
       const options = QUESTION_OPTIONS[qId] || [-80, 0, 80];
-      const snappedVal = snapToOption(rawVal, options);
+      const snappedVal = snapToOption(avgSpectrum, options);
       return { questionId: qId, issueId, answer: snappedVal };
     });
 

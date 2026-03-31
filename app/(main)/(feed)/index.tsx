@@ -141,7 +141,12 @@ export default function ForYouScreen() {
           candidatesData.some(({ candidate }) =>
             candidate.district === 'PA-02' &&
             candidate.topIssues?.some((ti: any) => ti.issueId === 'pa01-infrastructure')
-          );
+          ) ||
+          // Reseed if candidate quiz answers use non-snapped spectrum values
+          candidatesData.some(({ user: cu }) => {
+            const resp = cu?.questionnaireResponses?.find((r) => r.questionId === 'trade-1');
+            return resp && ![-80, 0, 80].includes(Number(resp.answer));
+          });
         if (needsReseed) {
           await reseedAllData();
           candidatesData = await getCandidatesForFeed(selectedDistrict);
