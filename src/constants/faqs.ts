@@ -71,16 +71,16 @@ const ROUND_FAQS: Partial<Record<ContestRoundId, FAQ[]>> = {
   ],
   debate: [
     {
-      id: 'debate-format',
-      question: 'How does the debate round work?',
+      id: 'debate-watch',
+      question: 'Will I have to watch the live debate on my app?',
       answer:
-        'The final 2 candidates participate in a live debate. After the debate, you cast a single vote for your preferred candidate. The candidate with the majority wins the nomination.',
+        'No. The local committee will moderate and record the debate. Citizens watch it at their convenience.',
     },
     {
-      id: 'pick-one',
-      question: 'Can I only vote for one candidate?',
+      id: 'debate-method',
+      question: 'What method will be used to choose the candidate?',
       answer:
-        'Yes. The debate round uses pick-one voting — you select a single candidate. The candidate with more than 50% of the vote wins.',
+        'Citizens will pick one of the two remaining potential nominees. The party candidate wins the nomination with at least 50% support.',
     },
   ],
   final_results: [
