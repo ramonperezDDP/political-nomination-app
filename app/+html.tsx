@@ -201,7 +201,7 @@ export default function Root({ children }: PropsWithChildren) {
               }
 
               /* Responsive: short screens */
-              @media screen and (min-width: 501px) and (max-height: 799px) and (min-height: 701px) {
+              @media screen and (min-width: 501px) and (max-height: 799px) and (min-height: 581px) {
                 #phone-frame {
                   transform: scale(0.75);
                 }
@@ -217,7 +217,9 @@ export default function Root({ children }: PropsWithChildren) {
               }
 
               /* Responsive: mobile / very small screens — hide frame, full-screen app */
-              @media screen and (max-width: 500px), screen and (max-height: 700px) {
+              /* Note: Chrome's UI chrome (bookmarks bar, extensions) can consume 150px+,
+                 so the height threshold is set low to avoid triggering on desktop browsers */
+              @media screen and (max-width: 500px), screen and (max-height: 580px) {
                 #phone-demo-page {
                   display: contents;
                 }

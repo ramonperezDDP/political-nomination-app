@@ -698,6 +698,25 @@ onPress={() => {
 
 **Fix:** Added `padding-top: 44px; box-sizing: border-box;` to `#phone-screen` in `app/+html.tsx` to simulate the iPhone status bar safe area. This padding is reset to `0` in the mobile media query where the frame is hidden.
 
+### Phone Frame Not Showing in Chrome (Full-Screen Instead)
+
+**Symptom:** The web app renders full-screen in Chrome on desktop, without the purple gradient background or iPhone phone frame. Works correctly in Safari.
+
+**Cause:** Chrome's browser UI (bookmarks bar, extensions row, address bar) consumes significantly more vertical space than Safari. The CSS media query `@media screen and (max-height: 700px)` was triggering on Chrome because the CSS viewport height (after subtracting Chrome's UI chrome) dropped below 700px. This activated the mobile breakpoint which sets `display: contents` on the phone frame, effectively hiding it.
+
+**Fix (in `app/+html.tsx`):** Lowered the mobile breakpoint height threshold from 700px to 580px:
+```css
+/* Before — triggered on Chrome desktop with bookmarks bar */
+@media screen and (max-width: 500px), screen and (max-height: 700px) { ... }
+
+/* After — 120px more headroom for browser chrome */
+@media screen and (max-width: 500px), screen and (max-height: 580px) { ... }
+```
+
+Also updated the short-screens breakpoint `min-height` from 701px to 581px to match.
+
+**Key lesson:** Chrome's UI chrome can consume 150px+ of vertical space (address bar ~50px, bookmarks bar ~30px, extensions ~30px, tab strip ~35px). Always test responsive breakpoints in Chrome with bookmarks bar visible, not just Safari.
+
 ---
 
 ## React Native Runtime Issues

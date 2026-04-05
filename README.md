@@ -845,8 +845,8 @@ On desktop browsers, the web app renders inside a realistic iPhone mockup with t
 |----------|----------|
 | Desktop (>500px wide, >950px tall) | Full phone frame at 375x812 |
 | Medium height (800-950px tall) | Phone frame scaled to 85% |
-| Short screens (700-800px tall) | Phone frame scaled to 75% |
-| Mobile (≤500px wide or ≤700px tall) | Frame hidden, app fills viewport normally |
+| Short screens (580-800px tall) | Phone frame scaled to 75% |
+| Mobile (≤500px wide or ≤580px tall) | Frame hidden, app fills viewport normally |
 
 #### Web-Specific Notes
 
