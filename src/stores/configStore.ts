@@ -126,6 +126,9 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
         }
       }
 
+      // Filter out legacy pre_nomination round (Firestore doc retained for audit trail)
+      rounds = rounds.filter((r) => r.id !== 'pre_nomination');
+
       // Sort by order at store time so selectors return stable references
       rounds.sort((a, b) => a.order - b.order);
 
