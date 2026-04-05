@@ -23,7 +23,7 @@ A cross-platform mobile application for democratic nominations, built with React
 
 The America's Main Street Party App is a participatory democracy platform that enables:
 
-- **Anonymous visitors** to browse candidates, take the policy quiz, and explore the platform without creating an account (via Firebase Anonymous Auth)
+- **Anonymous visitors** to browse candidates, take the quiz, and explore the platform without creating an account (via Firebase Anonymous Auth)
 - **Registered voters** to discover candidates aligned with their policy preferences, unlock alignment scores, and provide endorsements after progressive identity verification
 - **For You feed** with a full-screen TikTok-style vertical swipe experience, experience filters (Explore, My Area, My Issues, Top Picks), SVG location maps for zone-based browsing, and mass endorsement
 - **Candidates** to apply for nomination, build profiles, and track campaign metrics
@@ -808,10 +808,10 @@ Consumer code (components, other stores) imports from `@/services/firebase/auth`
 The app uses a **progressive access model** built on Firebase Anonymous Authentication:
 
 1. **First launch**: `signInAnonymously()` creates a real Firebase UID and Firestore user document — no email/password required
-2. **Anonymous users** can browse candidates, take the policy quiz, set dealbreakers, and toggle between districts
+2. **Anonymous users** can browse candidates, take the quiz, set dealbreakers, and toggle between districts
 3. **Account upgrade**: When users register, `linkWithCredential()` upgrades the anonymous account in place — the UID stays the same and all Firestore data (quiz responses, dealbreakers, etc.) is preserved
 4. **Progressive verification**: Five independent dimensions (email, voter registration, photo ID, questionnaire, dealbreakers) unlock capabilities incrementally
-5. **Alignment scores gated on quiz**: Users who haven't completed the policy quiz see "?" on the For You feed and "N/A" on candidate cards, leaderboard, and candidate profiles
+5. **Alignment scores gated on quiz**: Users who haven't completed the quiz see "?" on the For You feed and "N/A" on candidate cards, leaderboard, and candidate profiles
 6. **District-gated endorsements**: Users can browse any district but can only endorse candidates in their verified districts
 7. **Experience filters**: The For You feed supports 4 filter modes — Explore (random), My Area (SVG zone maps), My Issues (policy-aligned), and Top Picks (no dealbreakers). Filters unlock progressively as users complete the quiz and set dealbreakers
 8. **Mass endorsement**: After filtering, verified users can endorse all matching candidates in their district with a single action
