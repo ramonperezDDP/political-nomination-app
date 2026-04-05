@@ -25,7 +25,7 @@ interface ConfigState {
 // Helper: derive currentRound from partyConfig and contestRounds
 function deriveCurrentRound(config: PartyConfig | null, rounds: ContestRound[]): ContestRound | null {
   if (!config || rounds.length === 0) return null;
-  const roundId = config.currentRoundId || config.contestStage || 'pre_nomination';
+  const roundId = config.currentRoundId || config.contestStage || 'round_1_endorsement';
   return rounds.find((r) => r.id === roundId) || rounds[0];
 }
 
@@ -148,7 +148,7 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
   // Also converts endorsements → bookmarks when advancing rounds
   setDebugRound: (roundId: string | null) => {
     const { contestRounds, partyConfig, debugRoundOverride } = get();
-    const prevRoundId = debugRoundOverride || partyConfig?.currentRoundId || 'pre_nomination';
+    const prevRoundId = debugRoundOverride || partyConfig?.currentRoundId || 'round_1_endorsement';
 
     if (!roundId) {
       // Clear override — revert to Firestore value
@@ -182,10 +182,10 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
 
 /** @deprecated Use selectCurrentRoundId instead */
 export const selectContestStage = (state: ConfigState): ContestStage =>
-  (state.partyConfig?.currentRoundId || state.partyConfig?.contestStage || 'pre_nomination') as ContestStage;
+  (state.partyConfig?.currentRoundId || state.partyConfig?.contestStage || 'round_1_endorsement') as ContestStage;
 
 export const selectCurrentRoundId = (state: ConfigState): ContestRoundId =>
-  (state.debugRoundOverride || state.partyConfig?.currentRoundId || state.partyConfig?.contestStage || 'pre_nomination') as ContestRoundId;
+  (state.debugRoundOverride || state.partyConfig?.currentRoundId || state.partyConfig?.contestStage || 'round_1_endorsement') as ContestRoundId;
 
 export const selectVotingMethod = (state: ConfigState): VotingMethod =>
   state.currentRound?.votingMethod || 'none';
@@ -204,7 +204,7 @@ export const selectIsEndorsementRound = (state: ConfigState): boolean =>
   state.currentRound?.isEndorsementRound || false;
 
 export const selectCurrentRoundLabel = (state: ConfigState): string =>
-  state.currentRound?.label || 'Pre-Nomination';
+  state.currentRound?.label || 'First Round: Endorsement';
 
 export const selectContestTimeline = (state: ConfigState): ContestRound[] =>
   state.contestRounds;
@@ -261,8 +261,8 @@ export const defaultPartyConfig: PartyConfig = {
   secondaryColor: '#067eba',
   logoUrl: '',
   tagline: 'Your voice matters',
-  contestStage: 'pre_nomination',
-  currentRoundId: 'pre_nomination',
+  contestStage: 'round_1_endorsement',
+  currentRoundId: 'round_1_endorsement',
   contestMode: 'beta_demo',
   endorsementCutoffs: [],
 };

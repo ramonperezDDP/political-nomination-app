@@ -1890,7 +1890,6 @@ export const getContestRounds = async (): Promise<ContestRound[]> => {
 };
 
 const CONTEST_ROUNDS_SEED: Omit<ContestRound, 'startDate' | 'endDate'>[] = [
-  { id: 'pre_nomination', label: 'Pre-Nomination', shortLabel: 'Pre-Nom', order: 0, votingMethod: 'none', isEndorsementRound: false, candidatesEntering: null, candidatesAdvancing: null, tieBreakPolicy: 'advance_all_tied' },
   { id: 'round_1_endorsement', label: 'First Round: Endorsement', shortLabel: 'Round 1', order: 1, votingMethod: 'approval', isEndorsementRound: true, candidatesEntering: 100, candidatesAdvancing: 20, tieBreakPolicy: 'advance_all_tied' },
   { id: 'round_2_endorsement', label: 'Second Round: Endorsement', shortLabel: 'Round 2', order: 2, votingMethod: 'approval', isEndorsementRound: true, candidatesEntering: 20, candidatesAdvancing: 10, tieBreakPolicy: 'trending_score' },
   { id: 'round_3_endorsement', label: 'Third Round: Endorsement', shortLabel: 'Round 3', order: 3, votingMethod: 'approval', isEndorsementRound: true, candidatesEntering: 10, candidatesAdvancing: 4, tieBreakPolicy: 'trending_score' },

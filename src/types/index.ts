@@ -307,7 +307,6 @@ export interface Notification {
 
 // Contest Round Types
 export type ContestRoundId =
-  | 'pre_nomination'
   | 'round_1_endorsement'
   | 'round_2_endorsement'
   | 'round_3_endorsement'

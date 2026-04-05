@@ -29,7 +29,7 @@ async function migrate() {
 
   // 1. Get the current round
   const configSnap = await db.doc('config/partyConfig').get();
-  const currentRoundId = configSnap.data()?.currentRoundId || 'pre_nomination';
+  const currentRoundId = configSnap.data()?.currentRoundId || 'round_1_endorsement';
   console.log(`Current round: ${currentRoundId}`);
 
   // 2. Get all endorsements

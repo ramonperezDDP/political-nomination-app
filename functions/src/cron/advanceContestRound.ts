@@ -14,7 +14,7 @@ const BATCH_LIMIT = 500;
  * 4. Advances currentRoundId to the next round
  * 5. Creates audit trail in contestTransitions
  *
- * In beta_demo mode, when cycling back to pre_nomination, all candidates
+ * In beta_demo mode, when cycling back to round_1_endorsement, all candidates
  * are reset to 'active' status.
  */
 export const advanceContestRoundDaily = functions.pubsub
@@ -24,7 +24,7 @@ export const advanceContestRoundDaily = functions.pubsub
     const db = admin.firestore();
     const configRef = db.doc('config/partyConfig');
     const configSnap = await configRef.get();
-    const currentRoundId = configSnap.data()?.currentRoundId || 'pre_nomination';
+    const currentRoundId = configSnap.data()?.currentRoundId || 'round_1_endorsement';
     const contestMode = configSnap.data()?.contestMode || 'beta_demo';
 
     // Only run in beta_demo mode
@@ -46,7 +46,7 @@ export const advanceContestRoundDaily = functions.pubsub
       return;
     }
 
-    // If at the last round, cycle back to pre_nomination in beta_demo
+    // If at the last round, cycle back to round_1_endorsement in beta_demo
     const isLastRound = currentIndex >= rounds.length - 1;
     const nextRound = isLastRound ? rounds[0] : rounds[currentIndex + 1];
     const currentRound = rounds[currentIndex];
@@ -158,8 +158,8 @@ export const advanceContestRoundDaily = functions.pubsub
 
       console.log(`Converted ${totalConverted} endorsements to bookmarks for ${endorsementsByUser.size} users`);
 
-      // --- Step 3: Reset candidates if cycling back to pre_nomination ---
-      if (isLastRound && nextRound.id === 'pre_nomination') {
+      // --- Step 3: Reset eliminated candidates if cycling back to round_1_endorsement ---
+      if (isLastRound && nextRound.id === 'round_1_endorsement') {
         const allCandidatesSnap = await db
           .collection('candidates')
           .where('contestStatus', '==', 'eliminated')

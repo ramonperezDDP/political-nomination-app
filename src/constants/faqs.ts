@@ -30,14 +30,6 @@ const BASE_FAQS: FAQ[] = [
 
 // Round-specific FAQs
 const ROUND_FAQS: Partial<Record<ContestRoundId, FAQ[]>> = {
-  pre_nomination: [
-    {
-      id: 'when-voting',
-      question: 'When can I vote?',
-      answer:
-        "Voting opens after the endorsement phase ends. You'll be notified when voting begins. Only candidates who meet the endorsement threshold will appear on the ballot.",
-    },
-  ],
   round_1_endorsement: [
     {
       id: 'how-many-advance-r1',
@@ -114,9 +106,9 @@ const ROUND_FAQS: Partial<Record<ContestRoundId, FAQ[]>> = {
 
 /**
  * Returns FAQs for a given contest round: base FAQs + round-specific FAQs.
- * Falls back to pre_nomination FAQs for unknown round IDs.
+ * Falls back to round_1_endorsement FAQs for unknown round IDs.
  */
 export function getFaqsForRound(roundId: ContestRoundId): FAQ[] {
-  const roundSpecific = ROUND_FAQS[roundId] || ROUND_FAQS.pre_nomination || [];
+  const roundSpecific = ROUND_FAQS[roundId] || ROUND_FAQS.round_1_endorsement || [];
   return [...BASE_FAQS, ...roundSpecific];
 }

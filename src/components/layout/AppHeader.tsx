@@ -15,7 +15,6 @@ const DISTRICT_COLORS: Record<string, string> = {
 const AVAILABLE_DISTRICTS = ['PA-01', 'PA-02'];
 
 const ROUND_IDS = [
-  'pre_nomination',
   'round_1_endorsement',
   'round_2_endorsement',
   'round_3_endorsement',
@@ -43,7 +42,7 @@ export default function AppHeader({ hideDistrictPicker, showBack }: AppHeaderPro
 
   const handleRoundTap = useCallback(() => {
     if (contestRounds.length === 0) return;
-    const currentId = debugRoundOverride || useConfigStore.getState().partyConfig?.currentRoundId || 'pre_nomination';
+    const currentId = debugRoundOverride || useConfigStore.getState().partyConfig?.currentRoundId || 'round_1_endorsement';
     const currentIdx = ROUND_IDS.indexOf(currentId);
     const nextIdx = (currentIdx + 1) % ROUND_IDS.length;
     setDebugRound(ROUND_IDS[nextIdx]);

@@ -9,7 +9,7 @@ interface PartyConfigUpdate {
   secondaryColor?: string;
   logoUrl?: string;
   tagline?: string;
-  contestStage?: 'pre_nomination' | 'nomination' | 'voting' | 'post_election';
+  contestStage?: 'round_1_endorsement' | 'nomination' | 'voting' | 'post_election';
   endorsementCutoffs?: Array<{
     stage: number;
     threshold: number;
@@ -18,7 +18,7 @@ interface PartyConfigUpdate {
 }
 
 interface ContestStageUpdate {
-  stage: 'pre_nomination' | 'nomination' | 'voting' | 'post_election';
+  stage: 'round_1_endorsement' | 'nomination' | 'voting' | 'post_election';
   notifyUsers?: boolean;
 }
 
@@ -52,7 +52,7 @@ export const updatePartyConfig = functions.https.onCall(
           secondaryColor: data.secondaryColor || '#067eba',
           logoUrl: data.logoUrl || '',
           tagline: data.tagline || 'Your voice matters',
-          contestStage: data.contestStage || 'pre_nomination',
+          contestStage: data.contestStage || 'round_1_endorsement',
           endorsementCutoffs: data.endorsementCutoffs || [],
           createdAt: admin.firestore.FieldValue.serverTimestamp(),
           updatedAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -186,9 +186,9 @@ async function applyEndorsementCutoffs(cutoffs: any[]) {
  */
 async function notifyUsersOfStageChange(stage: string) {
   const stageMessages: Record<string, { title: string; body: string }> = {
-    pre_nomination: {
-      title: 'Pre-Nomination Phase',
-      body: 'The nomination process is in the pre-nomination phase. Explore candidates and learn about their positions.',
+    round_1_endorsement: {
+      title: 'First Round: Endorsement',
+      body: 'The endorsement round is now open. Browse candidates and endorse those who align with your values.',
     },
     nomination: {
       title: 'Nomination Phase Started!',

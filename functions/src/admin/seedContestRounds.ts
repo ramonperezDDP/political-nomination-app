@@ -16,7 +16,6 @@ interface ContestRoundSeed {
 }
 
 const CONTEST_ROUNDS: ContestRoundSeed[] = [
-  { id: 'pre_nomination', label: 'Pre-Nomination', shortLabel: 'Pre-Nom', order: 0, votingMethod: 'none', isEndorsementRound: false, candidatesEntering: null, candidatesAdvancing: null, startDate: null, endDate: null, tieBreakPolicy: 'advance_all_tied' },
   { id: 'round_1_endorsement', label: 'First Round: Endorsement', shortLabel: 'Round 1', order: 1, votingMethod: 'approval', isEndorsementRound: true, candidatesEntering: 100, candidatesAdvancing: 20, startDate: null, endDate: null, tieBreakPolicy: 'advance_all_tied' },
   { id: 'round_2_endorsement', label: 'Second Round: Endorsement', shortLabel: 'Round 2', order: 2, votingMethod: 'approval', isEndorsementRound: true, candidatesEntering: 20, candidatesAdvancing: 10, startDate: null, endDate: null, tieBreakPolicy: 'trending_score' },
   { id: 'round_3_endorsement', label: 'Third Round: Endorsement', shortLabel: 'Round 3', order: 3, votingMethod: 'approval', isEndorsementRound: true, candidatesEntering: 10, candidatesAdvancing: 4, startDate: null, endDate: null, tieBreakPolicy: 'trending_score' },
@@ -55,7 +54,7 @@ export const seedContestRounds = functions.https.onCall(
     const configSnap = await configRef.get();
     if (configSnap.exists && !configSnap.data()?.currentRoundId) {
       await configRef.update({
-        currentRoundId: configSnap.data()?.contestStage || 'pre_nomination',
+        currentRoundId: configSnap.data()?.contestStage || 'round_1_endorsement',
         contestMode: 'beta_demo',
       });
     }
