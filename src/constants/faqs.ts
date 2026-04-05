@@ -9,12 +9,6 @@ export interface FAQ {
 // Base FAQs shown in every round
 const BASE_FAQS: FAQ[] = [
   {
-    id: 'endorsement',
-    question: 'How do endorsements work?',
-    answer:
-      'Endorsements are your way of showing support for candidates. You can endorse multiple candidates, and your endorsements help determine who advances in the nomination process. Endorsements are anonymous to candidates.',
-  },
-  {
     id: 'alignment',
     question: 'What is the alignment score?',
     answer:
@@ -28,38 +22,33 @@ const BASE_FAQS: FAQ[] = [
   },
 ];
 
+// Shared endorsement round FAQs (used by all three endorsement rounds)
+const ENDORSEMENT_ROUND_FAQS: FAQ[] = [
+  {
+    id: 'how-endorsement-rounds-work',
+    question: 'How do the Endorsement rounds work?',
+    answer:
+      'During this stage citizens are allowed to endorse all potential nominees who they want to advance to the next round. This method is called Approval Voting.',
+  },
+  {
+    id: 'find-contestants',
+    question: 'How can I find contestants to endorse?',
+    answer:
+      'All prospective candidates are required to state their position on seven issues for the upcoming Congressional term. Answer the quiz for issues that matter to you and find those who match or go to the For You page.',
+  },
+  {
+    id: 'submit-endorsements',
+    question: 'How do I submit my endorsements?',
+    answer:
+      'You can bookmark your favorite candidates and endorse them all at once, or one at a time. The app will require ID verification each time endorsements are submitted. Once transmitted, your endorsements for that round cannot be changed.',
+  },
+];
+
 // Round-specific FAQs
 const ROUND_FAQS: Partial<Record<ContestRoundId, FAQ[]>> = {
-  round_1_endorsement: [
-    {
-      id: 'how-many-advance-r1',
-      question: 'How many candidates advance from Round 1?',
-      answer:
-        'The top 20 candidates by endorsement count will advance to Round 2. You can endorse as many candidates as you like — this is approval voting.',
-    },
-    {
-      id: 'what-happens-endorsements',
-      question: 'What happens to my endorsements after this round?',
-      answer:
-        'Each round starts fresh. In the next round, you will endorse again from the remaining candidates. This ensures each round reflects current voter preferences.',
-    },
-  ],
-  round_2_endorsement: [
-    {
-      id: 'how-many-advance-r2',
-      question: 'How many candidates advance from Round 2?',
-      answer:
-        'The top 10 candidates by endorsement count will advance to Round 3. If candidates are tied at the cutoff, the tie is broken by trending score.',
-    },
-  ],
-  round_3_endorsement: [
-    {
-      id: 'how-many-advance-r3',
-      question: 'How many candidates advance from Round 3?',
-      answer:
-        'The top 4 candidates will advance to the Virtual Town Hall, where the voting method changes to ranked choice.',
-    },
-  ],
+  round_1_endorsement: ENDORSEMENT_ROUND_FAQS,
+  round_2_endorsement: ENDORSEMENT_ROUND_FAQS,
+  round_3_endorsement: ENDORSEMENT_ROUND_FAQS,
   virtual_town_hall: [
     {
       id: 'ranked-choice',
