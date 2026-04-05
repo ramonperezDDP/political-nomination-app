@@ -126,6 +126,14 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
         }
       }
 
+      // Reseed if round labels are outdated (e.g., "First Round: Endorsement" → "Endorsement One")
+      const outdated = rounds.find((r) => r.id === 'round_1_endorsement');
+      if (outdated && outdated.label !== 'Endorsement One') {
+        console.log('Round labels outdated — reseeding...');
+        await seedContestRounds();
+        rounds = await getContestRounds();
+      }
+
       // Filter out legacy pre_nomination round (Firestore doc retained for audit trail)
       rounds = rounds.filter((r) => r.id !== 'pre_nomination');
 
