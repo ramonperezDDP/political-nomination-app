@@ -51,16 +51,22 @@ const ROUND_FAQS: Partial<Record<ContestRoundId, FAQ[]>> = {
   round_3_endorsement: ENDORSEMENT_ROUND_FAQS,
   virtual_town_hall: [
     {
-      id: 'ranked-choice',
-      question: 'How does ranked choice voting work?',
+      id: 'town-hall-content',
+      question: 'Does the Virtual Town Hall offer any new content?',
       answer:
-        'Instead of endorsing multiple candidates, you rank them in order of preference. The candidate with the fewest first-choice votes is eliminated, and their voters\' second choices are redistributed. This continues until 2 candidates remain.',
+        'Yes. The remaining four contestants will provide video responses to additional questions as determined by a local committee.',
     },
     {
-      id: 'town-hall-format',
-      question: 'What is the Virtual Town Hall?',
+      id: 'town-hall-weigh-in',
+      question: 'How do I weigh in?',
       answer:
-        'The Virtual Town Hall is a live event where the remaining 4 candidates present their platform and answer questions. After watching, you cast your ranked choice vote.',
+        'Citizens submit their ranking of the four remaining potential nominees. The top two advance to a final debate.',
+    },
+    {
+      id: 'voting-methods',
+      question: 'What voting methods will be evaluated?',
+      answer:
+        'Ranked Choice, STAR, Pick Two and Approval. Try all of the voting methods and weigh in using the one you like the best. This information will be collected to help determine which method will be chosen. Results will be published on our website.',
     },
   ],
   debate: [
