@@ -34,6 +34,8 @@ export default function MyEndorsementsScreen() {
   const { endorsements, bookmarks, revokeEndorsement, removeBookmark, reEndorseFromBookmark, fetchBookmarks } = useUserStore();
   const currentRoundId = useConfigStore(selectCurrentRoundId);
 
+  const selectedDistrict = useUserStore((s) => s.selectedBrowsingDistrict) || 'PA-01';
+
   const [activeTab, setActiveTab] = useState<TabValue>('endorsements');
   const [endorsedCandidates, setEndorsedCandidates] = useState<EndorsedCandidateInfo[]>([]);
   const [bookmarkedCandidates, setBookmarkedCandidates] = useState<BookmarkedCandidateInfo[]>([]);
@@ -258,8 +260,8 @@ export default function MyEndorsementsScreen() {
     return <LoadingScreen message="Loading..." />;
   }
 
-  const activeEndorsements = endorsedCandidates.filter(e => e.candidate !== null);
-  const activeBookmarks = bookmarkedCandidates.filter(b => b.candidate !== null);
+  const activeEndorsements = endorsedCandidates.filter(e => e.candidate !== null && e.candidate.district === selectedDistrict);
+  const activeBookmarks = bookmarkedCandidates.filter(b => b.candidate !== null && b.candidate.district === selectedDistrict);
 
   return (
     <SafeAreaView
