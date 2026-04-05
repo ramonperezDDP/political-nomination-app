@@ -40,7 +40,7 @@ export default function VerificationChecklist() {
     },
     {
       id: 'questionnaire',
-      label: 'Policy Quiz',
+      label: 'Your Quiz',
       icon: 'clipboard-check' as const,
       status: user.onboarding?.questionnaire || 'incomplete',
       route: '/(main)/quiz',

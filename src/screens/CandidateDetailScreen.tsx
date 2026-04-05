@@ -259,7 +259,7 @@ export default function CandidateProfileScreen() {
           <EmptyState
             icon="clipboard-list-outline"
             title="No quiz responses yet"
-            message="This candidate hasn't answered the policy quiz yet"
+            message="This candidate hasn't answered their quiz yet"
           />
         </View>
       );

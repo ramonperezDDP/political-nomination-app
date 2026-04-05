@@ -11,7 +11,7 @@ interface GatedFeatureProps {
   children: React.ReactNode;
   /** Short label for what's locked (e.g., "Alignment Score") */
   featureLabel: string;
-  /** What the user needs to do (e.g., "Complete the policy quiz") */
+  /** What the user needs to do (e.g., "Complete your quiz") */
   unlockPrompt: string;
   /** Where tapping the locked state navigates to */
   unlockRoute?: string;

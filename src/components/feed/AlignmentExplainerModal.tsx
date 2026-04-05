@@ -108,7 +108,7 @@ export default function AlignmentExplainerModal({
 
           {sharedCount === 0 && (
             <Text variant="bodyMedium" style={{ color: theme.colors.outline, textAlign: 'center', marginTop: 8 }}>
-              Complete the quiz to see your alignment with this candidate.
+              Complete your quiz to see your alignment with this candidate.
             </Text>
           )}
         </Pressable>

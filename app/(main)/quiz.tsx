@@ -137,7 +137,7 @@ export default function QuizScreen() {
           <Pressable onPress={() => router.back()} style={styles.webBackButton}>
             <MaterialCommunityIcons name="arrow-left" size={24} color={theme.colors.onSurface} />
             <Text variant="titleMedium" style={{ color: theme.colors.onSurface, marginLeft: 8 }}>
-              Policy Quiz
+              Your Quiz
             </Text>
           </Pressable>
         </View>

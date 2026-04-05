@@ -21,7 +21,7 @@ interface FilterOption {
 }
 
 const FILTER_OPTIONS: FilterOption[] = [
-  { id: 'issues', label: 'My Issues', icon: 'clipboard-list', disabledDescription: 'Complete the quiz to unlock' },
+  { id: 'issues', label: 'My Issues', icon: 'clipboard-list', disabledDescription: 'Complete your quiz to unlock' },
   { id: 'location', label: 'My Area', icon: 'map-marker', disabledDescription: '' },
 ];
 

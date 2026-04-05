@@ -53,7 +53,7 @@ export default function QuizPromptCard({ height }: QuizPromptCardProps) {
           buttonColor="#fff"
           textColor={theme.colors.primary}
         >
-          {completedCount === 0 ? 'Take the Quiz' : 'Continue Quiz'}
+          {completedCount === 0 ? 'Take Your Quiz' : 'Continue Your Quiz'}
         </Button>
 
         <Text variant="bodySmall" style={styles.scrollHint}>

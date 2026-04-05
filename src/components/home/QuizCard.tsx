@@ -71,7 +71,7 @@ export default function QuizCard({ completedCount, totalCount, answeredQuestionI
       <View style={styles.content}>
         <View style={styles.header}>
           <Text variant="titleMedium" style={styles.title}>
-            Policy Quiz
+            Your Quiz
           </Text>
           <Text variant="bodySmall" style={{ color: theme.colors.outline }}>
             {completedCount}/{totalCount} completed
