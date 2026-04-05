@@ -558,6 +558,7 @@ Now switching districts causes both the Leaderboard and For You feed to re-fetch
 | Duplicate tab header | `_layout.tsx` | `headerShown: false` on leaderboard tab |
 | Vimeo video embed | `VideoCard.tsx` | iframe (web) + WebView (native) for inline playback |
 | District filtering | `firestore.ts`, `firestore.web.ts`, `leaderboard.tsx`, `for-you.tsx` | Filter candidates by selected district |
+| Phone frame Chrome fix | `+html.tsx` | Lowered mobile breakpoint from 700px to 580px height |
 
 ---
 

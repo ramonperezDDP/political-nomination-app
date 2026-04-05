@@ -77,9 +77,10 @@ export default function AppHeader({ hideDistrictPicker, showBack }: AppHeaderPro
           style={{
             color: debugRoundOverride ? theme.colors.error : theme.colors.outline,
             fontWeight: debugRoundOverride ? '700' : undefined,
+            textAlign: 'center',
           }}
         >
-          {roundLabel}
+          {roundLabel.replace(/(\S+)\s+(\S+)$/, '$1\n$2')}
         </Text>
       </Pressable>
 
