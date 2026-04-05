@@ -86,15 +86,15 @@ const ROUND_FAQS: Partial<Record<ContestRoundId, FAQ[]>> = {
   final_results: [
     {
       id: 'results',
-      question: 'Where can I see the results?',
+      question: 'Where can I find the results?',
       answer:
-        "The final results are displayed on the Leaderboard tab. The winner is America's Main Street Party nominee.",
+        'Results for each round will be published on the AMSP website. Links will be available here once results are finalized.',
     },
     {
       id: 'audit',
-      question: 'Are the results auditable?',
+      question: 'Will the results be audited?',
       answer:
-        'Yes. Every round transition, vote tally, and elimination is logged in an immutable audit trail. Results can be independently verified.',
+        'The party audits the results and verifies that all contest rules were adhered to while citizens monitor virtual polling locations to help ensure data integrity.',
     },
   ],
 };
