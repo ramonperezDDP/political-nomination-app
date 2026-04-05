@@ -80,7 +80,6 @@ export default function AppHeader({ hideDistrictPicker, showBack }: AppHeaderPro
           }}
         >
           {roundLabel}
-          {debugRoundOverride ? ' ⟳' : ''}
         </Text>
       </Pressable>
 
