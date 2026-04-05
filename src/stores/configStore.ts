@@ -129,9 +129,13 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
       // Reseed if round labels are outdated (e.g., "First Round: Endorsement" → "Endorsement One")
       const outdated = rounds.find((r) => r.id === 'round_1_endorsement');
       if (outdated && outdated.label !== 'Endorsement One') {
-        console.log('Round labels outdated — reseeding...');
-        await seedContestRounds();
-        rounds = await getContestRounds();
+        try {
+          console.log('Round labels outdated — reseeding...');
+          await seedContestRounds();
+          rounds = await getContestRounds();
+        } catch (reseedError) {
+          console.warn('Reseed failed (may lack write permission), continuing with existing data:', reseedError);
+        }
       }
 
       // Filter out legacy pre_nomination round (Firestore doc retained for audit trail)
