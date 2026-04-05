@@ -187,7 +187,7 @@ async function applyEndorsementCutoffs(cutoffs: any[]) {
 async function notifyUsersOfStageChange(stage: string) {
   const stageMessages: Record<string, { title: string; body: string }> = {
     round_1_endorsement: {
-      title: 'First Round: Endorsement',
+      title: 'Endorsement One',
       body: 'The endorsement round is now open. Browse candidates and endorse those who align with your values.',
     },
     nomination: {

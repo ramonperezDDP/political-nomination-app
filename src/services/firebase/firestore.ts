@@ -1890,9 +1890,9 @@ export const getContestRounds = async (): Promise<ContestRound[]> => {
 };
 
 const CONTEST_ROUNDS_SEED: Omit<ContestRound, 'startDate' | 'endDate'>[] = [
-  { id: 'round_1_endorsement', label: 'First Round: Endorsement', shortLabel: 'Round 1', order: 1, votingMethod: 'approval', isEndorsementRound: true, candidatesEntering: 100, candidatesAdvancing: 20, tieBreakPolicy: 'advance_all_tied' },
-  { id: 'round_2_endorsement', label: 'Second Round: Endorsement', shortLabel: 'Round 2', order: 2, votingMethod: 'approval', isEndorsementRound: true, candidatesEntering: 20, candidatesAdvancing: 10, tieBreakPolicy: 'trending_score' },
-  { id: 'round_3_endorsement', label: 'Third Round: Endorsement', shortLabel: 'Round 3', order: 3, votingMethod: 'approval', isEndorsementRound: true, candidatesEntering: 10, candidatesAdvancing: 4, tieBreakPolicy: 'trending_score' },
+  { id: 'round_1_endorsement', label: 'Endorsement One', shortLabel: 'Round 1', order: 1, votingMethod: 'approval', isEndorsementRound: true, candidatesEntering: 100, candidatesAdvancing: 20, tieBreakPolicy: 'advance_all_tied' },
+  { id: 'round_2_endorsement', label: 'Endorsement Two', shortLabel: 'Round 2', order: 2, votingMethod: 'approval', isEndorsementRound: true, candidatesEntering: 20, candidatesAdvancing: 10, tieBreakPolicy: 'trending_score' },
+  { id: 'round_3_endorsement', label: 'Endorsement Three', shortLabel: 'Round 3', order: 3, votingMethod: 'approval', isEndorsementRound: true, candidatesEntering: 10, candidatesAdvancing: 4, tieBreakPolicy: 'trending_score' },
   { id: 'virtual_town_hall', label: 'Virtual Town Hall', shortLabel: 'Town Hall', order: 4, votingMethod: 'ranked_choice', isEndorsementRound: false, candidatesEntering: 4, candidatesAdvancing: 2, tieBreakPolicy: 'admin_decision' },
   { id: 'debate', label: 'Debate', shortLabel: 'Debate', order: 5, votingMethod: 'pick_one', isEndorsementRound: false, candidatesEntering: 2, candidatesAdvancing: 1, tieBreakPolicy: 'admin_decision' },
   { id: 'final_results', label: 'Final Results', shortLabel: 'Results', order: 6, votingMethod: 'none', isEndorsementRound: false, candidatesEntering: 1, candidatesAdvancing: null, tieBreakPolicy: 'advance_all_tied' },

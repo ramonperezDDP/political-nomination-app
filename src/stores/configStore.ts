@@ -207,7 +207,7 @@ export const selectIsEndorsementRound = (state: ConfigState): boolean =>
   state.currentRound?.isEndorsementRound || false;
 
 export const selectCurrentRoundLabel = (state: ConfigState): string =>
-  state.currentRound?.label || 'First Round: Endorsement';
+  state.currentRound?.label || 'Endorsement One';
 
 export const selectContestTimeline = (state: ConfigState): ContestRound[] =>
   state.contestRounds;
