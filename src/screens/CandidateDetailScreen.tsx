@@ -311,11 +311,6 @@ export default function CandidateProfileScreen() {
                       <Text style={{ color: theme.colors.outline, fontSize: 12 }}>{option.text}</Text>
                     </Text>
                     <View style={{ flexDirection: 'row', gap: 4 }}>
-                      {isCandidatePick && (
-                        <View style={{ backgroundColor: theme.colors.outline, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8 }}>
-                          <Text variant="labelSmall" style={{ color: '#fff', fontSize: 10, fontWeight: '600' }}>Candidate</Text>
-                        </View>
-                      )}
                       {isUserPick && (
                         <View style={{ backgroundColor: theme.colors.primary, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8 }}>
                           <Text variant="labelSmall" style={{ color: '#fff', fontSize: 10, fontWeight: '600' }}>You</Text>
