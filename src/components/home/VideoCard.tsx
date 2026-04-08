@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, View, Platform } from 'react-native';
-import { Text, useTheme } from 'react-native-paper';
+import { Text } from 'react-native-paper';
 
 import { Card } from '@/components/ui';
 
@@ -13,8 +13,6 @@ const WebView = Platform.OS !== 'web'
   : null;
 
 export default function VideoCard() {
-  const theme = useTheme();
-
   // On web, embed the Vimeo player inline via iframe
   if (Platform.OS === 'web') {
     return (
@@ -30,9 +28,6 @@ export default function VideoCard() {
         <View style={styles.info}>
           <Text variant="titleMedium" style={styles.title}>
             A Brand New Way
-          </Text>
-          <Text variant="bodySmall" style={{ color: theme.colors.outline }}>
-            Learn how our democratic nomination process works
           </Text>
         </View>
       </Card>
@@ -67,9 +62,6 @@ export default function VideoCard() {
       <View style={styles.info}>
         <Text variant="titleMedium" style={styles.title}>
           A Brand New Way
-        </Text>
-        <Text variant="bodySmall" style={{ color: theme.colors.outline }}>
-          Learn how our democratic nomination process works
         </Text>
       </View>
     </Card>
