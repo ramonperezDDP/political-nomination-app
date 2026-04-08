@@ -13,6 +13,8 @@ install! 'cocoapods',
 
 prepare_react_native_project!
 
+project 'PoliticalNomination'
+
 target 'PoliticalNomination' do
   use_frameworks! :linkage => :static
   use_expo_modules!
@@ -62,6 +64,18 @@ target 'PoliticalNomination' do
           config.build_settings['CODE_SIGNING_ALLOWED'] = 'NO'
         end
       end
+    end
+
+    # Fix fmt/gRPC build error with newer Xcode/Clang (consteval compatibility)
+    # Patch fmt base.h to disable consteval on all Apple clang versions
+    fmt_base = File.join(__dir__, 'Pods', 'fmt', 'include', 'fmt', 'base.h')
+    if File.exist?(fmt_base)
+      content = File.read(fmt_base)
+      patched = content.gsub(
+        /defined\(__apple_build_version__\) && __apple_build_version__ < \d+L/,
+        'defined(__apple_build_version__)'
+      )
+      File.write(fmt_base, patched) if patched != content
     end
   end
 end

@@ -73,7 +73,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
               email: firebaseUser.email || '',
               firstName: '',
               lastName: '',
-              displayName: firebaseUser.isAnonymous ? 'Anonymous' : (firebaseUser.displayName || ''),
+              displayName: firebaseUser.isAnonymous ? 'Your Name' : (firebaseUser.displayName || ''),
               isAnonymous: firebaseUser.isAnonymous,
               role: 'constituent',
               verification: {

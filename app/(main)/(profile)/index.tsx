@@ -28,7 +28,9 @@ export default function ProfileScreen() {
 
   const [showSignOutModal, setShowSignOutModal] = React.useState(false);
 
-
+  const displayName = user?.displayName && user.displayName !== 'Anonymous'
+    ? user.displayName
+    : 'Your Name';
 
   const handleSignOut = async () => {
     await signOut();
@@ -64,13 +66,13 @@ export default function ProfileScreen() {
           id: 'personal-info',
           icon: 'account-edit',
           label: 'Personal Information',
-          description: 'Update your name and contact details',
+          description: 'Update your contact details',
           onPress: () => router.push('/(main)/(profile)/personal-info' as any),
         },
         {
           id: 'endorsements',
           icon: 'thumb-up',
-          label: 'Endorsements & Bookmarks',
+          label: 'Endorsements',
           description: '',
           onPress: () => router.push('/(main)/(profile)/endorsements' as any),
         },
@@ -156,12 +158,12 @@ export default function ProfileScreen() {
         <View style={styles.header}>
           <UserAvatar
             photoUrl={user?.photoUrl || undefined}
-            displayName={user?.displayName || 'Your Name'}
+            displayName={displayName}
             size={80}
           />
           <View style={styles.headerInfo}>
             <Text variant="headlineSmall" style={styles.displayName}>
-              {user?.displayName || 'Your Name'}
+              {displayName}
             </Text>
             <Text variant="bodyMedium" style={{ color: theme.colors.outline }}>
               {user?.email}
