@@ -127,31 +127,11 @@ export default function ProfileScreen() {
         },
       ],
     },
-    {
-      title: 'Legal',
-      items: [
-        {
-          id: 'terms',
-          icon: 'file-document',
-          label: 'Terms of Service',
-          description: undefined,
-          onPress: () => openUrl('https://politicalnomination.app/terms'),
-        },
-        {
-          id: 'privacy',
-          icon: 'shield-lock',
-          label: 'Privacy Policy',
-          description: undefined,
-          onPress: () => openUrl('https://politicalnomination.app/privacy'),
-        },
-      ],
-    },
   ];
 
   return (
-    <SafeAreaView
+    <View
       style={[styles.container, { backgroundColor: theme.colors.background }]}
-      edges={['top']}
     >
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Profile Header */}
@@ -320,7 +300,7 @@ export default function ProfileScreen() {
         confirmLabel="Sign Out"
         cancelLabel="Cancel"
       />
-    </SafeAreaView>
+    </View>
   );
 }
 
