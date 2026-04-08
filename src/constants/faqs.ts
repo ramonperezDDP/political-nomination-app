@@ -7,20 +7,7 @@ export interface FAQ {
 }
 
 // Base FAQs shown in every round
-const BASE_FAQS: FAQ[] = [
-  {
-    id: 'alignment',
-    question: 'What is the alignment score?',
-    answer:
-      "The alignment score shows how closely a candidate's positions match your preferences based on the questionnaire you completed. A higher score means better alignment with your values.",
-  },
-  {
-    id: 'preferences',
-    question: 'Can I change my policy preferences?',
-    answer:
-      'Yes! You can update your policy preferences anytime in your profile settings. Your alignment scores will automatically recalculate based on your updated preferences.',
-  },
-];
+const BASE_FAQS: FAQ[] = [];
 
 // Shared endorsement round FAQs (used by all three endorsement rounds)
 const ENDORSEMENT_ROUND_FAQS: FAQ[] = [
