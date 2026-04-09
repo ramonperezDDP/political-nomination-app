@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { StyleSheet, View, Pressable, Modal, ScrollView, Animated, Platform } from 'react-native';
-import { Text, useTheme } from 'react-native-paper';
+import { Text, Portal, useTheme } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { Card } from '@/components/ui';
@@ -57,14 +57,41 @@ export default function AboutContestCard() {
 
   if (displayRounds.length === 0) return null;
 
+  const isWeb = Platform.OS === 'web';
+
+  const [webMounted, setWebMounted] = useState(false);
+  const [webAnimating, setWebAnimating] = useState(false);
+  useEffect(() => {
+    if (!isWeb) return;
+    if (visible) {
+      setWebMounted(true);
+      requestAnimationFrame(() => requestAnimationFrame(() => setWebAnimating(true)));
+    } else {
+      setWebAnimating(false);
+      const timer = setTimeout(() => setWebMounted(false), 300);
+      return () => clearTimeout(timer);
+    }
+  }, [visible, isWeb]);
+
+  const sheetStyle = isWeb
+    ? [styles.sheet, {
+        backgroundColor: theme.colors.surface,
+        transform: [{ translateY: webAnimating ? 0 : 400 }],
+        transition: 'transform 0.3s ease-out',
+        boxShadow: '0 -4px 20px rgba(0,0,0,0.15)',
+      } as any]
+    : [styles.sheet, { backgroundColor: theme.colors.surface, transform: [{ translateY: slideAnim }] }];
+
   const sheetContent = (
-    <View style={Platform.OS === 'web' ? styles.webBackdrop : styles.backdrop}>
-      <Animated.View style={[styles.backdropOverlay, { opacity: backdropAnim }]}>
+    <View style={isWeb ? styles.webBackdrop : styles.backdrop}>
+      {isWeb ? (
         <Pressable style={StyleSheet.absoluteFill} onPress={() => setVisible(false)} />
-      </Animated.View>
-      <Animated.View
-        style={[styles.sheet, { backgroundColor: theme.colors.surface, transform: [{ translateY: slideAnim }] }]}
-      >
+      ) : (
+        <Animated.View style={[styles.backdropOverlay, { opacity: backdropAnim }]}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setVisible(false)} />
+        </Animated.View>
+      )}
+      <Animated.View style={sheetStyle}>
         <View style={[styles.handle, { backgroundColor: theme.colors.outlineVariant }]} />
 
         <Text variant="titleMedium" style={styles.sheetTitle}>
@@ -137,8 +164,8 @@ export default function AboutContestCard() {
     </View>
   );
 
-  const modal = Platform.OS === 'web' ? (
-    visible ? sheetContent : null
+  const modal = isWeb ? (
+    webMounted ? <Portal>{sheetContent}</Portal> : null
   ) : (
     <Modal
       visible={visible}
@@ -193,7 +220,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   webBackdrop: {
-    position: 'fixed' as any,
+    position: 'absolute' as any,
     top: 0,
     left: 0,
     right: 0,

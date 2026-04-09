@@ -226,7 +226,40 @@ export default function VoterHome() {
   const currentRoundId = useConfigStore(selectCurrentRoundId);
   const faqs = useMemo(() => getFaqsForRound(currentRoundId), [currentRoundId]);
 
-  return (
+  // Web overlay sheets — rendered outside ScrollView via renderOverlays callback
+  const overlays = (
+    <>
+      {activeQuestionId && (
+        <QuizBottomSheet
+          visible={!!activeQuestionId}
+          question={activeQuestion}
+          currentAnswer={currentAnswerForActive}
+          onAnswer={handleAnswer}
+          onClear={handleClear}
+          onDismiss={handleDismiss}
+          saving={saving}
+          error={saveError}
+        />
+      )}
+      <CharacterSearchSheet
+        visible={showCharacterSearch}
+        onDismiss={() => setShowCharacterSearch(false)}
+        district={selectedDistrict}
+      />
+      <FilterByAreaSheet
+        visible={showFilterByArea}
+        onDismiss={() => setShowFilterByArea(false)}
+        district={selectedDistrict}
+      />
+      <VerifyIdentitySheet
+        visible={showVerifyIdentity}
+        onDismiss={() => setShowVerifyIdentity(false)}
+      />
+    </>
+  );
+
+
+  const content = (
     <View style={styles.container}>
       {/* 1. Video — "A Brand New Way" */}
       <VideoCard />
@@ -251,19 +284,6 @@ export default function VoterHome() {
         </Text>
       )}
 
-      {activeQuestionId && (
-        <QuizBottomSheet
-          visible={!!activeQuestionId}
-          question={activeQuestion}
-          currentAnswer={currentAnswerForActive}
-          onAnswer={handleAnswer}
-          onClear={handleClear}
-          onDismiss={handleDismiss}
-          saving={saving}
-          error={saveError}
-        />
-      )}
-
       {/* 3. Character Search */}
       <ContentCard
         icon="account-search"
@@ -271,12 +291,6 @@ export default function VoterHome() {
         subtitle=""
         onPress={() => setShowCharacterSearch(true)}
       />
-      <CharacterSearchSheet
-        visible={showCharacterSearch}
-        onDismiss={() => setShowCharacterSearch(false)}
-        district={selectedDistrict}
-      />
-
       {/* 3b. Filter by Area */}
       <ContentCard
         icon="map-marker-radius"
@@ -284,12 +298,6 @@ export default function VoterHome() {
         subtitle=""
         onPress={() => setShowFilterByArea(true)}
       />
-      <FilterByAreaSheet
-        visible={showFilterByArea}
-        onDismiss={() => setShowFilterByArea(false)}
-        district={selectedDistrict}
-      />
-
       {/* 4. Verify ID */}
       <ContentCard
         icon="shield-check"
@@ -298,11 +306,6 @@ export default function VoterHome() {
         onPress={() => setShowVerifyIdentity(true)}
         completed={user?.verification?.photoId === 'verified'}
       />
-      <VerifyIdentitySheet
-        visible={showVerifyIdentity}
-        onDismiss={() => setShowVerifyIdentity(false)}
-      />
-
       {/* 5. Submit / Endorse */}
       <ContentCard
         icon="thumb-up"
@@ -343,9 +346,14 @@ export default function VoterHome() {
 
       {/* 7. About The Contest */}
       <AboutContestCard />
+
+      {overlays}
     </View>
   );
+
+  return content;
 }
+
 
 const styles = StyleSheet.create({
   container: {},

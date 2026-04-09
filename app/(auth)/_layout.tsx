@@ -15,10 +15,8 @@ export default function AuthLayout() {
     return null;
   }
 
-  // If authenticated with a non-anonymous account, redirect to tabs
-  // Anonymous users can also access tabs (handled by tabs layout)
-  // but they should be able to reach auth screens to register/login
-  if (isAuthenticated && user && !user.isAnonymous) {
+  // If authenticated (including anonymous users in beta), redirect to tabs
+  if (isAuthenticated && user) {
     return <Redirect href="/(main)" />;
   }
 

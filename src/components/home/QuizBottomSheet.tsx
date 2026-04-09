@@ -1,6 +1,6 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { StyleSheet, View, Pressable, Modal, ScrollView, Animated, Platform } from 'react-native';
-import { Text, useTheme, RadioButton } from 'react-native-paper';
+import { Text, Portal, useTheme, RadioButton } from 'react-native-paper';
 
 import type { Question } from '@/types';
 
@@ -44,6 +44,22 @@ export default function QuizBottomSheet({
     }
   }, [visible]);
 
+  const isWeb = Platform.OS === 'web';
+
+  const [webMounted, setWebMounted] = useState(false);
+  const [webAnimating, setWebAnimating] = useState(false);
+  useEffect(() => {
+    if (!isWeb) return;
+    if (visible) {
+      setWebMounted(true);
+      requestAnimationFrame(() => requestAnimationFrame(() => setWebAnimating(true)));
+    } else {
+      setWebAnimating(false);
+      const timer = setTimeout(() => setWebMounted(false), 300);
+      return () => clearTimeout(timer);
+    }
+  }, [visible, isWeb]);
+
   if (!question) return null;
 
   const handleOptionPress = (spectrumValue: number) => {
@@ -51,14 +67,25 @@ export default function QuizBottomSheet({
     onAnswer(spectrumValue);
   };
 
+  const sheetStyle = isWeb
+    ? [styles.sheet, {
+        backgroundColor: theme.colors.surface,
+        transform: [{ translateY: webAnimating ? 0 : 400 }],
+        transition: 'transform 0.3s ease-out',
+        boxShadow: '0 -4px 20px rgba(0,0,0,0.15)',
+      } as any]
+    : [styles.sheet, { backgroundColor: theme.colors.surface, transform: [{ translateY: slideAnim }] }];
+
   const sheetContent = (
-    <View style={Platform.OS === 'web' ? styles.webBackdrop : styles.backdrop}>
-      <Animated.View style={[styles.backdropOverlay, { opacity: backdropAnim }]}>
+    <View style={isWeb ? styles.webBackdrop : styles.backdrop}>
+      {isWeb ? (
         <Pressable style={StyleSheet.absoluteFill} onPress={onDismiss} />
-      </Animated.View>
-      <Animated.View
-        style={[styles.sheet, { backgroundColor: theme.colors.surface, transform: [{ translateY: slideAnim }] }]}
-      >
+      ) : (
+        <Animated.View style={[styles.backdropOverlay, { opacity: backdropAnim }]}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={onDismiss} />
+        </Animated.View>
+      )}
+      <Animated.View style={sheetStyle}>
         <View style={[styles.handle, { backgroundColor: theme.colors.outlineVariant }]} />
 
         <Text
@@ -136,10 +163,10 @@ export default function QuizBottomSheet({
     </View>
   );
 
-  // On web, Modal renders outside the phone frame via Portal. Use inline overlay instead.
-  if (Platform.OS === 'web') {
-    if (!visible) return null;
-    return sheetContent;
+  // On web, use Portal to render outside ScrollView, position:absolute to stay in phone frame.
+  if (isWeb) {
+    if (!webMounted) return null;
+    return <Portal>{sheetContent}</Portal>;
   }
 
   return (
@@ -160,7 +187,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   webBackdrop: {
-    position: 'fixed' as any,
+    position: 'absolute' as any,
     top: 0,
     left: 0,
     right: 0,

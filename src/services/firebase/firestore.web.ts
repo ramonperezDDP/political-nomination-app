@@ -1458,6 +1458,29 @@ export const updateSingleQuizResponse = async (
   return updated;
 };
 
+// Remove a single quiz response by questionId
+export const clearQuizResponse = async (
+  userId: string,
+  questionId: string
+): Promise<QuestionnaireResponse[]> => {
+  const userRef = doc(db, Collections.USERS, userId);
+  const userSnap = await getDoc(userRef);
+  if (!userSnap.exists()) throw new Error('User not found');
+
+  const userData = userSnap.data() as User;
+  const existing = userData.questionnaireResponses || [];
+  const updated = existing.filter((r) => r.questionId !== questionId);
+
+  const updates: Record<string, any> = {
+    questionnaireResponses: updated,
+    lastQuizActivityAt: Timestamp.now(),
+    updatedAt: Timestamp.now(),
+  };
+
+  await updateDoc(userRef, updates);
+  return updated;
+};
+
 // Check if questions exist and seed them if not
 export const ensureQuestionsExist = async (): Promise<void> => {
   try {

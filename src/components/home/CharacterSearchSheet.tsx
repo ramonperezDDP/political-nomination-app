@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { StyleSheet, View, Pressable, Modal, ScrollView, Animated, Platform, ActivityIndicator } from 'react-native';
-import { Text, useTheme } from 'react-native-paper';
+import { Text, Portal, useTheme } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 
@@ -141,14 +141,42 @@ export default function CharacterSearchSheet({ visible, onDismiss, district }: C
 
   const selectedQuestion = questions.find((q) => q.id === selectedQuestionId);
 
+  const isWeb = Platform.OS === 'web';
+
+  // Web: keep mounted during close animation
+  const [webMounted, setWebMounted] = useState(false);
+  const [webAnimating, setWebAnimating] = useState(false);
+  useEffect(() => {
+    if (!isWeb) return;
+    if (visible) {
+      setWebMounted(true);
+      requestAnimationFrame(() => requestAnimationFrame(() => setWebAnimating(true)));
+    } else {
+      setWebAnimating(false);
+      const timer = setTimeout(() => setWebMounted(false), 300);
+      return () => clearTimeout(timer);
+    }
+  }, [visible, isWeb]);
+
+  const sheetStyle = isWeb
+    ? [styles.sheet, {
+        backgroundColor: theme.colors.surface,
+        transform: [{ translateY: webAnimating ? 0 : 400 }],
+        transition: 'transform 0.3s ease-out',
+        boxShadow: '0 -4px 20px rgba(0,0,0,0.15)',
+      } as any]
+    : [styles.sheet, { backgroundColor: theme.colors.surface, transform: [{ translateY: slideAnim }] }];
+
   const sheetContent = (
-    <View style={Platform.OS === 'web' ? styles.webBackdrop : styles.backdrop}>
-      <Animated.View style={[styles.backdropOverlay, { opacity: backdropAnim }]}>
+    <View style={isWeb ? styles.webBackdrop : styles.backdrop}>
+      {isWeb ? (
         <Pressable style={StyleSheet.absoluteFill} onPress={handleDismiss} />
-      </Animated.View>
-      <Animated.View
-        style={[styles.sheet, { backgroundColor: theme.colors.surface, transform: [{ translateY: slideAnim }] }]}
-      >
+      ) : (
+        <Animated.View style={[styles.backdropOverlay, { opacity: backdropAnim }]}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={handleDismiss} />
+        </Animated.View>
+      )}
+      <Animated.View style={sheetStyle}>
         <View style={[styles.handle, { backgroundColor: theme.colors.outlineVariant }]} />
 
         <Text variant="titleMedium" style={styles.sheetTitle}>
@@ -268,9 +296,9 @@ export default function CharacterSearchSheet({ visible, onDismiss, district }: C
     </View>
   );
 
-  if (Platform.OS === 'web') {
-    if (!visible) return null;
-    return sheetContent;
+  if (isWeb) {
+    if (!webMounted) return null;
+    return <Portal>{sheetContent}</Portal>;
   }
 
   return (
@@ -291,7 +319,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   webBackdrop: {
-    position: 'fixed' as any,
+    position: 'absolute' as any,
     top: 0,
     left: 0,
     right: 0,
