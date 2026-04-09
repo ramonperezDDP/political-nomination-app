@@ -372,6 +372,57 @@ npx expo start --clear
 
 ## Web Build & Deployment Issues
 
+### Bottom Sheets Floating Outside Phone Frame (Web)
+
+**Symptom:** Bottom sheet modals (Quiz, Filter by Policy, Filter by Area, Verify Identity, About the Contest) appear at the wrong position on web — floating above the phone frame, extending beyond its edges, or anchored to the browser viewport instead of the phone screen.
+
+**Cause:** Multiple interacting CSS issues:
+1. The phone frame uses `transform: scale()` at certain viewport sizes, which creates a new CSS containing block — `position: fixed` children are positioned relative to the transformed element, not the viewport
+2. Sheets rendered inside a `ScrollView` are part of the scroll content, so `position: fixed/absolute` doesn't anchor to the visible area
+3. React Native Paper's `Portal` renders at the `PaperProvider` root, which is inside `#phone-screen > #root` — outside the ScrollView but inside the phone frame
+
+**Solution (current implementation):**
+1. **Use `Portal` from react-native-paper** to render sheets outside the ScrollView
+2. **Use `position: 'absolute'`** (not `fixed`) for the web backdrop — this positions relative to `#phone-screen` which has `position: relative`
+3. **Use CSS transitions** instead of React Native `Animated` on web — the Animated API with `useNativeDriver: true` doesn't work on web, and `translateY` transforms conflict with the phone frame's own transforms
+4. **Use double `requestAnimationFrame`** to ensure the browser paints the initial state before triggering the CSS transition
+5. **Remove the semi-transparent backdrop overlay** on web (it fills the entire browser window via Portal) but keep a transparent `Pressable` for dismiss-on-tap
+6. **No explicit width needed** — `position: absolute` with `left: 0; right: 0` naturally constrains to the phone frame width
+
+**Key pattern for web bottom sheets:**
+```typescript
+// Web animation state
+const [webMounted, setWebMounted] = useState(false);
+const [webAnimating, setWebAnimating] = useState(false);
+useEffect(() => {
+  if (!isWeb) return;
+  if (visible) {
+    setWebMounted(true);
+    requestAnimationFrame(() => requestAnimationFrame(() => setWebAnimating(true)));
+  } else {
+    setWebAnimating(false);
+    const timer = setTimeout(() => setWebMounted(false), 300);
+    return () => clearTimeout(timer);
+  }
+}, [visible, isWeb]);
+
+// Sheet style with CSS transition
+const sheetStyle = isWeb
+  ? [styles.sheet, {
+      backgroundColor: theme.colors.surface,
+      transform: [{ translateY: webAnimating ? 0 : 400 }],
+      transition: 'transform 0.3s ease-out',
+      boxShadow: '0 -4px 20px rgba(0,0,0,0.15)',
+    }]
+  : [styles.sheet, { backgroundColor: theme.colors.surface, transform: [{ translateY: slideAnim }] }];
+
+// Render with Portal on web
+if (isWeb) {
+  if (!webMounted) return null;
+  return <Portal>{sheetContent}</Portal>;
+}
+```
+
 ### "react-native-web not found" Error
 
 **Symptom:**

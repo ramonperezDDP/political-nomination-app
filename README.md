@@ -858,6 +858,9 @@ On desktop browsers, the web app renders inside a realistic iPhone mockup with t
 - **Video embed**: The home screen "A Brand New Way" Vimeo video plays inline on both web (iframe) and native (react-native-webview). The video card displays only the title with no subtitle.
 - **District filtering**: Switching districts on the Home screen updates the Leaderboard and For You feed to show only candidates from the selected district.
 - **Home screen modals**: Filter by Policy (search candidates by quiz position), Filter by Area (interactive SVG zone map), Verify Identity (beta disclaimer with instant verification), and About the Contest (timeline bottom sheet) all use a consistent bottom sheet pattern matching the quiz pop-up style.
+- **Bottom sheets on web**: All bottom sheets use React Native Paper's `Portal` to render outside the ScrollView, `position: absolute` to stay within the phone frame, and CSS transitions for smooth open/close animation. See TROUBLESHOOTING.md for the full pattern — `position: fixed` does not work because the phone frame's CSS `transform: scale()` creates a new containing block.
+- **Auth redirect**: Anonymous users are automatically redirected to the main app. The login/register screens are only shown when no Firebase auth session exists (e.g., first visit before anonymous sign-in completes).
+- **Web Firestore parity**: The `firestore.web.ts` file must implement all functions exported by `firestore.ts`. Missing functions (e.g., `clearQuizResponse`) will silently fall back to the native version, which uses `@react-native-firebase` APIs that fail on web.
 - **App icon and label**: The iOS home screen shows "AMSP" as the app label with the AMSP arches logo icon. The full app name remains "America's Main Street Party" internally.
 
 ### Option 2: Web Only (EC2)
