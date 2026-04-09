@@ -12,6 +12,7 @@ import VideoCard from './VideoCard';
 import QuizCard from './QuizCard';
 import QuizBottomSheet from './QuizBottomSheet';
 import ContentCard from './ContentCard';
+import CharacterSearchSheet from './CharacterSearchSheet';
 import AboutContestCard from './AboutContestCard';
 
 // PLAN-10C: New quiz question IDs by district
@@ -27,6 +28,7 @@ export default function VoterHome() {
   const setUser = useAuthStore((s) => s.setUser);
   const hasAccount = useUserStore(selectHasAccount);
   const [expandedFaq, setExpandedFaq] = useState<string | null>(null);
+  const [showCharacterSearch, setShowCharacterSearch] = useState(false);
 
   const selectedDistrict = useUserStore((s) => s.selectedBrowsingDistrict) || 'PA-01';
   const districtQuestionIds = QUIZ_QUESTION_IDS[selectedDistrict] || QUIZ_QUESTION_IDS['PA-01'];
@@ -217,8 +219,13 @@ export default function VoterHome() {
       <ContentCard
         icon="account-search"
         title="Character Search"
-        subtitle="Find candidates by name or policy position"
-        onPress={() => router.push('/(main)/(feed)' as any)}
+        subtitle="Find candidates by policy position"
+        onPress={() => setShowCharacterSearch(true)}
+      />
+      <CharacterSearchSheet
+        visible={showCharacterSearch}
+        onDismiss={() => setShowCharacterSearch(false)}
+        district={selectedDistrict}
       />
 
       {/* 4. Verify ID */}
