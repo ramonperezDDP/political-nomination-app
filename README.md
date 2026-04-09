@@ -23,8 +23,9 @@ A cross-platform mobile application for democratic nominations, built with React
 
 The America's Main Street Party App is a participatory democracy platform that enables:
 
-- **Anonymous visitors** to browse candidates, take the quiz, and explore the platform without creating an account (via Firebase Anonymous Auth)
-- **Registered voters** to discover candidates aligned with their policy preferences, unlock alignment scores, and provide endorsements after progressive identity verification
+- **Anonymous visitors** to browse candidates, take the policy quiz, and explore the platform without creating an account (via Firebase Anonymous Auth)
+- **All users (beta)** to instantly verify via an "I understand" acknowledgment and gain full endorsement access to both PA-01 and PA-02 districts — no email registration or real identity verification required in the beta
+- **Home screen tools** including Filter by Policy (search candidates by quiz position), Filter by Area (SVG zone map), and a quiz card showing real-time candidate match counts
 - **For You feed** with a full-screen TikTok-style vertical swipe experience, experience filters (Explore, My Area, My Issues, Top Picks), SVG location maps for zone-based browsing, and mass endorsement
 - **Candidates** to apply for nomination, build profiles, and track campaign metrics
 - **Administrators** to manage party configuration and contest stages
@@ -808,14 +809,15 @@ Consumer code (components, other stores) imports from `@/services/firebase/auth`
 The app uses a **progressive access model** built on Firebase Anonymous Authentication:
 
 1. **First launch**: `signInAnonymously()` creates a real Firebase UID and Firestore user document — no email/password required
-2. **Anonymous users** can browse candidates, take the quiz, set dealbreakers, and toggle between districts
-3. **Account upgrade**: When users register, `linkWithCredential()` upgrades the anonymous account in place — the UID stays the same and all Firestore data (quiz responses, dealbreakers, etc.) is preserved
-4. **Progressive verification**: Five independent dimensions (email, voter registration, photo ID, questionnaire, dealbreakers) unlock capabilities incrementally
+2. **Anonymous users** can browse candidates, take the quiz, and toggle between districts
+3. **Beta verification**: Users tap "Verify Identity" on the home screen and acknowledge a disclaimer via "I understand" — this instantly sets all verification fields to `verified` and grants access to both PA-01 and PA-02 districts. No email registration or real ID verification is required in the beta. The full verification infrastructure (Onfido, email, voter registration) is preserved in code for future activation
+4. **Account upgrade (production)**: When real verification is enabled, `linkWithCredential()` upgrades the anonymous account in place — the UID stays the same and all Firestore data (quiz responses, etc.) is preserved
 5. **Alignment scores gated on quiz**: Users who haven't completed the quiz see "?" on the For You feed and "N/A" on candidate cards, leaderboard, and candidate profiles
 6. **District-gated endorsements**: Users can browse any district but can only endorse candidates in their verified districts
 7. **Experience filters**: The For You feed supports 4 filter modes — Explore (random), My Area (SVG zone maps), My Issues (policy-aligned), and Top Picks (no dealbreakers). Filters unlock progressively as users complete the quiz and set dealbreakers
 8. **Mass endorsement**: After filtering, verified users can endorse all matching candidates in their district with a single action
-9. **Cleanup**: A scheduled Cloud Function (`cleanupAbandonedAnonymous`) runs daily to delete anonymous accounts inactive for 90+ days
+9. **Endorsement gating**: Unverified users who tap endorse buttons anywhere in the app (For You feed, candidate profiles, leaderboard) see the Verify Identity bottom sheet instead of the old "Endorsement Locked" modal
+10. **Cleanup**: A scheduled Cloud Function (`cleanupAbandonedAnonymous`) runs daily to delete anonymous accounts inactive for 90+ days
 
 ---
 
@@ -853,8 +855,10 @@ On desktop browsers, the web app renders inside a realistic iPhone mockup with t
 - **Icon fonts**: MaterialCommunityIcons are preloaded via `@font-face` in `app/+html.tsx` and via `useFonts()` in `app/_layout.tsx`. The `firebase.json` ignore pattern must use `node_modules/**` (not `**/node_modules/**`) to avoid excluding bundled font assets from deployment.
 - **Navigation**: Top-level routes outside tabs (`app/candidate/[id].tsx`, `app/quiz.tsx`) include web-only back buttons since the web layout uses `<Slot />` instead of `<Stack>` (see docs/TROUBLESHOOTING.md for context). Back navigation uses `?from=` query params to return to the correct tab.
 - **For You feed sizing**: On web, `useWindowDimensions()` returns browser window dimensions, not the phone frame dimensions. The For You page uses `onLayout` to measure the actual container height, and `FullScreenPSA` uses `width: '100%'` instead of explicit pixel width. All sizing fixes are behind `Platform.OS === 'web'` guards — native code paths are untouched.
-- **Video embed**: The home screen "A Brand New Way" Vimeo video plays inline on both web (iframe) and native (react-native-webview).
+- **Video embed**: The home screen "A Brand New Way" Vimeo video plays inline on both web (iframe) and native (react-native-webview). The video card displays only the title with no subtitle.
 - **District filtering**: Switching districts on the Home screen updates the Leaderboard and For You feed to show only candidates from the selected district.
+- **Home screen modals**: Filter by Policy (search candidates by quiz position), Filter by Area (interactive SVG zone map), Verify Identity (beta disclaimer with instant verification), and About the Contest (timeline bottom sheet) all use a consistent bottom sheet pattern matching the quiz pop-up style.
+- **App icon and label**: The iOS home screen shows "AMSP" as the app label with the AMSP arches logo icon. The full app name remains "America's Main Street Party" internally.
 
 ### Option 2: Web Only (EC2)
 
@@ -965,7 +969,7 @@ npx expo export --platform web
 #### Firebase Connection Issues
 
 1. Verify environment variables are set correctly (web only)
-2. Verify `GoogleService-Info.plist` exists in project root (iOS)
+2. Verify `GoogleService-Info.plist` exists in **both** the project root **and** `ios/PoliticalNomination/` (iOS requires both locations)
 3. Verify `google-services.json` exists in `android/app/` (Android)
 4. Check Firebase project settings
 5. Ensure Firestore/Auth services are enabled

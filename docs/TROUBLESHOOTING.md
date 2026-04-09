@@ -184,6 +184,69 @@ target 'PoliticalNomination' do
 
 3. Then run `cd ios && pod install && cd ..`
 
+### Error: fmt/gRPC `consteval` Build Failure (Xcode 16.3+)
+
+**Symptom:**
+```
+call to consteval function 'fmt::basic_format_string<...>::basic_format_string<FMT_COMPILE_STRING, 0>' is not a constant expression
+```
+Multiple errors in `ios/Pods/fmt/include/fmt/format-inl.h`.
+
+**Cause:** The `fmt` library used by gRPC (a Firebase Firestore dependency) enables C++20 `consteval` on newer Apple Clang versions, but the implementation is broken.
+
+**Solution:** The `ios/Podfile` includes a `post_install` hook that patches `fmt/base.h` to disable `consteval` on all Apple Clang versions:
+
+```ruby
+# In post_install block:
+fmt_base = File.join(__dir__, 'Pods', 'fmt', 'include', 'fmt', 'base.h')
+if File.exist?(fmt_base)
+  content = File.read(fmt_base)
+  patched = content.gsub(
+    /defined\(__apple_build_version__\) && __apple_build_version__ < \d+L/,
+    'defined(__apple_build_version__)'
+  )
+  File.write(fmt_base, patched) if patched != content
+end
+```
+
+This patch is applied automatically after `pod install`. If you run `pod install` manually and still get the error, verify the patch is in the Podfile's `post_install` block.
+
+### Error: "Could not automatically select an Xcode project"
+
+**Symptom:**
+```
+Command `pod install` failed.
+Could not automatically select an Xcode project. Specify one in your Podfile.
+```
+
+**Cause:** The `ios/` directory contains two `.xcodeproj` files (`PoliticalNomination.xcodeproj` and `AmericasMainStreetParty.xcodeproj`), and CocoaPods cannot determine which one to use.
+
+**Solution:** The Podfile includes `project 'PoliticalNomination'` directive before the target block. If this is missing after a prebuild, add it:
+
+```ruby
+prepare_react_native_project!
+
+project 'PoliticalNomination'    # ADD THIS LINE
+
+target 'PoliticalNomination' do
+```
+
+### GoogleService-Info.plist Must Exist in Two Locations
+
+**Symptom:**
+```
+Build input file cannot be found: '.../ios/PoliticalNomination/GoogleService-Info.plist'
+```
+
+**Cause:** The iOS build expects `GoogleService-Info.plist` inside the `ios/PoliticalNomination/` directory, but it's only in the project root.
+
+**Solution:** Copy the file to both locations:
+```bash
+cp GoogleService-Info.plist ios/PoliticalNomination/GoogleService-Info.plist
+```
+
+Both copies must be kept in sync. The project root copy is referenced by `app.json`, and the `ios/PoliticalNomination/` copy is referenced by the Xcode build.
+
 ### typedRoutes Causing Metro Hang
 
 The `experiments.typedRoutes` setting in app.json can cause Metro to hang with the message "Waiting for TypeScript files to be added to the project...". As of Feb 2026, this is disabled in app.json:

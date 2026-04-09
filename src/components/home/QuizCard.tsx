@@ -76,7 +76,7 @@ export default function QuizCard({ completedCount, totalCount, matchCount, total
             Your Quiz
           </Text>
           <Text variant="bodySmall" style={{ color: completedCount > 0 ? theme.colors.primary : theme.colors.outline, fontWeight: completedCount > 0 ? '600' : 'normal' }}>
-            {completedCount > 0 ? `${matchCount}/${totalCandidates} matches` : `0/${totalCount} completed`}
+            {completedCount > 0 ? `${matchCount}/${totalCandidates} matches` : `${totalCandidates} Potential Matches`}
           </Text>
         </View>
 
