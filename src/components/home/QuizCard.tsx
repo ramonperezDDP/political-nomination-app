@@ -45,12 +45,14 @@ const SCOPE_ORDER: Array<'global' | 'national' | 'local'> = ['global', 'national
 interface QuizCardProps {
   completedCount: number;
   totalCount: number;
+  matchCount: number;
+  totalCandidates: number;
   answeredQuestionIds: string[];
   district: string;
   onQuestionPress: (questionId: string) => void;
 }
 
-export default function QuizCard({ completedCount, totalCount, answeredQuestionIds, district, onQuestionPress }: QuizCardProps) {
+export default function QuizCard({ completedCount, totalCount, matchCount, totalCandidates, answeredQuestionIds, district, onQuestionPress }: QuizCardProps) {
   const theme = useTheme();
 
   const questions = QUIZ_QUESTIONS[district] || QUIZ_QUESTIONS['PA-01'];
@@ -73,8 +75,8 @@ export default function QuizCard({ completedCount, totalCount, answeredQuestionI
           <Text variant="titleMedium" style={styles.title}>
             Your Quiz
           </Text>
-          <Text variant="bodySmall" style={{ color: theme.colors.outline }}>
-            {completedCount}/{totalCount} completed
+          <Text variant="bodySmall" style={{ color: completedCount > 0 ? theme.colors.primary : theme.colors.outline, fontWeight: completedCount > 0 ? '600' : 'normal' }}>
+            {completedCount > 0 ? `${matchCount}/${totalCandidates} matches` : `0/${totalCount} completed`}
           </Text>
         </View>
 

@@ -6,8 +6,8 @@ import { router } from 'expo-router';
 import { Card } from '@/components/ui';
 import { useAuthStore, useConfigStore, useUserStore, selectHasAccount, selectCurrentRoundId } from '@/stores';
 import { getFaqsForRound } from '@/constants/faqs';
-import { getActiveQuestions, updateSingleQuizResponse, clearQuizResponse, updateUser } from '@/services/firebase/firestore';
-import type { Question, QuestionnaireResponse } from '@/types';
+import { getActiveQuestions, updateSingleQuizResponse, clearQuizResponse, updateUser, getCandidatesForFeed } from '@/services/firebase/firestore';
+import type { Question, QuestionnaireResponse, Candidate, User as UserType } from '@/types';
 import VideoCard from './VideoCard';
 import QuizCard from './QuizCard';
 import QuizBottomSheet from './QuizBottomSheet';
@@ -40,6 +40,9 @@ export default function VoterHome() {
   // Bottom sheet state
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
+
+  // Candidate data for match counting
+  const [candidateData, setCandidateData] = useState<Array<{ candidate: Candidate; user: UserType | null }>>([]);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [showHint, setShowHint] = useState(true);
@@ -59,6 +62,46 @@ export default function VoterHome() {
     load();
     return () => { cancelled = true; };
   }, [selectedDistrict]);
+
+  // Load candidates for match count
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      const data = await getCandidatesForFeed(selectedDistrict);
+      if (!cancelled) setCandidateData(data);
+    };
+    load();
+    return () => { cancelled = true; };
+  }, [selectedDistrict]);
+
+  // Calculate exact match count
+  const { matchCount, totalCandidates } = useMemo(() => {
+    const userResponses = user?.questionnaireResponses?.filter(
+      (r) => districtQuestionIds.includes(r.questionId)
+    ) || [];
+    if (userResponses.length === 0) return { matchCount: 0, totalCandidates: candidateData.length };
+
+    let matches = 0;
+    for (const { user: candUser } of candidateData) {
+      if (!candUser?.questionnaireResponses) continue;
+      const allMatch = userResponses.every((ur) => {
+        const candResp = candUser.questionnaireResponses?.find((cr) => cr.questionId === ur.questionId);
+        if (!candResp) return false;
+        const question = questions.find((q) => q.id === ur.questionId);
+        if (!question?.options?.length) return Number(candResp.answer) === Number(ur.answer);
+        const snap = (val: number) => {
+          let closest = question.options![0];
+          for (const opt of question.options!) {
+            if (Math.abs(val - opt.spectrumValue) < Math.abs(val - closest.spectrumValue)) closest = opt;
+          }
+          return closest.spectrumValue;
+        };
+        return snap(Number(candResp.answer)) === snap(Number(ur.answer));
+      });
+      if (allMatch) matches++;
+    }
+    return { matchCount: matches, totalCandidates: candidateData.length };
+  }, [candidateData, user?.questionnaireResponses, districtQuestionIds, questions]);
 
   // District-change safety: dismiss bottom sheet if district changes
   useEffect(() => {
@@ -192,6 +235,8 @@ export default function VoterHome() {
       <QuizCard
         completedCount={completedIssueCount}
         totalCount={totalIssues}
+        matchCount={matchCount}
+        totalCandidates={totalCandidates}
         answeredQuestionIds={
           user?.questionnaireResponses
             ?.filter((r) => districtQuestionIds.includes(r.questionId))
