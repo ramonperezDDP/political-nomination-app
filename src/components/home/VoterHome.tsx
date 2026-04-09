@@ -246,10 +246,7 @@ export default function VoterHome() {
         onPress={() => router.push('/(main)/(feed)' as any)}
       />
 
-      {/* 6. About The Contest (includes nomination calendar) */}
-      <AboutContestCard />
-
-      {/* 7. FAQs */}
+      {/* 6. FAQs */}
       <Text variant="titleMedium" style={styles.sectionTitle}>
         Frequently Asked Questions
       </Text>
@@ -278,6 +275,9 @@ export default function VoterHome() {
           </List.Accordion>
         ))}
       </Card>
+
+      {/* 7. About The Contest */}
+      <AboutContestCard />
     </View>
   );
 }
