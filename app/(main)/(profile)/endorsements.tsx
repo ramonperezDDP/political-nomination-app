@@ -5,9 +5,10 @@ import { router } from 'expo-router';
 import { SafeAreaView as NativeSafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
-import { useAuthStore, useUserStore, useConfigStore } from '@/stores';
+import { useAuthStore, useUserStore, useConfigStore, selectFullyVerified } from '@/stores';
 import { selectCurrentRoundId } from '@/stores/configStore';
 import { Card, UserAvatar, EmptyState, LoadingScreen, Chip } from '@/components/ui';
+import VerifyIdentitySheet from '@/components/home/VerifyIdentitySheet';
 import { getCandidate, getUser } from '@/services/firebase/firestore';
 import type { Candidate, User, Endorsement, Bookmark } from '@/types';
 
@@ -36,11 +37,15 @@ export default function MyEndorsementsScreen() {
 
   const selectedDistrict = useUserStore((s) => s.selectedBrowsingDistrict) || 'PA-01';
 
+  const isFullyVerified = useUserStore(selectFullyVerified);
+
   const [activeTab, setActiveTab] = useState<TabValue>('endorsements');
   const [endorsedCandidates, setEndorsedCandidates] = useState<EndorsedCandidateInfo[]>([]);
   const [bookmarkedCandidates, setBookmarkedCandidates] = useState<BookmarkedCandidateInfo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [actionId, setActionId] = useState<string | null>(null);
+  const [showVerifySheet, setShowVerifySheet] = useState(false);
+  const [endorsingAll, setEndorsingAll] = useState(false);
 
   // Fetch bookmarks on mount
   useEffect(() => {
@@ -120,6 +125,30 @@ export default function MyEndorsementsScreen() {
       await reEndorseFromBookmark(currentUser.id, candidateId, currentRoundId);
     } finally {
       setActionId(null);
+    }
+  };
+
+  const activeEndorsements = endorsedCandidates.filter(e => e.candidate !== null && e.candidate.district === selectedDistrict);
+  const activeBookmarks = bookmarkedCandidates.filter(b => b.candidate !== null && b.candidate.district === selectedDistrict);
+
+  const handleEndorseAll = async () => {
+    if (!isFullyVerified) {
+      setShowVerifySheet(true);
+      return;
+    }
+    if (!currentUser?.id || endorsingAll) return;
+    setEndorsingAll(true);
+    try {
+      // Endorse all non-eliminated bookmarked candidates that aren't already endorsed
+      const endorsable = activeBookmarks.filter(b => {
+        if (!b.candidate || b.candidate.contestStatus === 'eliminated') return false;
+        return !endorsements.some(e => e.candidateId === b.candidate!.id && e.isActive);
+      });
+      for (const item of endorsable) {
+        await reEndorseFromBookmark(currentUser.id, item.candidate!.id, currentRoundId);
+      }
+    } finally {
+      setEndorsingAll(false);
     }
   };
 
@@ -260,9 +289,6 @@ export default function MyEndorsementsScreen() {
     return <LoadingScreen message="Loading..." />;
   }
 
-  const activeEndorsements = endorsedCandidates.filter(e => e.candidate !== null && e.candidate.district === selectedDistrict);
-  const activeBookmarks = bookmarkedCandidates.filter(b => b.candidate !== null && b.candidate.district === selectedDistrict);
-
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: theme.colors.background }]}
@@ -314,15 +340,34 @@ export default function MyEndorsementsScreen() {
             message="Bookmarks are created when endorsements carry over between rounds, or when you manually bookmark a candidate."
           />
         ) : (
-          <FlatList
-            data={activeBookmarks}
-            renderItem={renderBookmarkItem}
-            keyExtractor={(item) => item.bookmark.id}
-            contentContainerStyle={styles.listContent}
-            showsVerticalScrollIndicator={false}
-          />
+          <>
+            <View style={styles.endorseAllContainer}>
+              <Button
+                mode="contained"
+                icon="thumb-up"
+                onPress={handleEndorseAll}
+                loading={endorsingAll}
+                disabled={endorsingAll}
+                style={styles.endorseAllButton}
+              >
+                Endorse All
+              </Button>
+            </View>
+            <FlatList
+              data={activeBookmarks}
+              renderItem={renderBookmarkItem}
+              keyExtractor={(item) => item.bookmark.id}
+              contentContainerStyle={styles.listContent}
+              showsVerticalScrollIndicator={false}
+            />
+          </>
         )
       )}
+
+      <VerifyIdentitySheet
+        visible={showVerifySheet}
+        onDismiss={() => setShowVerifySheet(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -387,5 +432,13 @@ const styles = StyleSheet.create({
   },
   reEndorseLabel: {
     fontSize: 11,
+  },
+  endorseAllContainer: {
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 4,
+  },
+  endorseAllButton: {
+    borderRadius: 24,
   },
 });
