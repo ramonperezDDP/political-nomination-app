@@ -6,7 +6,9 @@
     "rules": "firebase/firestore.rules",
     "indexes": "firebase/firestore.indexes.json"
   },
-  "hosting": {
+  "hosting": [
+    {
+    "target": "mainstreet-party",
     "public": "dist",
     "ignore": ["firebase.json", "**/.*", "node_modules/**"],
     "rewrites": [
@@ -49,6 +51,17 @@
       }
     ]
   },
+  {
+    "public": "dist",
+    "ignore": ["firebase.json", "**/.*", "node_modules/**"],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
+  ],
   "react-native": {
     "crashlytics_debug_enabled": false,
     "crashlytics_auto_collection_enabled": false,

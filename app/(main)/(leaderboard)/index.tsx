@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { StyleSheet, View, FlatList, Pressable, Alert, Platform } from 'react-native';
-import { Text, useTheme, SegmentedButtons, IconButton, Tooltip, Button } from 'react-native-paper';
+import { Text, useTheme, SegmentedButtons, IconButton, Tooltip, Button, Searchbar } from 'react-native-paper';
 import { SafeAreaView as NativeSafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -28,6 +28,7 @@ export default function LeaderboardScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSeeding, setIsSeeding] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const fetchLeaderboard = useCallback(async () => {
     setIsLoading(true);
@@ -82,6 +83,12 @@ export default function LeaderboardScreen() {
   };
 
   const cutoffIndex = getCutoffLine();
+
+  const filteredLeaderboard = searchQuery.trim()
+    ? leaderboard.filter((entry) =>
+        entry.candidateName.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : leaderboard;
 
   const formatNumber = (num: number) => {
     if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
@@ -193,9 +200,8 @@ export default function LeaderboardScreen() {
   }
 
   return (
-    <SafeAreaView
+    <View
       style={[styles.container, { backgroundColor: theme.colors.background }]}
-      edges={['top']}
     >
       <View style={styles.header}>
         <View style={styles.titleRow}>
@@ -238,6 +244,15 @@ export default function LeaderboardScreen() {
             </Text>
           </Card>
         )}
+
+        <Searchbar
+          placeholder="Search by name"
+          onChangeText={setSearchQuery}
+          value={searchQuery}
+          style={styles.searchBar}
+          inputStyle={styles.searchInput}
+          elevation={0}
+        />
       </View>
 
       {leaderboard.length === 0 && !isLoading ? (
@@ -260,7 +275,7 @@ export default function LeaderboardScreen() {
       ) : (
         <>
           <FlatList
-            data={leaderboard}
+            data={filteredLeaderboard}
             renderItem={renderCandidateTile}
             keyExtractor={(item) => item.candidateId}
             contentContainerStyle={styles.listContent}
@@ -280,7 +295,7 @@ export default function LeaderboardScreen() {
           </Button>}
         </>
       )}
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -305,13 +320,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 16,
+    marginBottom: 8,
   },
   title: {
     fontWeight: 'bold',
   },
   segmentedButtons: {
     marginBottom: 8,
+  },
+  searchBar: {
+    marginTop: 4,
+    backgroundColor: '#f5f5f5',
+    borderRadius: 12,
+    height: 40,
+  },
+  searchInput: {
+    fontSize: 14,
+    minHeight: 40,
   },
   tooltipCard: {
     padding: 12,
