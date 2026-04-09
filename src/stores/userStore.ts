@@ -135,8 +135,9 @@ export const useUserStore = create<UserState>((set, get) => ({
     }
 
     // Store-level verification gate (defense-in-depth, see PLAN-18)
+    // Beta: anonymous users can endorse if fully verified (via "I understand" flow)
     const profile = get().userProfile;
-    if (!profile || profile.isAnonymous) {
+    if (!profile) {
       set({ error: 'Create an account to endorse' });
       return false;
     }
@@ -368,10 +369,13 @@ export const selectCanEndorseCandidate = (candidateDistrict: string) =>
 /** Get the reason endorsement is locked for a candidate */
 export const selectEndorseLockReason = (candidateDistrict: string) =>
   (state: UserState): string | null => {
-    if (selectIsAnonymous(state)) return 'Create an account to endorse';
-    if (!selectEmailVerified(state)) return 'Verify your email to endorse';
-    if (!selectVoterRegVerified(state)) return 'Complete voter registration to endorse';
-    if (!selectPhotoIdVerified(state)) return 'Upload photo ID to endorse';
+    // Beta: skip anonymous check if user is fully verified (via "I understand" flow)
+    if (!selectFullyVerified(state)) {
+      if (selectIsAnonymous(state)) return 'Verify your identity to endorse';
+      if (!selectEmailVerified(state)) return 'Verify your email to endorse';
+      if (!selectVoterRegVerified(state)) return 'Complete voter registration to endorse';
+      if (!selectPhotoIdVerified(state)) return 'Upload photo ID to endorse';
+    }
     const userDistrictIds = selectUserDistrictIds(state);
     if (!userDistrictIds.includes(candidateDistrict)) {
       return 'You are not verified in this candidate\'s district. Complete voter registration to endorse.';

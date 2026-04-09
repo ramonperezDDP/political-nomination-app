@@ -8,7 +8,7 @@ import { Video, ResizeMode, AVPlaybackStatus } from 'expo-av';
 import { Card, CandidateAvatar, AlignmentBadge, Chip, PrimaryButton } from '@/components/ui';
 import { useAuthStore, useUserStore, useConfigStore, selectCurrentRoundId } from '@/stores';
 import { selectEndorseLockReason, selectHasAccount } from '@/stores';
-import EndorseLockModal from './EndorseLockModal';
+import VerifyIdentitySheet from '../home/VerifyIdentitySheet';
 import type { FeedItem, Issue } from '@/types';
 
 interface PSACardProps {
@@ -274,16 +274,10 @@ export default function PSACard({ feedItem, isActive = true, selectedIssueId, is
 
     </Card>
 
-    {showLockModal && (
-      <EndorseLockModal
-        visible={showLockModal}
-        reason={lockReason}
-        hasAccount={hasAccount}
-        onDismiss={() => setShowLockModal(false)}
-        onSignUp={() => router.push('/(auth)/register')}
-        onVerify={() => router.push('/(auth)/verify-identity' as any)}
-      />
-    )}
+    <VerifyIdentitySheet
+      visible={showLockModal}
+      onDismiss={() => setShowLockModal(false)}
+    />
     </>
   );
 }

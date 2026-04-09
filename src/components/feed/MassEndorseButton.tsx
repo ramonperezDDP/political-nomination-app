@@ -33,7 +33,8 @@ export default function MassEndorseButton({
 
   // Mass endorse available on all filters
   if (filteredItems.length === 0) return null;
-  if (!userId || !hasAccount || !fullyVerified) return null;
+  // Beta: allow verified anonymous users (skip hasAccount check)
+  if (!userId || !fullyVerified) return null;
 
   const endorsableCandidates = filteredItems.filter((item) => {
     if (endorsements.some((e) => e.candidateId === item.candidate.id && e.isActive)) return false;

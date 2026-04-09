@@ -14,7 +14,7 @@ const DISTRICT_COLORS: Record<string, string> = {
 };
 import AlignmentCircle from './AlignmentCircle';
 import AlignmentExplainerModal from './AlignmentExplainerModal';
-import EndorseLockModal from './EndorseLockModal';
+import VerifyIdentitySheet from '../home/VerifyIdentitySheet';
 import type { FeedItem } from '@/types';
 
 interface FullScreenPSAProps {
@@ -274,17 +274,11 @@ export default function FullScreenPSA({ feedItem, isActive, height }: FullScreen
         />
       )}
 
-      {/* Lock modal for endorsement gating — only mount when needed to avoid Portal blocking tab bar */}
-      {showLockModal && (
-        <EndorseLockModal
-          visible={showLockModal}
-          reason={lockReason}
-          hasAccount={hasAccount}
-          onDismiss={() => setShowLockModal(false)}
-          onSignUp={() => router.push('/(auth)/register')}
-          onVerify={() => router.push('/(auth)/verify-identity' as any)}
-        />
-      )}
+      {/* Beta: show verify identity sheet instead of lock modal */}
+      <VerifyIdentitySheet
+        visible={showLockModal}
+        onDismiss={() => setShowLockModal(false)}
+      />
     </View>
   );
 }

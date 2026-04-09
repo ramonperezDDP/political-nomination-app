@@ -15,7 +15,7 @@ import {
 } from '@/services/firebase/firestore';
 import { useAuthStore, useConfigStore, useUserStore, selectCurrentRoundId } from '@/stores';
 import { selectEndorseLockReason, selectHasAccount } from '@/stores';
-import EndorseLockModal from '@/components/feed/EndorseLockModal';
+import VerifyIdentitySheet from '@/components/home/VerifyIdentitySheet';
 
 const DISTRICT_COLORS: Record<string, string> = {
   'PA-01': '#FFB6C1',
@@ -628,16 +628,10 @@ export default function CandidateProfileScreen() {
         {activeTab === 'psas' && renderPSAsTab()}
       </ScrollView>
 
-      {showLockModal && (
-        <EndorseLockModal
-          visible={showLockModal}
-          reason={lockReason}
-          hasAccount={hasAccount}
-          onDismiss={() => setShowLockModal(false)}
-          onSignUp={() => router.push('/(auth)/register')}
-          onVerify={() => router.push('/(auth)/verify-identity' as any)}
-        />
-      )}
+      <VerifyIdentitySheet
+        visible={showLockModal}
+        onDismiss={() => setShowLockModal(false)}
+      />
     </SafeAreaView>
   );
 }

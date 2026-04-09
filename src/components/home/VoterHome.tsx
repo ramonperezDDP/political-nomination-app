@@ -14,6 +14,7 @@ import QuizBottomSheet from './QuizBottomSheet';
 import ContentCard from './ContentCard';
 import CharacterSearchSheet from './CharacterSearchSheet';
 import FilterByAreaSheet from './FilterByAreaSheet';
+import VerifyIdentitySheet from './VerifyIdentitySheet';
 import AboutContestCard from './AboutContestCard';
 
 // PLAN-10C: New quiz question IDs by district
@@ -31,6 +32,7 @@ export default function VoterHome() {
   const [expandedFaq, setExpandedFaq] = useState<string | null>(null);
   const [showCharacterSearch, setShowCharacterSearch] = useState(false);
   const [showFilterByArea, setShowFilterByArea] = useState(false);
+  const [showVerifyIdentity, setShowVerifyIdentity] = useState(false);
 
   const selectedDistrict = useUserStore((s) => s.selectedBrowsingDistrict) || 'PA-01';
   const districtQuestionIds = QUIZ_QUESTION_IDS[selectedDistrict] || QUIZ_QUESTION_IDS['PA-01'];
@@ -246,26 +248,22 @@ export default function VoterHome() {
       {/* 4. Verify ID */}
       <ContentCard
         icon="shield-check"
-        title="Verify Your Identity"
-        subtitle={
-          hasAccount
-            ? 'Verify to unlock endorsement features'
-            : 'Create an account and verify to endorse candidates'
-        }
-        onPress={() =>
-          hasAccount
-            ? router.push('/(auth)/verify-identity' as any)
-            : router.push('/(auth)/register')
-        }
+        title="Verify Identity"
+        subtitle=""
+        onPress={() => setShowVerifyIdentity(true)}
         completed={user?.verification?.photoId === 'verified'}
+      />
+      <VerifyIdentitySheet
+        visible={showVerifyIdentity}
+        onDismiss={() => setShowVerifyIdentity(false)}
       />
 
       {/* 5. Submit / Endorse */}
       <ContentCard
         icon="thumb-up"
-        title="Submit / Endorse"
-        subtitle="Apply filters and endorse matching candidates"
-        onPress={() => router.push('/(main)/(feed)' as any)}
+        title="Submit Endorsements"
+        subtitle=""
+        onPress={() => router.push('/(main)/(profile)/endorsements' as any)}
       />
 
       {/* 6. FAQs */}
