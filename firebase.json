@@ -52,6 +52,7 @@
     ]
   },
   {
+    "site": "party-nomination-app",
     "public": "dist",
     "ignore": ["firebase.json", "**/.*", "node_modules/**"],
     "rewrites": [
