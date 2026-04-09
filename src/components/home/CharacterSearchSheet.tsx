@@ -152,10 +152,7 @@ export default function CharacterSearchSheet({ visible, onDismiss, district }: C
         <View style={[styles.handle, { backgroundColor: theme.colors.outlineVariant }]} />
 
         <Text variant="titleMedium" style={styles.sheetTitle}>
-          Character Search
-        </Text>
-        <Text variant="bodySmall" style={[styles.subtitle, { color: theme.colors.outline }]}>
-          Select a policy position to find matching candidates
+          Filter by Policy
         </Text>
 
         <ScrollView style={styles.scrollContent} bounces={false}>

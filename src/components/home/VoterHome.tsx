@@ -13,6 +13,7 @@ import QuizCard from './QuizCard';
 import QuizBottomSheet from './QuizBottomSheet';
 import ContentCard from './ContentCard';
 import CharacterSearchSheet from './CharacterSearchSheet';
+import FilterByAreaSheet from './FilterByAreaSheet';
 import AboutContestCard from './AboutContestCard';
 
 // PLAN-10C: New quiz question IDs by district
@@ -29,6 +30,7 @@ export default function VoterHome() {
   const hasAccount = useUserStore(selectHasAccount);
   const [expandedFaq, setExpandedFaq] = useState<string | null>(null);
   const [showCharacterSearch, setShowCharacterSearch] = useState(false);
+  const [showFilterByArea, setShowFilterByArea] = useState(false);
 
   const selectedDistrict = useUserStore((s) => s.selectedBrowsingDistrict) || 'PA-01';
   const districtQuestionIds = QUIZ_QUESTION_IDS[selectedDistrict] || QUIZ_QUESTION_IDS['PA-01'];
@@ -218,13 +220,26 @@ export default function VoterHome() {
       {/* 3. Character Search */}
       <ContentCard
         icon="account-search"
-        title="Character Search"
-        subtitle="Find candidates by policy position"
+        title="Filter by Policy"
+        subtitle=""
         onPress={() => setShowCharacterSearch(true)}
       />
       <CharacterSearchSheet
         visible={showCharacterSearch}
         onDismiss={() => setShowCharacterSearch(false)}
+        district={selectedDistrict}
+      />
+
+      {/* 3b. Filter by Area */}
+      <ContentCard
+        icon="map-marker-radius"
+        title="Filter by Area"
+        subtitle=""
+        onPress={() => setShowFilterByArea(true)}
+      />
+      <FilterByAreaSheet
+        visible={showFilterByArea}
+        onDismiss={() => setShowFilterByArea(false)}
         district={selectedDistrict}
       />
 

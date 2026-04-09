@@ -46,9 +46,11 @@ export default function ContentCard({
             <Text variant="titleMedium" style={styles.title}>
               {title}
             </Text>
-            <Text variant="bodySmall" style={{ color: theme.colors.outline }}>
-              {subtitle}
-            </Text>
+            {subtitle ? (
+              <Text variant="bodySmall" style={{ color: theme.colors.outline }}>
+                {subtitle}
+              </Text>
+            ) : null}
           </View>
           <MaterialCommunityIcons
             name="chevron-right"
