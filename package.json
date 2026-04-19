@@ -10,7 +10,11 @@
     "lint": "eslint .",
     "type-check": "tsc --noEmit",
     "build:web": "npx expo export --platform web",
-    "deploy": "npm run build:web && firebase deploy --only hosting"
+    "deploy": "npm run build:web && firebase deploy --only hosting",
+    "build:bios": "node scripts/buildBios.js",
+    "map:zones": "node scripts/mapZones.js",
+    "seed:candidates": "ts-node scripts/seedCandidatesFromJson.ts",
+    "seed:candidates:apply": "ts-node scripts/seedCandidatesFromJson.ts --confirm"
   },
   "dependencies": {
     "@expo-google-fonts/nunito-sans": "^0.4.2",
