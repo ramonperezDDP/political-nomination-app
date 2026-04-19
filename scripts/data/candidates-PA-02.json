@@ -1,0 +1,6691 @@
+{
+  "district": "PA-02",
+  "generatedAt": "2026-04-19T18:58:11.248Z",
+  "questions": [
+    {
+      "id": "trade-1",
+      "issueId": "trade",
+      "options": [
+        {
+          "shortLabel": "Free Trade",
+          "spectrumValue": -80
+        },
+        {
+          "shortLabel": "Limited Trade",
+          "spectrumValue": 0
+        },
+        {
+          "shortLabel": "Protection",
+          "spectrumValue": 80
+        }
+      ]
+    },
+    {
+      "id": "iran-1",
+      "issueId": "iran",
+      "options": [
+        {
+          "shortLabel": "No Involvement",
+          "spectrumValue": -80
+        },
+        {
+          "shortLabel": "Limited Response",
+          "spectrumValue": 0
+        },
+        {
+          "shortLabel": "Escalation",
+          "spectrumValue": 80
+        }
+      ]
+    },
+    {
+      "id": "inflation-1",
+      "issueId": "inflation",
+      "options": [
+        {
+          "shortLabel": "Regulation",
+          "spectrumValue": -70
+        },
+        {
+          "shortLabel": "Strengthen Production",
+          "spectrumValue": 0
+        },
+        {
+          "shortLabel": "Fiscal Policy",
+          "spectrumValue": 70
+        }
+      ]
+    },
+    {
+      "id": "borders-1",
+      "issueId": "borders",
+      "options": [
+        {
+          "shortLabel": "Open",
+          "spectrumValue": -80
+        },
+        {
+          "shortLabel": "Partially Close",
+          "spectrumValue": 0
+        },
+        {
+          "shortLabel": "Close",
+          "spectrumValue": 80
+        }
+      ]
+    },
+    {
+      "id": "welfare-1",
+      "issueId": "welfare",
+      "options": [
+        {
+          "shortLabel": "Socialize",
+          "spectrumValue": -80
+        },
+        {
+          "shortLabel": "Maintain",
+          "spectrumValue": 0
+        },
+        {
+          "shortLabel": "Privatize",
+          "spectrumValue": 80
+        }
+      ]
+    },
+    {
+      "id": "pa02-budget-1",
+      "issueId": "pa02-budget",
+      "options": [
+        {
+          "shortLabel": "Yes",
+          "spectrumValue": 50
+        },
+        {
+          "shortLabel": "No",
+          "spectrumValue": -50
+        }
+      ]
+    },
+    {
+      "id": "pa02-transit-1",
+      "issueId": "pa02-transit",
+      "options": [
+        {
+          "shortLabel": "Yes",
+          "spectrumValue": -50
+        },
+        {
+          "shortLabel": "No",
+          "spectrumValue": 50
+        }
+      ]
+    }
+  ],
+  "candidates": [
+    {
+      "pn": 1,
+      "firstName": "Chloe",
+      "lastName": "Johnson",
+      "displayName": "Chloe Johnson",
+      "age": 25,
+      "gender": "female",
+      "ethnicity": "White",
+      "neighborhood": "Academy Gardens",
+      "zipCode": "19114",
+      "district": "PA-02",
+      "imageFilename": "02-01.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 3168,
+        "afterTop10": 7261,
+        "afterVTH": 11258,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": -80,
+          "optionShortLabel": "Free Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": -80,
+          "optionShortLabel": "No Involvement"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": -70,
+          "optionShortLabel": "Regulation"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": -80,
+          "optionShortLabel": "Open"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": -80,
+          "optionShortLabel": "Socialize"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": 50,
+          "optionShortLabel": "Yes"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": -50,
+          "optionShortLabel": "Yes"
+        }
+      ]
+    },
+    {
+      "pn": 2,
+      "firstName": "Juan",
+      "lastName": "Flores",
+      "displayName": "Juan Flores",
+      "age": 55,
+      "gender": "male",
+      "ethnicity": "Hispanic",
+      "neighborhood": "Ashton Wooden Bridge",
+      "zipCode": "19123",
+      "district": "PA-02",
+      "imageFilename": "02-02.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 512,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": -80,
+          "optionShortLabel": "Free Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": -80,
+          "optionShortLabel": "No Involvement"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": -70,
+          "optionShortLabel": "Regulation"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": -80,
+          "optionShortLabel": "Open"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": -80,
+          "optionShortLabel": "Socialize"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": 50,
+          "optionShortLabel": "Yes"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": -50,
+          "optionShortLabel": "Yes"
+        }
+      ]
+    },
+    {
+      "pn": 3,
+      "firstName": "Lily",
+      "lastName": "Brown",
+      "displayName": "Lily Brown",
+      "age": 56,
+      "gender": "female",
+      "ethnicity": "White",
+      "neighborhood": "Bridesburg",
+      "zipCode": "19137",
+      "district": "PA-02",
+      "imageFilename": "02-03.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 666,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 0,
+          "optionShortLabel": "Limited Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": -80,
+          "optionShortLabel": "No Involvement"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": -70,
+          "optionShortLabel": "Regulation"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": -80,
+          "optionShortLabel": "Open"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": -80,
+          "optionShortLabel": "Socialize"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": 50,
+          "optionShortLabel": "Yes"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": -50,
+          "optionShortLabel": "Yes"
+        }
+      ]
+    },
+    {
+      "pn": 4,
+      "firstName": "Oscar",
+      "lastName": "Jones",
+      "displayName": "Oscar Jones",
+      "age": 57,
+      "gender": "male",
+      "ethnicity": "Black",
+      "neighborhood": "Bustleton",
+      "zipCode": "19115",
+      "district": "PA-02",
+      "imageFilename": "02-04.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 382,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": -80,
+          "optionShortLabel": "Free Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": -80,
+          "optionShortLabel": "No Involvement"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": -70,
+          "optionShortLabel": "Regulation"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": -80,
+          "optionShortLabel": "Open"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": -80,
+          "optionShortLabel": "Socialize"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": 50,
+          "optionShortLabel": "Yes"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": -50,
+          "optionShortLabel": "Yes"
+        }
+      ]
+    },
+    {
+      "pn": 5,
+      "firstName": "Ella",
+      "lastName": "Martin",
+      "displayName": "Ella Martin",
+      "age": 75,
+      "gender": "female",
+      "ethnicity": "Hispanic",
+      "neighborhood": "Center City",
+      "zipCode": "19102",
+      "district": "PA-02",
+      "imageFilename": "02-05.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 215,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 0,
+          "optionShortLabel": "Limited Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": -80,
+          "optionShortLabel": "No Involvement"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": -70,
+          "optionShortLabel": "Regulation"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": -80,
+          "optionShortLabel": "Open"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": -80,
+          "optionShortLabel": "Socialize"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": 50,
+          "optionShortLabel": "Yes"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": -50,
+          "optionShortLabel": "Yes"
+        }
+      ]
+    },
+    {
+      "pn": 6,
+      "firstName": "Douglas",
+      "lastName": "Davis",
+      "displayName": "Douglas Davis",
+      "age": 41,
+      "gender": "male",
+      "ethnicity": "White",
+      "neighborhood": "East Kensington",
+      "zipCode": "19122",
+      "district": "PA-02",
+      "imageFilename": "02-06.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 320,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": -80,
+          "optionShortLabel": "Free Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": 0,
+          "optionShortLabel": "Limited Response"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": -70,
+          "optionShortLabel": "Regulation"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": -80,
+          "optionShortLabel": "Open"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": -80,
+          "optionShortLabel": "Socialize"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": 50,
+          "optionShortLabel": "Yes"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": -50,
+          "optionShortLabel": "Yes"
+        }
+      ]
+    },
+    {
+      "pn": 7,
+      "firstName": "Victoria",
+      "lastName": "Wilson",
+      "displayName": "Victoria Wilson",
+      "age": 74,
+      "gender": "female",
+      "ethnicity": "Black",
+      "neighborhood": "Fairhill",
+      "zipCode": "19133",
+      "district": "PA-02",
+      "imageFilename": "02-07.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 510,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": -80,
+          "optionShortLabel": "Free Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": -80,
+          "optionShortLabel": "No Involvement"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": 0,
+          "optionShortLabel": "Strengthen Production"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": -80,
+          "optionShortLabel": "Open"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": -80,
+          "optionShortLabel": "Socialize"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": 50,
+          "optionShortLabel": "Yes"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": -50,
+          "optionShortLabel": "Yes"
+        }
+      ]
+    },
+    {
+      "pn": 8,
+      "firstName": "Hiroshi",
+      "lastName": "Ming",
+      "displayName": "Hiroshi Ming",
+      "age": 26,
+      "gender": "male",
+      "ethnicity": "Asian",
+      "neighborhood": "Feltonville",
+      "zipCode": "19120",
+      "district": "PA-02",
+      "imageFilename": "02-08.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 459,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 0,
+          "optionShortLabel": "Limited Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": -80,
+          "optionShortLabel": "No Involvement"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": -70,
+          "optionShortLabel": "Regulation"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": 0,
+          "optionShortLabel": "Partially Close"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": -80,
+          "optionShortLabel": "Socialize"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": 50,
+          "optionShortLabel": "Yes"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": -50,
+          "optionShortLabel": "Yes"
+        }
+      ]
+    },
+    {
+      "pn": 9,
+      "firstName": "Samantha",
+      "lastName": "Robinson",
+      "displayName": "Samantha Robinson",
+      "age": 45,
+      "gender": "female",
+      "ethnicity": "White",
+      "neighborhood": "Fishtown",
+      "zipCode": "19125",
+      "district": "PA-02",
+      "imageFilename": "02-09.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 399,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": -80,
+          "optionShortLabel": "Free Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": -80,
+          "optionShortLabel": "No Involvement"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": -70,
+          "optionShortLabel": "Regulation"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": -80,
+          "optionShortLabel": "Open"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": 0,
+          "optionShortLabel": "Maintain"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": 50,
+          "optionShortLabel": "Yes"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": -50,
+          "optionShortLabel": "Yes"
+        }
+      ]
+    },
+    {
+      "pn": 10,
+      "firstName": "Jose",
+      "lastName": "Rivera",
+      "displayName": "Jose Rivera",
+      "age": 58,
+      "gender": "male",
+      "ethnicity": "Hispanic",
+      "neighborhood": "Fox Chase",
+      "zipCode": "19111",
+      "district": "PA-02",
+      "imageFilename": "02-10.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 242,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 0,
+          "optionShortLabel": "Limited Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": -80,
+          "optionShortLabel": "No Involvement"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": -70,
+          "optionShortLabel": "Regulation"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": -80,
+          "optionShortLabel": "Open"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": -80,
+          "optionShortLabel": "Socialize"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": -50,
+          "optionShortLabel": "No"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": -50,
+          "optionShortLabel": "Yes"
+        }
+      ]
+    },
+    {
+      "pn": 11,
+      "firstName": "Natalie",
+      "lastName": "Moore",
+      "displayName": "Natalie Moore",
+      "age": 42,
+      "gender": "female",
+      "ethnicity": "Black",
+      "neighborhood": "Frankford",
+      "zipCode": "19124",
+      "district": "PA-02",
+      "imageFilename": "02-11.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 311,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": -80,
+          "optionShortLabel": "Free Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": -80,
+          "optionShortLabel": "No Involvement"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": -70,
+          "optionShortLabel": "Regulation"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": -80,
+          "optionShortLabel": "Open"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": -80,
+          "optionShortLabel": "Socialize"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": 50,
+          "optionShortLabel": "Yes"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": 50,
+          "optionShortLabel": "No"
+        }
+      ]
+    },
+    {
+      "pn": 12,
+      "firstName": "William",
+      "lastName": "Jackson",
+      "displayName": "William Jackson",
+      "age": 40,
+      "gender": "male",
+      "ethnicity": "White",
+      "neighborhood": "Franklinville",
+      "zipCode": "16683",
+      "district": "PA-02",
+      "imageFilename": "02-12.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 289,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 0,
+          "optionShortLabel": "Limited Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": 0,
+          "optionShortLabel": "Limited Response"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": -70,
+          "optionShortLabel": "Regulation"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": -80,
+          "optionShortLabel": "Open"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": -80,
+          "optionShortLabel": "Socialize"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": 50,
+          "optionShortLabel": "Yes"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": -50,
+          "optionShortLabel": "Yes"
+        }
+      ]
+    },
+    {
+      "pn": 13,
+      "firstName": "Noor",
+      "lastName": "Lee",
+      "displayName": "Noor Lee",
+      "age": 27,
+      "gender": "female",
+      "ethnicity": "Asian",
+      "neighborhood": "Glenwood",
+      "zipCode": "19132",
+      "district": "PA-02",
+      "imageFilename": "02-13.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 2507,
+        "afterTop10": 4953,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": -80,
+          "optionShortLabel": "Free Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": 0,
+          "optionShortLabel": "Limited Response"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": 0,
+          "optionShortLabel": "Strengthen Production"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": -80,
+          "optionShortLabel": "Open"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": -80,
+          "optionShortLabel": "Socialize"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": 50,
+          "optionShortLabel": "Yes"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": -50,
+          "optionShortLabel": "Yes"
+        }
+      ]
+    },
+    {
+      "pn": 14,
+      "firstName": "Miguel",
+      "lastName": "Phillips",
+      "displayName": "Miguel Phillips",
+      "age": 46,
+      "gender": "male",
+      "ethnicity": "Hispanic",
+      "neighborhood": "Harrowgate",
+      "zipCode": "19134",
+      "district": "PA-02",
+      "imageFilename": "02-14.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 231,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": -80,
+          "optionShortLabel": "Free Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": -80,
+          "optionShortLabel": "No Involvement"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": 0,
+          "optionShortLabel": "Strengthen Production"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": 0,
+          "optionShortLabel": "Partially Close"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": -80,
+          "optionShortLabel": "Socialize"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": 50,
+          "optionShortLabel": "Yes"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": -50,
+          "optionShortLabel": "Yes"
+        }
+      ]
+    },
+    {
+      "pn": 15,
+      "firstName": "Hannah",
+      "lastName": "Thompson",
+      "displayName": "Hannah Thompson",
+      "age": 59,
+      "gender": "female",
+      "ethnicity": "White",
+      "neighborhood": "Hartranft",
+      "zipCode": "19133",
+      "district": "PA-02",
+      "imageFilename": "02-15.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 201,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 0,
+          "optionShortLabel": "Limited Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": -80,
+          "optionShortLabel": "No Involvement"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": -70,
+          "optionShortLabel": "Regulation"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": 0,
+          "optionShortLabel": "Partially Close"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": 0,
+          "optionShortLabel": "Maintain"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": 50,
+          "optionShortLabel": "Yes"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": -50,
+          "optionShortLabel": "Yes"
+        }
+      ]
+    },
+    {
+      "pn": 16,
+      "firstName": "Noah",
+      "lastName": "Harris",
+      "displayName": "Noah Harris",
+      "age": 73,
+      "gender": "male",
+      "ethnicity": "Black",
+      "neighborhood": "Holmesburg",
+      "zipCode": "19136",
+      "district": "PA-02",
+      "imageFilename": "02-16.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 154,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": -80,
+          "optionShortLabel": "Free Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": -80,
+          "optionShortLabel": "No Involvement"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": -70,
+          "optionShortLabel": "Regulation"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": -80,
+          "optionShortLabel": "Open"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": 0,
+          "optionShortLabel": "Maintain"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": -50,
+          "optionShortLabel": "No"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": -50,
+          "optionShortLabel": "Yes"
+        }
+      ]
+    },
+    {
+      "pn": 17,
+      "firstName": "Alexis",
+      "lastName": "White",
+      "displayName": "Alexis White",
+      "age": 39,
+      "gender": "female",
+      "ethnicity": "Multiracial",
+      "neighborhood": "Hunting Park",
+      "zipCode": "19140",
+      "district": "PA-02",
+      "imageFilename": "02-17.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 289,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": -80,
+          "optionShortLabel": "Free Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": -80,
+          "optionShortLabel": "No Involvement"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": -70,
+          "optionShortLabel": "Regulation"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": -80,
+          "optionShortLabel": "Open"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": -80,
+          "optionShortLabel": "Socialize"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": -50,
+          "optionShortLabel": "No"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": 50,
+          "optionShortLabel": "No"
+        }
+      ]
+    },
+    {
+      "pn": 18,
+      "firstName": "Henry",
+      "lastName": "Williams",
+      "displayName": "Henry Williams",
+      "age": 28,
+      "gender": "male",
+      "ethnicity": "White",
+      "neighborhood": "East Kensington",
+      "zipCode": "19122",
+      "district": "PA-02",
+      "imageFilename": "02-18.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 445,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 0,
+          "optionShortLabel": "Limited Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": -80,
+          "optionShortLabel": "No Involvement"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": -70,
+          "optionShortLabel": "Regulation"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": 80,
+          "optionShortLabel": "Close"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": -80,
+          "optionShortLabel": "Socialize"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": 50,
+          "optionShortLabel": "Yes"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": 50,
+          "optionShortLabel": "No"
+        }
+      ]
+    },
+    {
+      "pn": 19,
+      "firstName": "Jasmine",
+      "lastName": "Diaz",
+      "displayName": "Jasmine Diaz",
+      "age": 47,
+      "gender": "female",
+      "ethnicity": "Hispanic",
+      "neighborhood": "Krewstown",
+      "zipCode": "19115",
+      "district": "PA-02",
+      "imageFilename": "02-19.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 2158,
+        "afterTop10": 6623,
+        "afterVTH": 10296,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": -80,
+          "optionShortLabel": "Free Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": 0,
+          "optionShortLabel": "Limited Response"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": -70,
+          "optionShortLabel": "Regulation"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": -80,
+          "optionShortLabel": "Open"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": -80,
+          "optionShortLabel": "Socialize"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": 50,
+          "optionShortLabel": "Yes"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": 50,
+          "optionShortLabel": "No"
+        }
+      ]
+    },
+    {
+      "pn": 20,
+      "firstName": "Adam",
+      "lastName": "Anderson",
+      "displayName": "Adam Anderson",
+      "age": 43,
+      "gender": "male",
+      "ethnicity": "Black",
+      "neighborhood": "Lawncrest",
+      "zipCode": "19111",
+      "district": "PA-02",
+      "imageFilename": "02-20.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 523,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 0,
+          "optionShortLabel": "Limited Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": -80,
+          "optionShortLabel": "No Involvement"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": 0,
+          "optionShortLabel": "Strengthen Production"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": -80,
+          "optionShortLabel": "Open"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": -80,
+          "optionShortLabel": "Socialize"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": 50,
+          "optionShortLabel": "Yes"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": 50,
+          "optionShortLabel": "No"
+        }
+      ]
+    },
+    {
+      "pn": 21,
+      "firstName": "Ashley",
+      "lastName": "Hill",
+      "displayName": "Ashley Hill",
+      "age": 60,
+      "gender": "female",
+      "ethnicity": "White",
+      "neighborhood": "Lawndale",
+      "zipCode": "19111",
+      "district": "PA-02",
+      "imageFilename": "02-21.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 341,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": -80,
+          "optionShortLabel": "Free Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": -80,
+          "optionShortLabel": "No Involvement"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": -70,
+          "optionShortLabel": "Regulation"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": 0,
+          "optionShortLabel": "Partially Close"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": -80,
+          "optionShortLabel": "Socialize"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": 50,
+          "optionShortLabel": "Yes"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": 50,
+          "optionShortLabel": "No"
+        }
+      ]
+    },
+    {
+      "pn": 22,
+      "firstName": "Nick",
+      "lastName": "Sing",
+      "displayName": "Nick Sing",
+      "age": 29,
+      "gender": "male",
+      "ethnicity": "Asian",
+      "neighborhood": "Lexington Park",
+      "zipCode": "19128",
+      "district": "PA-02",
+      "imageFilename": "02-22.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 329,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 0,
+          "optionShortLabel": "Limited Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": -80,
+          "optionShortLabel": "No Involvement"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": -70,
+          "optionShortLabel": "Regulation"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": -80,
+          "optionShortLabel": "Open"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": 0,
+          "optionShortLabel": "Maintain"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": 50,
+          "optionShortLabel": "Yes"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": 50,
+          "optionShortLabel": "No"
+        }
+      ]
+    },
+    {
+      "pn": 23,
+      "firstName": "Maria",
+      "lastName": "Cruz",
+      "displayName": "Maria Cruz",
+      "age": 38,
+      "gender": "female",
+      "ethnicity": "Hispanic",
+      "neighborhood": "Logan",
+      "zipCode": "19141",
+      "district": "PA-02",
+      "imageFilename": "02-23.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 589,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 0,
+          "optionShortLabel": "Limited Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": -80,
+          "optionShortLabel": "No Involvement"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": -70,
+          "optionShortLabel": "Regulation"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": 0,
+          "optionShortLabel": "Partially Close"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": -80,
+          "optionShortLabel": "Socialize"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": -50,
+          "optionShortLabel": "No"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": -50,
+          "optionShortLabel": "Yes"
+        }
+      ]
+    },
+    {
+      "pn": 24,
+      "firstName": "Thomas",
+      "lastName": "Nelson",
+      "displayName": "Thomas Nelson",
+      "age": 48,
+      "gender": "male",
+      "ethnicity": "White",
+      "neighborhood": "Ogontz",
+      "zipCode": "19141",
+      "district": "PA-02",
+      "imageFilename": "02-24.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 635,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": -80,
+          "optionShortLabel": "Free Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": -80,
+          "optionShortLabel": "No Involvement"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": 0,
+          "optionShortLabel": "Strengthen Production"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": -80,
+          "optionShortLabel": "Open"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": -80,
+          "optionShortLabel": "Socialize"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": -50,
+          "optionShortLabel": "No"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": -50,
+          "optionShortLabel": "Yes"
+        }
+      ]
+    },
+    {
+      "pn": 25,
+      "firstName": "Trinity",
+      "lastName": "Adams",
+      "displayName": "Trinity Adams",
+      "age": 30,
+      "gender": "female",
+      "ethnicity": "Black",
+      "neighborhood": "Fern Rock",
+      "zipCode": "19141",
+      "district": "PA-02",
+      "imageFilename": "02-25.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 189,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": -80,
+          "optionShortLabel": "Free Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": 0,
+          "optionShortLabel": "Limited Response"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": -70,
+          "optionShortLabel": "Regulation"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": -80,
+          "optionShortLabel": "Open"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": -80,
+          "optionShortLabel": "Socialize"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": -50,
+          "optionShortLabel": "No"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": -50,
+          "optionShortLabel": "Yes"
+        }
+      ]
+    },
+    {
+      "pn": 26,
+      "firstName": "Luis",
+      "lastName": "Taylor",
+      "displayName": "Luis Taylor",
+      "age": 61,
+      "gender": "male",
+      "ethnicity": "Hispanic",
+      "neighborhood": "Ludlow",
+      "zipCode": "19107",
+      "district": "PA-02",
+      "imageFilename": "02-26.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 258,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 0,
+          "optionShortLabel": "Limited Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": -80,
+          "optionShortLabel": "No Involvement"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": -70,
+          "optionShortLabel": "Regulation"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": -80,
+          "optionShortLabel": "Open"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": -80,
+          "optionShortLabel": "Socialize"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": -50,
+          "optionShortLabel": "No"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": -50,
+          "optionShortLabel": "Yes"
+        }
+      ]
+    },
+    {
+      "pn": 27,
+      "firstName": "Sue",
+      "lastName": "Hall",
+      "displayName": "Sue Hall",
+      "age": 44,
+      "gender": "female",
+      "ethnicity": "White",
+      "neighborhood": "Mayfair",
+      "zipCode": "19124",
+      "district": "PA-02",
+      "imageFilename": "02-27.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 1894,
+        "afterTop10": 3899,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": -80,
+          "optionShortLabel": "Free Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": -80,
+          "optionShortLabel": "No Involvement"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": 0,
+          "optionShortLabel": "Strengthen Production"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": 80,
+          "optionShortLabel": "Close"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": 0,
+          "optionShortLabel": "Maintain"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": 50,
+          "optionShortLabel": "Yes"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": -50,
+          "optionShortLabel": "Yes"
+        }
+      ]
+    },
+    {
+      "pn": 28,
+      "firstName": "Roberto",
+      "lastName": "Baker",
+      "displayName": "Roberto Baker",
+      "age": 31,
+      "gender": "male",
+      "ethnicity": "Black",
+      "neighborhood": "Millbrook",
+      "zipCode": "19114",
+      "district": "PA-02",
+      "imageFilename": "02-28.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 369,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": -80,
+          "optionShortLabel": "Free Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": 0,
+          "optionShortLabel": "Limited Response"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": -70,
+          "optionShortLabel": "Regulation"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": -80,
+          "optionShortLabel": "Open"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": 0,
+          "optionShortLabel": "Maintain"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": 50,
+          "optionShortLabel": "Yes"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": -50,
+          "optionShortLabel": "Yes"
+        }
+      ]
+    },
+    {
+      "pn": 29,
+      "firstName": "Tiffany",
+      "lastName": "Chin",
+      "displayName": "Tiffany Chin",
+      "age": 37,
+      "gender": "female",
+      "ethnicity": "Asian",
+      "neighborhood": "Morrell Park",
+      "zipCode": "19114",
+      "district": "PA-02",
+      "imageFilename": "02-29.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 654,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 0,
+          "optionShortLabel": "Limited Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": -80,
+          "optionShortLabel": "No Involvement"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": -70,
+          "optionShortLabel": "Regulation"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": -80,
+          "optionShortLabel": "Open"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": 0,
+          "optionShortLabel": "Maintain"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": 50,
+          "optionShortLabel": "Yes"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": -50,
+          "optionShortLabel": "Yes"
+        }
+      ]
+    },
+    {
+      "pn": 30,
+      "firstName": "Ricardo",
+      "lastName": "Roberts",
+      "displayName": "Ricardo Roberts",
+      "age": 49,
+      "gender": "male",
+      "ethnicity": "White",
+      "neighborhood": "Norris Square",
+      "zipCode": "19122",
+      "district": "PA-02",
+      "imageFilename": "02-30.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 741,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": -80,
+          "optionShortLabel": "Free Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": 0,
+          "optionShortLabel": "Limited Response"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": -70,
+          "optionShortLabel": "Regulation"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": 0,
+          "optionShortLabel": "Partially Close"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": -80,
+          "optionShortLabel": "Socialize"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": 50,
+          "optionShortLabel": "Yes"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": -50,
+          "optionShortLabel": "Yes"
+        }
+      ]
+    },
+    {
+      "pn": 31,
+      "firstName": "Diamond",
+      "lastName": "Carter",
+      "displayName": "Diamond Carter",
+      "age": 32,
+      "gender": "female",
+      "ethnicity": "Hispanic",
+      "neighborhood": "Normandy",
+      "zipCode": "19154",
+      "district": "PA-02",
+      "imageFilename": "02-31.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 681,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 0,
+          "optionShortLabel": "Limited Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": -80,
+          "optionShortLabel": "No Involvement"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": -70,
+          "optionShortLabel": "Regulation"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": 0,
+          "optionShortLabel": "Partially Close"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": -80,
+          "optionShortLabel": "Socialize"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": 50,
+          "optionShortLabel": "Yes"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": -50,
+          "optionShortLabel": "Yes"
+        }
+      ]
+    },
+    {
+      "pn": 32,
+      "firstName": "Antonio",
+      "lastName": "Mitchell",
+      "displayName": "Antonio Mitchell",
+      "age": 62,
+      "gender": "male",
+      "ethnicity": "Black",
+      "neighborhood": "North Philadelphia",
+      "zipCode": "19120",
+      "district": "PA-02",
+      "imageFilename": "02-32.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 285,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 0,
+          "optionShortLabel": "Limited Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": -80,
+          "optionShortLabel": "No Involvement"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": 0,
+          "optionShortLabel": "Strengthen Production"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": -80,
+          "optionShortLabel": "Open"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": -80,
+          "optionShortLabel": "Socialize"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": 50,
+          "optionShortLabel": "Yes"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": -50,
+          "optionShortLabel": "Yes"
+        }
+      ]
+    },
+    {
+      "pn": 33,
+      "firstName": "Nicole",
+      "lastName": "Campbell",
+      "displayName": "Nicole Campbell",
+      "age": 33,
+      "gender": "female",
+      "ethnicity": "White",
+      "neighborhood": "North Philadelphia East",
+      "zipCode": "19121",
+      "district": "PA-02",
+      "imageFilename": "02-33.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 259,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 80,
+          "optionShortLabel": "Protection"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": 0,
+          "optionShortLabel": "Limited Response"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": 0,
+          "optionShortLabel": "Strengthen Production"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": -80,
+          "optionShortLabel": "Open"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": -80,
+          "optionShortLabel": "Socialize"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": 50,
+          "optionShortLabel": "Yes"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": -50,
+          "optionShortLabel": "Yes"
+        }
+      ]
+    },
+    {
+      "pn": 34,
+      "firstName": "Zachary",
+      "lastName": "Evans",
+      "displayName": "Zachary Evans",
+      "age": 50,
+      "gender": "male",
+      "ethnicity": "White",
+      "neighborhood": "North Philadelphia West",
+      "zipCode": "19132",
+      "district": "PA-02",
+      "imageFilename": "02-34.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 341,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 0,
+          "optionShortLabel": "Limited Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": 0,
+          "optionShortLabel": "Limited Response"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": -70,
+          "optionShortLabel": "Regulation"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": 0,
+          "optionShortLabel": "Partially Close"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": -80,
+          "optionShortLabel": "Socialize"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": 50,
+          "optionShortLabel": "Yes"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": -50,
+          "optionShortLabel": "Yes"
+        }
+      ]
+    },
+    {
+      "pn": 35,
+      "firstName": "Amara",
+      "lastName": "Perez",
+      "displayName": "Amara Perez",
+      "age": 36,
+      "gender": "female",
+      "ethnicity": "Hispanic",
+      "neighborhood": "Northeast Philadelphia",
+      "zipCode": "19111",
+      "district": "PA-02",
+      "imageFilename": "02-35.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 1689,
+        "afterTop10": 4994,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 80,
+          "optionShortLabel": "Protection"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": 0,
+          "optionShortLabel": "Limited Response"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": -70,
+          "optionShortLabel": "Regulation"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": -80,
+          "optionShortLabel": "Open"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": 0,
+          "optionShortLabel": "Maintain"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": 50,
+          "optionShortLabel": "Yes"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": -50,
+          "optionShortLabel": "Yes"
+        }
+      ]
+    },
+    {
+      "pn": 36,
+      "firstName": "Peter",
+      "lastName": "Parker",
+      "displayName": "Peter Parker",
+      "age": 34,
+      "gender": "male",
+      "ethnicity": "White",
+      "neighborhood": "Port Richmond",
+      "zipCode": "19125",
+      "district": "PA-02",
+      "imageFilename": "02-36.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 192,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 0,
+          "optionShortLabel": "Limited Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": 0,
+          "optionShortLabel": "Limited Response"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": -70,
+          "optionShortLabel": "Regulation"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": -80,
+          "optionShortLabel": "Open"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": -80,
+          "optionShortLabel": "Socialize"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": -50,
+          "optionShortLabel": "No"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": -50,
+          "optionShortLabel": "Yes"
+        }
+      ]
+    },
+    {
+      "pn": 37,
+      "firstName": "Latoya",
+      "lastName": "Edwards",
+      "displayName": "Latoya Edwards",
+      "age": 63,
+      "gender": "female",
+      "ethnicity": "Black",
+      "neighborhood": "Center City",
+      "zipCode": "19102",
+      "district": "PA-02",
+      "imageFilename": "02-37.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 2124,
+        "afterTop10": 6785,
+        "afterVTH": 14125,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 0,
+          "optionShortLabel": "Limited Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": 0,
+          "optionShortLabel": "Limited Response"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": -70,
+          "optionShortLabel": "Regulation"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": -80,
+          "optionShortLabel": "Open"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": -80,
+          "optionShortLabel": "Socialize"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": 50,
+          "optionShortLabel": "Yes"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": 50,
+          "optionShortLabel": "No"
+        }
+      ]
+    },
+    {
+      "pn": 38,
+      "firstName": "Manuel",
+      "lastName": "Reyes",
+      "displayName": "Manuel Reyes",
+      "age": 51,
+      "gender": "male",
+      "ethnicity": "Hispanic",
+      "neighborhood": "Center City",
+      "zipCode": "19102",
+      "district": "PA-02",
+      "imageFilename": "02-38.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 521,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": -80,
+          "optionShortLabel": "Free Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": 0,
+          "optionShortLabel": "Limited Response"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": 0,
+          "optionShortLabel": "Strengthen Production"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": 0,
+          "optionShortLabel": "Partially Close"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": -80,
+          "optionShortLabel": "Socialize"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": 50,
+          "optionShortLabel": "Yes"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": -50,
+          "optionShortLabel": "Yes"
+        }
+      ]
+    },
+    {
+      "pn": 39,
+      "firstName": "Melissa",
+      "lastName": "Collins",
+      "displayName": "Melissa Collins",
+      "age": 25,
+      "gender": "female",
+      "ethnicity": "White",
+      "neighborhood": "Olde Richmond",
+      "zipCode": "19125",
+      "district": "PA-02",
+      "imageFilename": "02-39.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 483,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": -80,
+          "optionShortLabel": "Free Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": 0,
+          "optionShortLabel": "Limited Response"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": 0,
+          "optionShortLabel": "Strengthen Production"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": -80,
+          "optionShortLabel": "Open"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": 0,
+          "optionShortLabel": "Maintain"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": 50,
+          "optionShortLabel": "Yes"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": -50,
+          "optionShortLabel": "Yes"
+        }
+      ]
+    },
+    {
+      "pn": 40,
+      "firstName": "Steven",
+      "lastName": "Stewart",
+      "displayName": "Steven Stewart",
+      "age": 64,
+      "gender": "male",
+      "ethnicity": "Black",
+      "neighborhood": "Olney",
+      "zipCode": "19120",
+      "district": "PA-02",
+      "imageFilename": "02-40.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 259,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 80,
+          "optionShortLabel": "Protection"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": 0,
+          "optionShortLabel": "Limited Response"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": 0,
+          "optionShortLabel": "Strengthen Production"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": -80,
+          "optionShortLabel": "Open"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": -80,
+          "optionShortLabel": "Socialize"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": -50,
+          "optionShortLabel": "No"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": -50,
+          "optionShortLabel": "Yes"
+        }
+      ]
+    },
+    {
+      "pn": 41,
+      "firstName": "Aaliyah",
+      "lastName": "Morris",
+      "displayName": "Aaliyah Morris",
+      "age": 55,
+      "gender": "female",
+      "ethnicity": "Asian",
+      "neighborhood": "Oxford Circle",
+      "zipCode": "19111",
+      "district": "PA-02",
+      "imageFilename": "02-41.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 1802,
+        "afterTop10": 4852,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 80,
+          "optionShortLabel": "Protection"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": 0,
+          "optionShortLabel": "Limited Response"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": 0,
+          "optionShortLabel": "Strengthen Production"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": -80,
+          "optionShortLabel": "Open"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": -80,
+          "optionShortLabel": "Socialize"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": 50,
+          "optionShortLabel": "Yes"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": 50,
+          "optionShortLabel": "No"
+        }
+      ]
+    },
+    {
+      "pn": 42,
+      "firstName": "Jason",
+      "lastName": "Murphy",
+      "displayName": "Jason Murphy",
+      "age": 52,
+      "gender": "male",
+      "ethnicity": "White",
+      "neighborhood": "Parkwood",
+      "zipCode": "19154",
+      "district": "PA-02",
+      "imageFilename": "02-42.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 412,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 80,
+          "optionShortLabel": "Protection"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": -80,
+          "optionShortLabel": "No Involvement"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": 0,
+          "optionShortLabel": "Strengthen Production"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": 0,
+          "optionShortLabel": "Partially Close"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": 0,
+          "optionShortLabel": "Maintain"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": 50,
+          "optionShortLabel": "Yes"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": -50,
+          "optionShortLabel": "Yes"
+        }
+      ]
+    },
+    {
+      "pn": 43,
+      "firstName": "Monique",
+      "lastName": "Ramirez",
+      "displayName": "Monique Ramirez",
+      "age": 35,
+      "gender": "female",
+      "ethnicity": "Hispanic",
+      "neighborhood": "Poplar",
+      "zipCode": "19123",
+      "district": "PA-02",
+      "imageFilename": "02-43.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 685,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": -80,
+          "optionShortLabel": "Free Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": -80,
+          "optionShortLabel": "No Involvement"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": 0,
+          "optionShortLabel": "Strengthen Production"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": 0,
+          "optionShortLabel": "Partially Close"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": -80,
+          "optionShortLabel": "Socialize"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": -50,
+          "optionShortLabel": "No"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": -50,
+          "optionShortLabel": "Yes"
+        }
+      ]
+    },
+    {
+      "pn": 44,
+      "firstName": "Victor",
+      "lastName": "Rogers",
+      "displayName": "Victor Rogers",
+      "age": 26,
+      "gender": "male",
+      "ethnicity": "Black",
+      "neighborhood": "Rhawnhurst",
+      "zipCode": "19152",
+      "district": "PA-02",
+      "imageFilename": "02-44.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 158,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": -80,
+          "optionShortLabel": "Free Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": 0,
+          "optionShortLabel": "Limited Response"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": 0,
+          "optionShortLabel": "Strengthen Production"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": 0,
+          "optionShortLabel": "Partially Close"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": -80,
+          "optionShortLabel": "Socialize"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": 50,
+          "optionShortLabel": "Yes"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": 50,
+          "optionShortLabel": "No"
+        }
+      ]
+    },
+    {
+      "pn": 45,
+      "firstName": "Vanessa",
+      "lastName": "Lewis",
+      "displayName": "Vanessa Lewis",
+      "age": 56,
+      "gender": "female",
+      "ethnicity": "White",
+      "neighborhood": "Somerton",
+      "zipCode": "19116",
+      "district": "PA-02",
+      "imageFilename": "02-45.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 245,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 80,
+          "optionShortLabel": "Protection"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": -80,
+          "optionShortLabel": "No Involvement"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": -70,
+          "optionShortLabel": "Regulation"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": 0,
+          "optionShortLabel": "Partially Close"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": 0,
+          "optionShortLabel": "Maintain"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": -50,
+          "optionShortLabel": "No"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": -50,
+          "optionShortLabel": "Yes"
+        }
+      ]
+    },
+    {
+      "pn": 46,
+      "firstName": "Jamal",
+      "lastName": "Clark",
+      "displayName": "Jamal Clark",
+      "age": 53,
+      "gender": "male",
+      "ethnicity": "Black",
+      "neighborhood": "Tacony",
+      "zipCode": "19135",
+      "district": "PA-02",
+      "imageFilename": "02-46.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 2185,
+        "afterTop10": 5891,
+        "afterVTH": 18251,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": -80,
+          "optionShortLabel": "Free Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": -80,
+          "optionShortLabel": "No Involvement"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": -70,
+          "optionShortLabel": "Regulation"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": 0,
+          "optionShortLabel": "Partially Close"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": 0,
+          "optionShortLabel": "Maintain"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": 50,
+          "optionShortLabel": "Yes"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": 50,
+          "optionShortLabel": "No"
+        }
+      ]
+    },
+    {
+      "pn": 47,
+      "firstName": "Carmen",
+      "lastName": "Peres",
+      "displayName": "Carmen Peres",
+      "age": 27,
+      "gender": "female",
+      "ethnicity": "Hispanic",
+      "neighborhood": "Torresdale",
+      "zipCode": "19114",
+      "district": "PA-02",
+      "imageFilename": "02-47.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 357,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": -80,
+          "optionShortLabel": "Free Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": -80,
+          "optionShortLabel": "No Involvement"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": -70,
+          "optionShortLabel": "Regulation"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": -80,
+          "optionShortLabel": "Open"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": 0,
+          "optionShortLabel": "Maintain"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": -50,
+          "optionShortLabel": "No"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": 50,
+          "optionShortLabel": "No"
+        }
+      ]
+    },
+    {
+      "pn": 48,
+      "firstName": "Kyle",
+      "lastName": "Gomez",
+      "displayName": "Kyle Gomez",
+      "age": 57,
+      "gender": "male",
+      "ethnicity": "White",
+      "neighborhood": "West Kensington",
+      "zipCode": "19133",
+      "district": "PA-02",
+      "imageFilename": "02-48.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 701,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 0,
+          "optionShortLabel": "Limited Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": 0,
+          "optionShortLabel": "Limited Response"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": 0,
+          "optionShortLabel": "Strengthen Production"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": 0,
+          "optionShortLabel": "Partially Close"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": -80,
+          "optionShortLabel": "Socialize"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": 50,
+          "optionShortLabel": "Yes"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": -50,
+          "optionShortLabel": "Yes"
+        }
+      ]
+    },
+    {
+      "pn": 49,
+      "firstName": "Ebony",
+      "lastName": "Nguyen",
+      "displayName": "Ebony Nguyen",
+      "age": 44,
+      "gender": "female",
+      "ethnicity": "Multiracial",
+      "neighborhood": "Wissinoming",
+      "zipCode": "19137",
+      "district": "PA-02",
+      "imageFilename": "02-49.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 541,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 0,
+          "optionShortLabel": "Limited Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": 0,
+          "optionShortLabel": "Limited Response"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": 0,
+          "optionShortLabel": "Strengthen Production"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": -80,
+          "optionShortLabel": "Open"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": 0,
+          "optionShortLabel": "Maintain"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": 50,
+          "optionShortLabel": "Yes"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": -50,
+          "optionShortLabel": "Yes"
+        }
+      ]
+    },
+    {
+      "pn": 50,
+      "firstName": "Fernando",
+      "lastName": "Lima",
+      "displayName": "Fernando Lima",
+      "age": 58,
+      "gender": "male",
+      "ethnicity": "Hispanic",
+      "neighborhood": "Yorktown",
+      "zipCode": "19122",
+      "district": "PA-02",
+      "imageFilename": "02-50.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 1636,
+        "afterTop10": 4826,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 0,
+          "optionShortLabel": "Limited Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": 0,
+          "optionShortLabel": "Limited Response"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": 0,
+          "optionShortLabel": "Strengthen Production"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": -80,
+          "optionShortLabel": "Open"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": -80,
+          "optionShortLabel": "Socialize"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": -50,
+          "optionShortLabel": "No"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": -50,
+          "optionShortLabel": "Yes"
+        }
+      ]
+    },
+    {
+      "pn": 51,
+      "firstName": "Elena",
+      "lastName": "Allen",
+      "displayName": "Elena Allen",
+      "age": 38,
+      "gender": "female",
+      "ethnicity": "White",
+      "neighborhood": "Center City",
+      "zipCode": "19102",
+      "district": "PA-02",
+      "imageFilename": "02-51.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 367,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 0,
+          "optionShortLabel": "Limited Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": 0,
+          "optionShortLabel": "Limited Response"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": 0,
+          "optionShortLabel": "Strengthen Production"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": -80,
+          "optionShortLabel": "Open"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": -80,
+          "optionShortLabel": "Socialize"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": 50,
+          "optionShortLabel": "Yes"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": 50,
+          "optionShortLabel": "No"
+        }
+      ]
+    },
+    {
+      "pn": 52,
+      "firstName": "Malik",
+      "lastName": "King",
+      "displayName": "Malik King",
+      "age": 54,
+      "gender": "male",
+      "ethnicity": "Black",
+      "neighborhood": "North Philadelphia",
+      "zipCode": "19120",
+      "district": "PA-02",
+      "imageFilename": "02-52.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 525,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 0,
+          "optionShortLabel": "Limited Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": 0,
+          "optionShortLabel": "Limited Response"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": 0,
+          "optionShortLabel": "Strengthen Production"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": 0,
+          "optionShortLabel": "Partially Close"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": 0,
+          "optionShortLabel": "Maintain"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": 50,
+          "optionShortLabel": "Yes"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": -50,
+          "optionShortLabel": "Yes"
+        }
+      ]
+    },
+    {
+      "pn": 53,
+      "firstName": "Fatima",
+      "lastName": "Sharma",
+      "displayName": "Fatima Sharma",
+      "age": 59,
+      "gender": "female",
+      "ethnicity": "Asian",
+      "neighborhood": "North Philadelphia East",
+      "zipCode": "19121",
+      "district": "PA-02",
+      "imageFilename": "02-53.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 2741,
+        "afterTop10": 7709,
+        "afterVTH": 13251,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": -80,
+          "optionShortLabel": "Free Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": 0,
+          "optionShortLabel": "Limited Response"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": 0,
+          "optionShortLabel": "Strengthen Production"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": 0,
+          "optionShortLabel": "Partially Close"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": -80,
+          "optionShortLabel": "Socialize"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": -50,
+          "optionShortLabel": "No"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": -50,
+          "optionShortLabel": "Yes"
+        }
+      ]
+    },
+    {
+      "pn": 54,
+      "firstName": "Kelly",
+      "lastName": "Scott",
+      "displayName": "Kelly Scott",
+      "age": 72,
+      "gender": "female",
+      "ethnicity": "White",
+      "neighborhood": "North Philadelphia West",
+      "zipCode": "19132",
+      "district": "PA-02",
+      "imageFilename": "02-54.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 293,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": -80,
+          "optionShortLabel": "Free Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": 0,
+          "optionShortLabel": "Limited Response"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": 0,
+          "optionShortLabel": "Strengthen Production"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": 0,
+          "optionShortLabel": "Partially Close"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": -80,
+          "optionShortLabel": "Socialize"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": 50,
+          "optionShortLabel": "Yes"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": 50,
+          "optionShortLabel": "No"
+        }
+      ]
+    },
+    {
+      "pn": 55,
+      "firstName": "Aisha",
+      "lastName": "Hernandez",
+      "displayName": "Aisha Hernandez",
+      "age": 29,
+      "gender": "female",
+      "ethnicity": "Hispanic",
+      "neighborhood": "Northeast Philadelphia",
+      "zipCode": "19111",
+      "district": "PA-02",
+      "imageFilename": "02-55.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 781,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 80,
+          "optionShortLabel": "Protection"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": -80,
+          "optionShortLabel": "No Involvement"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": 0,
+          "optionShortLabel": "Strengthen Production"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": 0,
+          "optionShortLabel": "Partially Close"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": 0,
+          "optionShortLabel": "Maintain"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": -50,
+          "optionShortLabel": "No"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": -50,
+          "optionShortLabel": "Yes"
+        }
+      ]
+    },
+    {
+      "pn": 56,
+      "firstName": "Marcus",
+      "lastName": "Cook",
+      "displayName": "Marcus Cook",
+      "age": 43,
+      "gender": "male",
+      "ethnicity": "Black",
+      "neighborhood": "Fox Chase",
+      "zipCode": "19111",
+      "district": "PA-02",
+      "imageFilename": "02-56.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 1131,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 80,
+          "optionShortLabel": "Protection"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": -80,
+          "optionShortLabel": "No Involvement"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": 0,
+          "optionShortLabel": "Strengthen Production"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": 0,
+          "optionShortLabel": "Partially Close"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": 0,
+          "optionShortLabel": "Maintain"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": 50,
+          "optionShortLabel": "Yes"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": -50,
+          "optionShortLabel": "Yes"
+        }
+      ]
+    },
+    {
+      "pn": 57,
+      "firstName": "Samantha",
+      "lastName": "Gonzalez",
+      "displayName": "Samantha Gonzalez",
+      "age": 30,
+      "gender": "female",
+      "ethnicity": "White",
+      "neighborhood": "Lawndale",
+      "zipCode": "19111",
+      "district": "PA-02",
+      "imageFilename": "02-57.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 892,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": -80,
+          "optionShortLabel": "Free Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": -80,
+          "optionShortLabel": "No Involvement"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": -70,
+          "optionShortLabel": "Regulation"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": 0,
+          "optionShortLabel": "Partially Close"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": 0,
+          "optionShortLabel": "Maintain"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": -50,
+          "optionShortLabel": "No"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": 50,
+          "optionShortLabel": "No"
+        }
+      ]
+    },
+    {
+      "pn": 58,
+      "firstName": "Jesus",
+      "lastName": "Martinez",
+      "displayName": "Jesus Martinez",
+      "age": 45,
+      "gender": "male",
+      "ethnicity": "Black",
+      "neighborhood": "Center City",
+      "zipCode": "19102",
+      "district": "PA-02",
+      "imageFilename": "02-58.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 2649,
+        "afterTop10": 8825,
+        "afterVTH": 14598,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 0,
+          "optionShortLabel": "Limited Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": -80,
+          "optionShortLabel": "No Involvement"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": 0,
+          "optionShortLabel": "Strengthen Production"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": -80,
+          "optionShortLabel": "Open"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": 0,
+          "optionShortLabel": "Maintain"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": -50,
+          "optionShortLabel": "No"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": 50,
+          "optionShortLabel": "No"
+        }
+      ]
+    },
+    {
+      "pn": 59,
+      "firstName": "Mary",
+      "lastName": "Morales",
+      "displayName": "Mary Morales",
+      "age": 54,
+      "gender": "female",
+      "ethnicity": "White",
+      "neighborhood": "North Philadelphia",
+      "zipCode": "19120",
+      "district": "PA-02",
+      "imageFilename": "02-59.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 247,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": -80,
+          "optionShortLabel": "Free Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": 0,
+          "optionShortLabel": "Limited Response"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": -70,
+          "optionShortLabel": "Regulation"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": -80,
+          "optionShortLabel": "Open"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": 0,
+          "optionShortLabel": "Maintain"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": -50,
+          "optionShortLabel": "No"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": 50,
+          "optionShortLabel": "No"
+        }
+      ]
+    },
+    {
+      "pn": 60,
+      "firstName": "Brian",
+      "lastName": "Chambers",
+      "displayName": "Brian Chambers",
+      "age": 46,
+      "gender": "male",
+      "ethnicity": "White",
+      "neighborhood": "North Philadelphia East",
+      "zipCode": "19121",
+      "district": "PA-02",
+      "imageFilename": "02-60.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 392,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 0,
+          "optionShortLabel": "Limited Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": -80,
+          "optionShortLabel": "No Involvement"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": -70,
+          "optionShortLabel": "Regulation"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": -80,
+          "optionShortLabel": "Open"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": 0,
+          "optionShortLabel": "Maintain"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": -50,
+          "optionShortLabel": "No"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": 50,
+          "optionShortLabel": "No"
+        }
+      ]
+    },
+    {
+      "pn": 61,
+      "firstName": "Christi",
+      "lastName": "Romero",
+      "displayName": "Christi Romero",
+      "age": 42,
+      "gender": "female",
+      "ethnicity": "Hispanic",
+      "neighborhood": "North Philadelphia West",
+      "zipCode": "19132",
+      "district": "PA-02",
+      "imageFilename": "02-61.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 652,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": -80,
+          "optionShortLabel": "Free Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": -80,
+          "optionShortLabel": "No Involvement"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": 0,
+          "optionShortLabel": "Strengthen Production"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": 0,
+          "optionShortLabel": "Partially Close"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": -80,
+          "optionShortLabel": "Socialize"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": -50,
+          "optionShortLabel": "No"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": 50,
+          "optionShortLabel": "No"
+        }
+      ]
+    },
+    {
+      "pn": 62,
+      "firstName": "Adrian",
+      "lastName": "Chan",
+      "displayName": "Adrian Chan",
+      "age": 31,
+      "gender": "male",
+      "ethnicity": "Asian",
+      "neighborhood": "Northeast Philadelphia",
+      "zipCode": "19111",
+      "district": "PA-02",
+      "imageFilename": "02-62.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 589,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": -80,
+          "optionShortLabel": "Free Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": 0,
+          "optionShortLabel": "Limited Response"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": -70,
+          "optionShortLabel": "Regulation"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": 0,
+          "optionShortLabel": "Partially Close"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": -80,
+          "optionShortLabel": "Socialize"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": -50,
+          "optionShortLabel": "No"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": 50,
+          "optionShortLabel": "No"
+        }
+      ]
+    },
+    {
+      "pn": 63,
+      "firstName": "Abigail",
+      "lastName": "Nemanic",
+      "displayName": "Abigail Nemanic",
+      "age": 60,
+      "gender": "female",
+      "ethnicity": "White",
+      "neighborhood": "Port Richmond",
+      "zipCode": "19125",
+      "district": "PA-02",
+      "imageFilename": "02-63.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 1850,
+        "afterTop10": 5051,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 0,
+          "optionShortLabel": "Limited Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": -80,
+          "optionShortLabel": "No Involvement"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": -70,
+          "optionShortLabel": "Regulation"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": 0,
+          "optionShortLabel": "Partially Close"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": -80,
+          "optionShortLabel": "Socialize"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": -50,
+          "optionShortLabel": "No"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": 50,
+          "optionShortLabel": "No"
+        }
+      ]
+    },
+    {
+      "pn": 64,
+      "firstName": "Omar",
+      "lastName": "Manne",
+      "displayName": "Omar Manne",
+      "age": 47,
+      "gender": "male",
+      "ethnicity": "Black",
+      "neighborhood": "Fox Chase",
+      "zipCode": "19111",
+      "district": "PA-02",
+      "imageFilename": "02-64.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 600,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 0,
+          "optionShortLabel": "Limited Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": 0,
+          "optionShortLabel": "Limited Response"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": 0,
+          "optionShortLabel": "Strengthen Production"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": 0,
+          "optionShortLabel": "Partially Close"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": 0,
+          "optionShortLabel": "Maintain"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": 50,
+          "optionShortLabel": "Yes"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": -50,
+          "optionShortLabel": "Yes"
+        }
+      ]
+    },
+    {
+      "pn": 65,
+      "firstName": "Victoria",
+      "lastName": "Lopez",
+      "displayName": "Victoria Lopez",
+      "age": 53,
+      "gender": "female",
+      "ethnicity": "Hispanic",
+      "neighborhood": "Center City",
+      "zipCode": "19102",
+      "district": "PA-02",
+      "imageFilename": "02-65.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 591,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 0,
+          "optionShortLabel": "Limited Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": 0,
+          "optionShortLabel": "Limited Response"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": 0,
+          "optionShortLabel": "Strengthen Production"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": 0,
+          "optionShortLabel": "Partially Close"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": -80,
+          "optionShortLabel": "Socialize"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": -50,
+          "optionShortLabel": "No"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": -50,
+          "optionShortLabel": "Yes"
+        }
+      ]
+    },
+    {
+      "pn": 66,
+      "firstName": "Larry",
+      "lastName": "Schaefer",
+      "displayName": "Larry Schaefer",
+      "age": 41,
+      "gender": "male",
+      "ethnicity": "White",
+      "neighborhood": "Olney",
+      "zipCode": "19120",
+      "district": "PA-02",
+      "imageFilename": "02-66.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 741,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 0,
+          "optionShortLabel": "Limited Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": 0,
+          "optionShortLabel": "Limited Response"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": 0,
+          "optionShortLabel": "Strengthen Production"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": 0,
+          "optionShortLabel": "Partially Close"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": -80,
+          "optionShortLabel": "Socialize"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": 50,
+          "optionShortLabel": "Yes"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": 50,
+          "optionShortLabel": "No"
+        }
+      ]
+    },
+    {
+      "pn": 67,
+      "firstName": "Jasmine",
+      "lastName": "Walker",
+      "displayName": "Jasmine Walker",
+      "age": 61,
+      "gender": "female",
+      "ethnicity": "Black",
+      "neighborhood": "Poplar",
+      "zipCode": "19123",
+      "district": "PA-02",
+      "imageFilename": "02-67.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 488,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": -80,
+          "optionShortLabel": "Free Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": 0,
+          "optionShortLabel": "Limited Response"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": 0,
+          "optionShortLabel": "Strengthen Production"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": 0,
+          "optionShortLabel": "Partially Close"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": 0,
+          "optionShortLabel": "Maintain"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": -50,
+          "optionShortLabel": "No"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": -50,
+          "optionShortLabel": "Yes"
+        }
+      ]
+    },
+    {
+      "pn": 68,
+      "firstName": "Jose",
+      "lastName": "Rodriguez",
+      "displayName": "Jose Rodriguez",
+      "age": 32,
+      "gender": "male",
+      "ethnicity": "Hispanic",
+      "neighborhood": "Hartranft",
+      "zipCode": "19133",
+      "district": "PA-02",
+      "imageFilename": "02-68.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 496,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": -80,
+          "optionShortLabel": "Free Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": -80,
+          "optionShortLabel": "No Involvement"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": 0,
+          "optionShortLabel": "Strengthen Production"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": 0,
+          "optionShortLabel": "Partially Close"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": 0,
+          "optionShortLabel": "Maintain"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": -50,
+          "optionShortLabel": "No"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": 50,
+          "optionShortLabel": "No"
+        }
+      ]
+    },
+    {
+      "pn": 69,
+      "firstName": "Natalie",
+      "lastName": "White",
+      "displayName": "Natalie White",
+      "age": 48,
+      "gender": "female",
+      "ethnicity": "White",
+      "neighborhood": "West Kensington",
+      "zipCode": "19133",
+      "district": "PA-02",
+      "imageFilename": "02-69.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 589,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 0,
+          "optionShortLabel": "Limited Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": -80,
+          "optionShortLabel": "No Involvement"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": 0,
+          "optionShortLabel": "Strengthen Production"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": 0,
+          "optionShortLabel": "Partially Close"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": 0,
+          "optionShortLabel": "Maintain"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": -50,
+          "optionShortLabel": "No"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": 50,
+          "optionShortLabel": "No"
+        }
+      ]
+    },
+    {
+      "pn": 70,
+      "firstName": "Darius",
+      "lastName": "Castillo",
+      "displayName": "Darius Castillo",
+      "age": 62,
+      "gender": "male",
+      "ethnicity": "Black",
+      "neighborhood": "Center City",
+      "zipCode": "19102",
+      "district": "PA-02",
+      "imageFilename": "02-70.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 2526,
+        "afterTop10": 7203,
+        "afterVTH": 11896,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": -80,
+          "optionShortLabel": "Free Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": 0,
+          "optionShortLabel": "Limited Response"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": -70,
+          "optionShortLabel": "Regulation"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": 0,
+          "optionShortLabel": "Partially Close"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": 0,
+          "optionShortLabel": "Maintain"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": -50,
+          "optionShortLabel": "No"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": 50,
+          "optionShortLabel": "No"
+        }
+      ]
+    },
+    {
+      "pn": 71,
+      "firstName": "Mei",
+      "lastName": "Joseph",
+      "displayName": "Mei Joseph",
+      "age": 40,
+      "gender": "female",
+      "ethnicity": "Asian",
+      "neighborhood": "North Philadelphia",
+      "zipCode": "19120",
+      "district": "PA-02",
+      "imageFilename": "02-71.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 741,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 0,
+          "optionShortLabel": "Limited Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": -80,
+          "optionShortLabel": "No Involvement"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": -70,
+          "optionShortLabel": "Regulation"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": 0,
+          "optionShortLabel": "Partially Close"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": 0,
+          "optionShortLabel": "Maintain"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": -50,
+          "optionShortLabel": "No"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": 50,
+          "optionShortLabel": "No"
+        }
+      ]
+    },
+    {
+      "pn": 72,
+      "firstName": "Ryan",
+      "lastName": "Daugherty",
+      "displayName": "Ryan Daugherty",
+      "age": 63,
+      "gender": "male",
+      "ethnicity": "White",
+      "neighborhood": "North Philadelphia East",
+      "zipCode": "19121",
+      "district": "PA-02",
+      "imageFilename": "02-72.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 485,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": -80,
+          "optionShortLabel": "Free Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": 0,
+          "optionShortLabel": "Limited Response"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": 0,
+          "optionShortLabel": "Strengthen Production"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": 0,
+          "optionShortLabel": "Partially Close"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": 0,
+          "optionShortLabel": "Maintain"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": -50,
+          "optionShortLabel": "No"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": 50,
+          "optionShortLabel": "No"
+        }
+      ]
+    },
+    {
+      "pn": 73,
+      "firstName": "Anna",
+      "lastName": "Perez",
+      "displayName": "Anna Perez",
+      "age": 49,
+      "gender": "female",
+      "ethnicity": "Hispanic",
+      "neighborhood": "North Philadelphia West",
+      "zipCode": "19132",
+      "district": "PA-02",
+      "imageFilename": "02-73.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 359,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 0,
+          "optionShortLabel": "Limited Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": -80,
+          "optionShortLabel": "No Involvement"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": 0,
+          "optionShortLabel": "Strengthen Production"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": 0,
+          "optionShortLabel": "Partially Close"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": 0,
+          "optionShortLabel": "Maintain"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": -50,
+          "optionShortLabel": "No"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": 50,
+          "optionShortLabel": "No"
+        }
+      ]
+    },
+    {
+      "pn": 74,
+      "firstName": "Andre",
+      "lastName": "Kennedy",
+      "displayName": "Andre Kennedy",
+      "age": 52,
+      "gender": "male",
+      "ethnicity": "Black",
+      "neighborhood": "Northeast Philadelphia",
+      "zipCode": "19111",
+      "district": "PA-02",
+      "imageFilename": "02-74.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 2845,
+        "afterTop10": 7773,
+        "afterVTH": 17269,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 0,
+          "optionShortLabel": "Limited Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": 0,
+          "optionShortLabel": "Limited Response"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": -70,
+          "optionShortLabel": "Regulation"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": 0,
+          "optionShortLabel": "Partially Close"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": 0,
+          "optionShortLabel": "Maintain"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": -50,
+          "optionShortLabel": "No"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": 50,
+          "optionShortLabel": "No"
+        }
+      ]
+    },
+    {
+      "pn": 75,
+      "firstName": "Grace",
+      "lastName": "Myers",
+      "displayName": "Grace Myers",
+      "age": 33,
+      "gender": "female",
+      "ethnicity": "White",
+      "neighborhood": "Glenwood",
+      "zipCode": "19132",
+      "district": "PA-02",
+      "imageFilename": "02-75.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 458,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 0,
+          "optionShortLabel": "Limited Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": -80,
+          "optionShortLabel": "No Involvement"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": 0,
+          "optionShortLabel": "Strengthen Production"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": -80,
+          "optionShortLabel": "Open"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": 0,
+          "optionShortLabel": "Maintain"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": -50,
+          "optionShortLabel": "No"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": 50,
+          "optionShortLabel": "No"
+        }
+      ]
+    },
+    {
+      "pn": 76,
+      "firstName": "Devon",
+      "lastName": "Sanders",
+      "displayName": "Devon Sanders",
+      "age": 64,
+      "gender": "male",
+      "ethnicity": "Hispanic",
+      "neighborhood": "Harrowgate",
+      "zipCode": "19134",
+      "district": "PA-02",
+      "imageFilename": "02-76.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 820,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 0,
+          "optionShortLabel": "Limited Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": 0,
+          "optionShortLabel": "Limited Response"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": 0,
+          "optionShortLabel": "Strengthen Production"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": 0,
+          "optionShortLabel": "Partially Close"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": -80,
+          "optionShortLabel": "Socialize"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": -50,
+          "optionShortLabel": "No"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": 50,
+          "optionShortLabel": "No"
+        }
+      ]
+    },
+    {
+      "pn": 77,
+      "firstName": "Sophia",
+      "lastName": "Price",
+      "displayName": "Sophia Price",
+      "age": 39,
+      "gender": "female",
+      "ethnicity": "Black",
+      "neighborhood": "Hartranft",
+      "zipCode": "19133",
+      "district": "PA-02",
+      "imageFilename": "02-77.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 351,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 0,
+          "optionShortLabel": "Limited Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": 0,
+          "optionShortLabel": "Limited Response"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": 0,
+          "optionShortLabel": "Strengthen Production"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": 0,
+          "optionShortLabel": "Partially Close"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": 0,
+          "optionShortLabel": "Maintain"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": 50,
+          "optionShortLabel": "Yes"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": 50,
+          "optionShortLabel": "No"
+        }
+      ]
+    },
+    {
+      "pn": 78,
+      "firstName": "Tyrone",
+      "lastName": "Long",
+      "displayName": "Tyrone Long",
+      "age": 50,
+      "gender": "male",
+      "ethnicity": "White",
+      "neighborhood": "Holmesburg",
+      "zipCode": "19136",
+      "district": "PA-02",
+      "imageFilename": "02-78.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 1501,
+        "afterTop10": 4946,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 0,
+          "optionShortLabel": "Limited Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": 80,
+          "optionShortLabel": "Escalation"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": 0,
+          "optionShortLabel": "Strengthen Production"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": 0,
+          "optionShortLabel": "Partially Close"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": 0,
+          "optionShortLabel": "Maintain"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": -50,
+          "optionShortLabel": "No"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": -50,
+          "optionShortLabel": "Yes"
+        }
+      ]
+    },
+    {
+      "pn": 79,
+      "firstName": "Isabella",
+      "lastName": "Young",
+      "displayName": "Isabella Young",
+      "age": 65,
+      "gender": "female",
+      "ethnicity": "Black",
+      "neighborhood": "Morrell Park",
+      "zipCode": "19114",
+      "district": "PA-02",
+      "imageFilename": "02-79.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 489,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 0,
+          "optionShortLabel": "Limited Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": 0,
+          "optionShortLabel": "Limited Response"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": 0,
+          "optionShortLabel": "Strengthen Production"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": 0,
+          "optionShortLabel": "Partially Close"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": 0,
+          "optionShortLabel": "Maintain"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": -50,
+          "optionShortLabel": "No"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": 50,
+          "optionShortLabel": "No"
+        }
+      ]
+    },
+    {
+      "pn": 80,
+      "firstName": "Vic",
+      "lastName": "Vargas",
+      "displayName": "Vic Vargas",
+      "age": 51,
+      "gender": "male",
+      "ethnicity": "Hispanic",
+      "neighborhood": "North Philadelphia",
+      "zipCode": "19120",
+      "district": "PA-02",
+      "imageFilename": "02-80.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 296,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 0,
+          "optionShortLabel": "Limited Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": 0,
+          "optionShortLabel": "Limited Response"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": 0,
+          "optionShortLabel": "Strengthen Production"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": 0,
+          "optionShortLabel": "Partially Close"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": 0,
+          "optionShortLabel": "Maintain"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": -50,
+          "optionShortLabel": "No"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": 50,
+          "optionShortLabel": "No"
+        }
+      ]
+    },
+    {
+      "pn": 81,
+      "firstName": "Olivia",
+      "lastName": "Gray",
+      "displayName": "Olivia Gray",
+      "age": 34,
+      "gender": "female",
+      "ethnicity": "White",
+      "neighborhood": "Center City",
+      "zipCode": "19102",
+      "district": "PA-02",
+      "imageFilename": "02-81.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 478,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 0,
+          "optionShortLabel": "Limited Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": 80,
+          "optionShortLabel": "Escalation"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": 0,
+          "optionShortLabel": "Strengthen Production"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": 0,
+          "optionShortLabel": "Partially Close"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": 0,
+          "optionShortLabel": "Maintain"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": -50,
+          "optionShortLabel": "No"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": 50,
+          "optionShortLabel": "No"
+        }
+      ]
+    },
+    {
+      "pn": 82,
+      "firstName": "Alex",
+      "lastName": "Chan",
+      "displayName": "Alex Chan",
+      "age": 38,
+      "gender": "male",
+      "ethnicity": "Asian",
+      "neighborhood": "Hunting Park",
+      "zipCode": "19140",
+      "district": "PA-02",
+      "imageFilename": "02-82.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 1721,
+        "afterTop10": 4620,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 0,
+          "optionShortLabel": "Limited Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": 0,
+          "optionShortLabel": "Limited Response"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": 0,
+          "optionShortLabel": "Strengthen Production"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": 0,
+          "optionShortLabel": "Partially Close"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": 0,
+          "optionShortLabel": "Maintain"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": -50,
+          "optionShortLabel": "No"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": 50,
+          "optionShortLabel": "No"
+        }
+      ]
+    },
+    {
+      "pn": 83,
+      "firstName": "Monica",
+      "lastName": "Howard",
+      "displayName": "Monica Howard",
+      "age": 53,
+      "gender": "female",
+      "ethnicity": "Black",
+      "neighborhood": "West Kensington",
+      "zipCode": "19133",
+      "district": "PA-02",
+      "imageFilename": "02-83.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 895,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 0,
+          "optionShortLabel": "Limited Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": 0,
+          "optionShortLabel": "Limited Response"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": 0,
+          "optionShortLabel": "Strengthen Production"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": 0,
+          "optionShortLabel": "Partially Close"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": 0,
+          "optionShortLabel": "Maintain"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": -50,
+          "optionShortLabel": "No"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": 50,
+          "optionShortLabel": "No"
+        }
+      ]
+    },
+    {
+      "pn": 84,
+      "firstName": "Jordan",
+      "lastName": "Hughes",
+      "displayName": "Jordan Hughes",
+      "age": 66,
+      "gender": "male",
+      "ethnicity": "White",
+      "neighborhood": "Krewstown",
+      "zipCode": "19115",
+      "district": "PA-02",
+      "imageFilename": "02-84.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 547,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 0,
+          "optionShortLabel": "Limited Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": -80,
+          "optionShortLabel": "No Involvement"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": 0,
+          "optionShortLabel": "Strengthen Production"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": 0,
+          "optionShortLabel": "Partially Close"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": 0,
+          "optionShortLabel": "Maintain"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": -50,
+          "optionShortLabel": "No"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": 50,
+          "optionShortLabel": "No"
+        }
+      ]
+    },
+    {
+      "pn": 85,
+      "firstName": "Diego",
+      "lastName": "Ortiz",
+      "displayName": "Diego Ortiz",
+      "age": 52,
+      "gender": "female",
+      "ethnicity": "Hispanic",
+      "neighborhood": "Center City",
+      "zipCode": "19102",
+      "district": "PA-02",
+      "imageFilename": "02-85.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 369,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 0,
+          "optionShortLabel": "Limited Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": -80,
+          "optionShortLabel": "No Involvement"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": 0,
+          "optionShortLabel": "Strengthen Production"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": 0,
+          "optionShortLabel": "Partially Close"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": 0,
+          "optionShortLabel": "Maintain"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": -50,
+          "optionShortLabel": "No"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": 50,
+          "optionShortLabel": "No"
+        }
+      ]
+    },
+    {
+      "pn": 86,
+      "firstName": "Kaleb",
+      "lastName": "Ward",
+      "displayName": "Kaleb Ward",
+      "age": 67,
+      "gender": "male",
+      "ethnicity": "Black",
+      "neighborhood": "North Philadelphia West",
+      "zipCode": "19132",
+      "district": "PA-02",
+      "imageFilename": "02-86.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 489,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 80,
+          "optionShortLabel": "Protection"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": 0,
+          "optionShortLabel": "Limited Response"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": 0,
+          "optionShortLabel": "Strengthen Production"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": 0,
+          "optionShortLabel": "Partially Close"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": 0,
+          "optionShortLabel": "Maintain"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": -50,
+          "optionShortLabel": "No"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": 50,
+          "optionShortLabel": "No"
+        }
+      ]
+    },
+    {
+      "pn": 87,
+      "firstName": "Elizabeth",
+      "lastName": "Brooks",
+      "displayName": "Elizabeth Brooks",
+      "age": 54,
+      "gender": "female",
+      "ethnicity": "White",
+      "neighborhood": "Northeast Philadelphia",
+      "zipCode": "19111",
+      "district": "PA-02",
+      "imageFilename": "02-87.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 2352,
+        "afterTop10": 7280,
+        "afterVTH": 10254,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 0,
+          "optionShortLabel": "Limited Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": 0,
+          "optionShortLabel": "Limited Response"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": 0,
+          "optionShortLabel": "Strengthen Production"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": 0,
+          "optionShortLabel": "Partially Close"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": 80,
+          "optionShortLabel": "Privatize"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": -50,
+          "optionShortLabel": "No"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": 50,
+          "optionShortLabel": "No"
+        }
+      ]
+    },
+    {
+      "pn": 88,
+      "firstName": "Ahmad",
+      "lastName": "Watson",
+      "displayName": "Ahmad Watson",
+      "age": 37,
+      "gender": "male",
+      "ethnicity": "Multiracial",
+      "neighborhood": "North Philadelphia East",
+      "zipCode": "19121",
+      "district": "PA-02",
+      "imageFilename": "02-88.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 425,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 80,
+          "optionShortLabel": "Protection"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": 0,
+          "optionShortLabel": "Limited Response"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": 70,
+          "optionShortLabel": "Fiscal Policy"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": 80,
+          "optionShortLabel": "Close"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": 0,
+          "optionShortLabel": "Maintain"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": -50,
+          "optionShortLabel": "No"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": -50,
+          "optionShortLabel": "Yes"
+        }
+      ]
+    },
+    {
+      "pn": 89,
+      "firstName": "Ava",
+      "lastName": "Ruiz",
+      "displayName": "Ava Ruiz",
+      "age": 45,
+      "gender": "female",
+      "ethnicity": "Hispanic",
+      "neighborhood": "North Philadelphia",
+      "zipCode": "19120",
+      "district": "PA-02",
+      "imageFilename": "02-89.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 299,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 0,
+          "optionShortLabel": "Limited Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": 80,
+          "optionShortLabel": "Escalation"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": 0,
+          "optionShortLabel": "Strengthen Production"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": 0,
+          "optionShortLabel": "Partially Close"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": 0,
+          "optionShortLabel": "Maintain"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": -50,
+          "optionShortLabel": "No"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": -50,
+          "optionShortLabel": "Yes"
+        }
+      ]
+    },
+    {
+      "pn": 90,
+      "firstName": "Jerome",
+      "lastName": "Wood",
+      "displayName": "Jerome Wood",
+      "age": 51,
+      "gender": "male",
+      "ethnicity": "White",
+      "neighborhood": "Center City",
+      "zipCode": "19102",
+      "district": "PA-02",
+      "imageFilename": "02-90.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 369,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 80,
+          "optionShortLabel": "Protection"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": 0,
+          "optionShortLabel": "Limited Response"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": 0,
+          "optionShortLabel": "Strengthen Production"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": 0,
+          "optionShortLabel": "Partially Close"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": 0,
+          "optionShortLabel": "Maintain"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": -50,
+          "optionShortLabel": "No"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": -50,
+          "optionShortLabel": "Yes"
+        }
+      ]
+    },
+    {
+      "pn": 91,
+      "firstName": "Madison",
+      "lastName": "Cox",
+      "displayName": "Madison Cox",
+      "age": 68,
+      "gender": "female",
+      "ethnicity": "Black",
+      "neighborhood": "Glenwood",
+      "zipCode": "19132",
+      "district": "PA-02",
+      "imageFilename": "02-91.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 416,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 0,
+          "optionShortLabel": "Limited Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": 0,
+          "optionShortLabel": "Limited Response"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": 70,
+          "optionShortLabel": "Fiscal Policy"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": 0,
+          "optionShortLabel": "Partially Close"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": 80,
+          "optionShortLabel": "Privatize"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": -50,
+          "optionShortLabel": "No"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": 50,
+          "optionShortLabel": "No"
+        }
+      ]
+    },
+    {
+      "pn": 92,
+      "firstName": "Dante",
+      "lastName": "Tito",
+      "displayName": "Dante Tito",
+      "age": 46,
+      "gender": "male",
+      "ethnicity": "Hispanic",
+      "neighborhood": "Harrowgate",
+      "zipCode": "19134",
+      "district": "PA-02",
+      "imageFilename": "02-92.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 1525,
+        "afterTop10": 4769,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 0,
+          "optionShortLabel": "Limited Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": 80,
+          "optionShortLabel": "Escalation"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": 0,
+          "optionShortLabel": "Strengthen Production"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": 0,
+          "optionShortLabel": "Partially Close"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": 0,
+          "optionShortLabel": "Maintain"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": -50,
+          "optionShortLabel": "No"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": 50,
+          "optionShortLabel": "No"
+        }
+      ]
+    },
+    {
+      "pn": 93,
+      "firstName": "Charlotte",
+      "lastName": "Kelly",
+      "displayName": "Charlotte Kelly",
+      "age": 69,
+      "gender": "female",
+      "ethnicity": "White",
+      "neighborhood": "Hartranft",
+      "zipCode": "19133",
+      "district": "PA-02",
+      "imageFilename": "02-93.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 659,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 80,
+          "optionShortLabel": "Protection"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": 0,
+          "optionShortLabel": "Limited Response"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": 70,
+          "optionShortLabel": "Fiscal Policy"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": 0,
+          "optionShortLabel": "Partially Close"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": 80,
+          "optionShortLabel": "Privatize"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": -50,
+          "optionShortLabel": "No"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": 50,
+          "optionShortLabel": "No"
+        }
+      ]
+    },
+    {
+      "pn": 94,
+      "firstName": "Terrell",
+      "lastName": "Reed",
+      "displayName": "Terrell Reed",
+      "age": 47,
+      "gender": "male",
+      "ethnicity": "Multiracial",
+      "neighborhood": "Tacony",
+      "zipCode": "19135",
+      "district": "PA-02",
+      "imageFilename": "02-94.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 741,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 0,
+          "optionShortLabel": "Limited Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": 0,
+          "optionShortLabel": "Limited Response"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": 0,
+          "optionShortLabel": "Strengthen Production"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": 80,
+          "optionShortLabel": "Close"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": 0,
+          "optionShortLabel": "Maintain"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": -50,
+          "optionShortLabel": "No"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": 50,
+          "optionShortLabel": "No"
+        }
+      ]
+    },
+    {
+      "pn": 95,
+      "firstName": "Lola",
+      "lastName": "Garcia",
+      "displayName": "Lola Garcia",
+      "age": 36,
+      "gender": "female",
+      "ethnicity": "Hispanic",
+      "neighborhood": "North Philadelphia West",
+      "zipCode": "19132",
+      "district": "PA-02",
+      "imageFilename": "02-95.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 1820,
+        "afterTop10": 6652,
+        "afterVTH": 8542,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 80,
+          "optionShortLabel": "Protection"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": 80,
+          "optionShortLabel": "Escalation"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": 70,
+          "optionShortLabel": "Fiscal Policy"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": 0,
+          "optionShortLabel": "Partially Close"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": 0,
+          "optionShortLabel": "Maintain"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": -50,
+          "optionShortLabel": "No"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": 50,
+          "optionShortLabel": "No"
+        }
+      ]
+    },
+    {
+      "pn": 96,
+      "firstName": "Jack",
+      "lastName": "Cooper",
+      "displayName": "Jack Cooper",
+      "age": 70,
+      "gender": "male",
+      "ethnicity": "White",
+      "neighborhood": "Northeast Philadelphia",
+      "zipCode": "19111",
+      "district": "PA-02",
+      "imageFilename": "02-96.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 415,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 80,
+          "optionShortLabel": "Protection"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": 80,
+          "optionShortLabel": "Escalation"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": 0,
+          "optionShortLabel": "Strengthen Production"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": 0,
+          "optionShortLabel": "Partially Close"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": 0,
+          "optionShortLabel": "Maintain"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": -50,
+          "optionShortLabel": "No"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": 50,
+          "optionShortLabel": "No"
+        }
+      ]
+    },
+    {
+      "pn": 97,
+      "firstName": "Evelyn",
+      "lastName": "Kim",
+      "displayName": "Evelyn Kim",
+      "age": 48,
+      "gender": "female",
+      "ethnicity": "Multiracial",
+      "neighborhood": "North Philadelphia East",
+      "zipCode": "19121",
+      "district": "PA-02",
+      "imageFilename": "02-97.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 654,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 80,
+          "optionShortLabel": "Protection"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": 0,
+          "optionShortLabel": "Limited Response"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": 0,
+          "optionShortLabel": "Strengthen Production"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": 80,
+          "optionShortLabel": "Close"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": 80,
+          "optionShortLabel": "Privatize"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": -50,
+          "optionShortLabel": "No"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": -50,
+          "optionShortLabel": "Yes"
+        }
+      ]
+    },
+    {
+      "pn": 98,
+      "firstName": "Xavier",
+      "lastName": "Torres",
+      "displayName": "Xavier Torres",
+      "age": 71,
+      "gender": "male",
+      "ethnicity": "Hispanic",
+      "neighborhood": "Wissinoming",
+      "zipCode": "19137",
+      "district": "PA-02",
+      "imageFilename": "02-98.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 1734,
+        "afterTop10": 5096,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 0,
+          "optionShortLabel": "Limited Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": 80,
+          "optionShortLabel": "Escalation"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": 70,
+          "optionShortLabel": "Fiscal Policy"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": 80,
+          "optionShortLabel": "Close"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": 80,
+          "optionShortLabel": "Privatize"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": -50,
+          "optionShortLabel": "No"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": 50,
+          "optionShortLabel": "No"
+        }
+      ]
+    },
+    {
+      "pn": 99,
+      "firstName": "Diane",
+      "lastName": "Bennett",
+      "displayName": "Diane Bennett",
+      "age": 50,
+      "gender": "female",
+      "ethnicity": "White",
+      "neighborhood": "Fishtown",
+      "zipCode": "19125",
+      "district": "PA-02",
+      "imageFilename": "02-99.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 596,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 80,
+          "optionShortLabel": "Protection"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": 80,
+          "optionShortLabel": "Escalation"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": 70,
+          "optionShortLabel": "Fiscal Policy"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": 80,
+          "optionShortLabel": "Close"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": 80,
+          "optionShortLabel": "Privatize"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": -50,
+          "optionShortLabel": "No"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": -50,
+          "optionShortLabel": "Yes"
+        }
+      ]
+    },
+    {
+      "pn": 100,
+      "firstName": "Hassan",
+      "lastName": "Kumar",
+      "displayName": "Hassan Kumar",
+      "age": 49,
+      "gender": "male",
+      "ethnicity": "Asian",
+      "neighborhood": "Norris Square",
+      "zipCode": "19122",
+      "district": "PA-02",
+      "imageFilename": "02-100.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 489,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 0,
+          "optionShortLabel": "Limited Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": 0,
+          "optionShortLabel": "Limited Response"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": 0,
+          "optionShortLabel": "Strengthen Production"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": 0,
+          "optionShortLabel": "Partially Close"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": 0,
+          "optionShortLabel": "Maintain"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": -50,
+          "optionShortLabel": "No"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": -50,
+          "optionShortLabel": "Yes"
+        }
+      ]
+    },
+    {
+      "pn": 101,
+      "firstName": "Zoe",
+      "lastName": "Smith",
+      "displayName": "Zoe Smith",
+      "age": 35,
+      "gender": "female",
+      "ethnicity": "White",
+      "neighborhood": "North Philadelphia",
+      "zipCode": "19120",
+      "district": "PA-02",
+      "imageFilename": "02-101.png",
+      "endorsements": {
+        "start": 100,
+        "afterTop20": 333,
+        "afterTop10": null,
+        "afterVTH": null,
+        "afterDebate": null,
+        "winner": null
+      },
+      "quizResponses": [
+        {
+          "questionId": "trade-1",
+          "issueId": "trade",
+          "answer": 0,
+          "optionShortLabel": "Limited Trade"
+        },
+        {
+          "questionId": "iran-1",
+          "issueId": "iran",
+          "answer": -80,
+          "optionShortLabel": "No Involvement"
+        },
+        {
+          "questionId": "inflation-1",
+          "issueId": "inflation",
+          "answer": 0,
+          "optionShortLabel": "Strengthen Production"
+        },
+        {
+          "questionId": "borders-1",
+          "issueId": "borders",
+          "answer": -80,
+          "optionShortLabel": "Open"
+        },
+        {
+          "questionId": "welfare-1",
+          "issueId": "welfare",
+          "answer": 0,
+          "optionShortLabel": "Maintain"
+        },
+        {
+          "questionId": "pa02-budget-1",
+          "issueId": "pa02-budget",
+          "answer": 50,
+          "optionShortLabel": "Yes"
+        },
+        {
+          "questionId": "pa02-transit-1",
+          "issueId": "pa02-transit",
+          "answer": 50,
+          "optionShortLabel": "No"
+        }
+      ]
+    }
+  ]
+}
