@@ -56,7 +56,12 @@ function parseArgs(argv: string[]): Args {
     else if (v === '--allow-deletes') a.allowDeletes = true;
     else if (v === '--skip-images') a.skipImages = true;
     else if (v === '--skip-psas') a.skipPsas = true;
-    else if (v === '--district') { a.districtFilter = argv[++i] || null; }
+    else if (v === '--district') {
+      const nxt = argv[++i];
+      if (!nxt || nxt.startsWith('--')) throw new Error(`--district requires a value (e.g. --district PA-01)`);
+      if (nxt !== 'PA-01' && nxt !== 'PA-02') throw new Error(`--district must be PA-01 or PA-02, got "${nxt}"`);
+      a.districtFilter = nxt;
+    }
     else if (v === '--dry-run') a.confirm = false;
     else if (v.startsWith('--')) throw new Error(`Unknown flag: ${v}`);
   }
@@ -479,27 +484,30 @@ async function executeLegacyWipe(legacy: LegacyDoc[]) {
   }
 }
 
-async function executeAvatarUploads(items: { plan: CandidatePlan; avatar: AvatarPlan }[]) {
+async function executeAvatarUploads(items: { plan: CandidatePlan; avatar: AvatarPlan }[], uploadedPaths: string[]) {
   for (const { plan, avatar } of items) {
     const ext = path.extname(avatar.path) || '.png';
     const storagePath = `profilePhotos/${plan.userId}/avatar${ext}`;
     const ct = guessImageContentType(avatar.path);
     const url = await uploadFile(avatar.path, storagePath, ct);
+    uploadedPaths.push(storagePath);
     (plan as any)._photoUrl = url;
   }
 }
 
-async function executeVideoUploads(psas: PsaPlan[]) {
+async function executeVideoUploads(psas: PsaPlan[], uploadedPaths: string[]) {
   const tmpDir = '/tmp';
   for (const p of psas) {
     const ext = path.extname(p.videoPath);
     const videoStoragePath = `psaVideos/${p.candidateId}/video${ext}`;
     const videoUrl = await uploadFile(p.videoPath, videoStoragePath, guessVideoContentType(p.videoPath));
+    uploadedPaths.push(videoStoragePath);
     // Thumbnail
     const thumbLocal = path.join(tmpDir, `amsp-psa-thumb-${p.psaId}.jpg`);
     generateThumbnail(p.videoPath, p.durationSec, thumbLocal);
     const thumbStoragePath = `psaThumbnails/${p.candidateId}/thumbnail.jpg`;
     const thumbUrl = await uploadFile(thumbLocal, thumbStoragePath, 'image/jpeg');
+    uploadedPaths.push(thumbStoragePath);
     try { fs.unlinkSync(thumbLocal); } catch { /* ignore */ }
     (p as any)._videoUrl = videoUrl;
     (p as any)._thumbUrl = thumbUrl;
@@ -708,10 +716,27 @@ async function main() {
   }
 
   console.log('\nExecuting...');
+  // Execution order: build the new world first, then tear down the old.
+  // If any of the upload / write steps below fail, process.exit(1) runs
+  // BEFORE executeLegacyWipe ever touches the existing data. This trades a
+  // brief period where both legacy + new candidates coexist (harmless — the
+  // new ones use `seed-` IDs that don't collide) for a strong guarantee
+  // that we never end up in an empty-state where the wipe succeeded but
+  // creates failed.
+  const uploadedPaths: string[] = [];
+  try {
+    if (!args.skipImages) await executeAvatarUploads(plan.avatarsToUpload, uploadedPaths);
+    if (!args.skipPsas) await executeVideoUploads(plan.psas.filter((p) => p.kind !== 'skip'), uploadedPaths);
+    await executeDocWrites(plan, args, jsonsByDistrict);
+  } catch (err) {
+    console.error('\nA create / upload step failed BEFORE the legacy wipe ran. Legacy data is untouched.');
+    if (uploadedPaths.length > 0) {
+      console.error(`\nStorage objects uploaded before the failure (may be orphaned — clean up manually if needed):`);
+      for (const p of uploadedPaths) console.error(`  gs://${BUCKET_NAME}/${p}`);
+    }
+    throw err;
+  }
   if (args.removeLegacy) await executeLegacyWipe(plan.legacy);
-  if (!args.skipImages) await executeAvatarUploads(plan.avatarsToUpload);
-  if (!args.skipPsas) await executeVideoUploads(plan.psas.filter((p) => p.kind !== 'skip'));
-  await executeDocWrites(plan, args, jsonsByDistrict);
   console.log('\nDone.');
 }
 

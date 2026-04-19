@@ -321,7 +321,16 @@ Responsibilities:
 7. Scan PSA video folders. For each video file, compute plan vs. any existing `seed-psa-*` doc; hash-compare video; plan video + thumbnail upload + metadata write. Read optional sidecar JSON for overrides.
 8. Print diff summary — broken out as legacy deletes (with full ID list), candidates create/update/delete, avatars upload, PSAs create/update/delete, videos upload (with total bytes). Batch counts shown explicitly so operator can sanity-check against the 500-per-batch Firestore limit.
 9. If `--dry-run` (default): exit.
-10. If `--confirm`: execute in order — legacy wipe (if requested) first (after typed-project-ID confirmation prompt per Decision 11); upload changed avatars; upload changed videos and generated thumbnails; batch-write user, candidate, and PSA docs.
+10. If `--confirm`: execute in this order — **build up the new world before tearing down the old**:
+    a. Typed-project-ID prompt if `--remove-legacy` is set.
+    b. Upload changed avatars.
+    c. Upload changed videos + generated thumbnails.
+    d. Batch-write user, candidate, and PSA docs.
+    e. **Only after** (b–d) succeed: execute the legacy wipe.
+    
+    Rationale: if any of b–d fails, the process exits with legacy data intact — we're in a transient "both legacy and new candidates visible" state rather than an empty state. Stable `seed-` IDs mean the legacy docs and new docs don't collide. The operator can fix the failure and re-run (idempotent upsert handles partial-create correctly) before the wipe ever runs.
+    
+    Orphaned Storage uploads (uploads that succeeded before a doc-write failure) are logged with their `gs://` paths at exit so the operator can clean up manually. Future extension: wrap upload+write pairs and auto-delete on failure.
 
 **Batch-overflow guard:** the seeder computes `chunkCount = Math.ceil(docsInPlan / 500)` and logs e.g. `"writing 202 user docs in 1 batch, 202 candidate docs in 1 batch"`. If any single collection's plan exceeds 500 docs, chunking produces multiple sequential batches; if for any reason the chunk math yields `0` when `docsInPlan > 0`, the seeder throws rather than silently writing nothing. The 500 cap is hardcoded since it is Firestore's documented limit; future growth past it is an explicit code change, not a silent truncation.
 11. If `--allow-deletes` and orphan `seed-…` docs exist: delete in separate batch.
