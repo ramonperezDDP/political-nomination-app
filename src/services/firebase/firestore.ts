@@ -386,6 +386,28 @@ export const getCandidatePSAs = async (
   }
 };
 
+// Batch-fetch published PSAs keyed by candidateId for the feed. Returns
+// the most-recent published PSA per candidate so the For You scroll can
+// inline-play videos where available and fall back to the headshot otherwise.
+export const getPublishedPSAsByCandidate = async (): Promise<Map<string, PSA>> => {
+  try {
+    const snapshot = await getCollection<PSA>(Collections.PSAS).get();
+    const published = (snapshot?.docs?.map((doc) => doc.data() as PSA) || [])
+      .filter((psa) => psa.status === 'published' && psa.videoUrl);
+    const byCandidate = new Map<string, PSA>();
+    for (const psa of published) {
+      const existing = byCandidate.get(psa.candidateId);
+      const psaTime = psa.createdAt?.toMillis?.() || 0;
+      const existingTime = existing?.createdAt?.toMillis?.() || 0;
+      if (!existing || psaTime > existingTime) byCandidate.set(psa.candidateId, psa);
+    }
+    return byCandidate;
+  } catch (error) {
+    console.warn('Error fetching published PSAs:', error);
+    return new Map();
+  }
+};
+
 export const updatePSA = async (
   psaId: string,
   data: Partial<PSA>

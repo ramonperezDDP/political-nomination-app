@@ -382,6 +382,26 @@ export const getCandidatePSAs = async (
   }
 };
 
+export const getPublishedPSAsByCandidate = async (): Promise<Map<string, PSA>> => {
+  try {
+    const snapshot = await getDocs(collection(db, Collections.PSAS));
+    const published = snapshot.docs
+      .map((d) => d.data() as PSA)
+      .filter((psa) => psa.status === 'published' && psa.videoUrl);
+    const byCandidate = new Map<string, PSA>();
+    for (const psa of published) {
+      const existing = byCandidate.get(psa.candidateId);
+      const psaTime = psa.createdAt?.toMillis?.() || 0;
+      const existingTime = existing?.createdAt?.toMillis?.() || 0;
+      if (!existing || psaTime > existingTime) byCandidate.set(psa.candidateId, psa);
+    }
+    return byCandidate;
+  } catch (error) {
+    console.warn('Error fetching published PSAs:', error);
+    return new Map();
+  }
+};
+
 export const updatePSA = async (
   psaId: string,
   data: Partial<PSA>

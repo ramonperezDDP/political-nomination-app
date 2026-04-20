@@ -11,7 +11,12 @@ import type { LayoutChangeEvent } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore, useConfigStore, selectCurrentRoundId } from '@/stores';
 import { useUserStore, selectCanSeeAlignment, selectBrowsingDistrict } from '@/stores';
-import { getCandidatesForFeed, reseedAllData, inferGenderFromName } from '@/services/firebase/firestore';
+import {
+  getCandidatesForFeed,
+  reseedAllData,
+  inferGenderFromName,
+  getPublishedPSAsByCandidate,
+} from '@/services/firebase/firestore';
 import { calculateAlignmentScore } from '@/utils/alignment';
 import { getRoundCandidateLimit } from '@/utils/contestRounds';
 import FullScreenPSA from '@/components/feed/FullScreenPSA';
@@ -21,7 +26,7 @@ import QuizPromptCard from '@/components/feed/QuizPromptCard';
 import MassEndorseButton from '@/components/feed/MassEndorseButton';
 import LocationMapModal from '@/components/feed/LocationMapModal';
 import { LoadingScreen } from '@/components/ui';
-import type { FeedItem, Candidate, User } from '@/types';
+import type { FeedItem, Candidate, User, PSA } from '@/types';
 
 type DisplayItem =
   | (FeedItem & { type?: 'candidate' })
@@ -31,7 +36,8 @@ const generateFeedItem = (
   candidate: Candidate,
   candidateUser: User | null,
   issues: Array<{ id: string; name: string }>,
-  currentUserResponses: Array<{ questionId: string; issueId: string; answer: number }> = []
+  currentUserResponses: Array<{ questionId: string; issueId: string; answer: number }> = [],
+  realPSA: PSA | null = null
 ): FeedItem => {
   // Normalize candidate's quiz responses to numeric answers
   const candidateResponses = (candidateUser?.questionnaireResponses || [])
@@ -51,21 +57,21 @@ const generateFeedItem = (
   return {
     id: candidate.id,
     psa: {
-      id: `psa-${candidate.id}`,
+      id: realPSA?.id || `psa-${candidate.id}`,
       candidateId: candidate.id,
-      title: candidate.topIssues?.[0]
+      title: realPSA?.title || (candidate.topIssues?.[0]
         ? `My Position on ${issues.find((i) => i.id === candidate.topIssues[0].issueId)?.name || 'Key Issues'}`
-        : 'Meet the Candidate',
-      description: candidate.reasonForRunning || 'Learn about this candidate\'s platform',
-      videoUrl: '',
-      thumbnailUrl: '',
-      duration: 60,
+        : 'Meet the Candidate'),
+      description: realPSA?.description || candidate.reasonForRunning || 'Learn about this candidate\'s platform',
+      videoUrl: realPSA?.videoUrl || '',
+      thumbnailUrl: realPSA?.thumbnailUrl || '',
+      duration: realPSA?.duration || 60,
       status: 'published',
-      issueIds: candidateIssueIds,
-      views: candidate.profileViews || 0,
-      likes: Math.floor((candidate.endorsementCount || 0) * 0.7),
-      createdAt: candidate.createdAt,
-      updatedAt: candidate.updatedAt,
+      issueIds: realPSA?.issueIds || candidateIssueIds,
+      views: realPSA?.views ?? candidate.profileViews ?? 0,
+      likes: realPSA?.likes ?? Math.floor((candidate.endorsementCount || 0) * 0.7),
+      createdAt: realPSA?.createdAt || candidate.createdAt,
+      updatedAt: realPSA?.updatedAt || candidate.updatedAt,
     },
     candidate: {
       id: candidate.id,
@@ -163,8 +169,17 @@ export default function ForYouScreen() {
         const activeCandidates = candidatesData.filter(
           ({ candidate }) => candidate.contestStatus !== 'eliminated'
         );
+        // Fetch published PSAs once and merge into feed items so the scroll
+        // can autoplay real videos where available (headshot fallback otherwise).
+        const psaByCandidate = await getPublishedPSAsByCandidate();
         const items = activeCandidates.map(({ candidate, user: candidateUser }) =>
-          generateFeedItem(candidate, candidateUser, issues, normalizedUserResponses)
+          generateFeedItem(
+            candidate,
+            candidateUser,
+            issues,
+            normalizedUserResponses,
+            psaByCandidate.get(candidate.id) || null
+          )
         );
         setFeedItems(items);
       } catch (error) {
