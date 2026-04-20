@@ -998,7 +998,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 32,
     paddingTop: 12,
-    height: '75%',
+    // `height:'75%'` + `ScrollView flex:1` doesn't scroll reliably on web
+    // inside an Animated.View. Using maxHeight (matches FilterByAreaSheet)
+    // lets the sheet size to its content and the ScrollView scrolls cleanly
+    // when content exceeds the cap.
+    maxHeight: '85%',
   },
   photoHandle: {
     width: 36,
@@ -1013,7 +1017,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   photoSheetScroll: {
-    flex: 1,
+    flexGrow: 0,
   },
   photoSheetScrollContent: {
     paddingBottom: 12,
@@ -1023,7 +1027,7 @@ const styles = StyleSheet.create({
   },
   photoSheetImage: {
     width: '100%',
-    height: 340,
+    height: Platform.OS === 'web' ? 260 : 340,
     borderRadius: 12,
   },
   photoSheetSectionLabel: {
