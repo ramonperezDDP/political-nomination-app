@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { StyleSheet, View, ScrollView, Dimensions, FlatList, Pressable, Modal, Platform } from 'react-native';
+import { StyleSheet, View, ScrollView, Dimensions, FlatList, Pressable, Modal, Platform, Image } from 'react-native';
 import { Text, useTheme, SegmentedButtons, Chip, Divider, IconButton } from 'react-native-paper';
+import { Video, ResizeMode } from 'expo-av';
 import { useLocalSearchParams, useGlobalSearchParams, router } from 'expo-router';
 import { SafeAreaView as NativeSafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -60,6 +61,7 @@ export default function CandidateProfileScreen() {
   const [isEndorsing, setIsEndorsing] = useState(false);
   const [displayedEndorsementCount, setDisplayedEndorsementCount] = useState(0);
   const [showLockModal, setShowLockModal] = useState(false);
+  const [playingPSA, setPlayingPSA] = useState<PSA | null>(null);
 
   // Check endorsement status and lock state
   const hasEndorsed = useUserStore((s) =>
@@ -423,13 +425,21 @@ export default function CandidateProfileScreen() {
             <Card
               key={psa.id}
               style={styles.psaCard}
-              onPress={() => {}}
+              onPress={() => setPlayingPSA(psa)}
             >
               <View style={[styles.psaThumbnail, { backgroundColor: theme.colors.surfaceVariant }]}>
+                {psa.thumbnailUrl ? (
+                  <Image
+                    source={{ uri: psa.thumbnailUrl }}
+                    style={StyleSheet.absoluteFillObject as any}
+                    resizeMode="cover"
+                  />
+                ) : null}
                 <MaterialCommunityIcons
                   name="play-circle"
                   size={48}
-                  color={theme.colors.primary}
+                  color="#fff"
+                  style={styles.psaPlayIcon}
                 />
               </View>
               <View style={styles.psaInfo}>
@@ -633,6 +643,46 @@ export default function CandidateProfileScreen() {
         visible={showLockModal}
         onDismiss={() => setShowLockModal(false)}
       />
+
+      {/* PSA video player modal */}
+      <Modal
+        visible={playingPSA !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setPlayingPSA(null)}
+      >
+        <Pressable
+          style={styles.psaVideoOverlay}
+          onPress={() => setPlayingPSA(null)}
+        >
+          <Pressable style={styles.psaVideoContainer} onPress={(e) => e.stopPropagation()}>
+            {playingPSA?.videoUrl ? (
+              <Video
+                source={{ uri: playingPSA.videoUrl }}
+                style={styles.psaVideo}
+                useNativeControls
+                resizeMode={ResizeMode.CONTAIN}
+                shouldPlay
+                isLooping={false}
+              />
+            ) : null}
+            <IconButton
+              icon="close"
+              iconColor="#fff"
+              size={28}
+              style={styles.psaVideoClose}
+              onPress={() => setPlayingPSA(null)}
+            />
+            {playingPSA?.title ? (
+              <View style={styles.psaVideoTitleBar}>
+                <Text variant="titleSmall" style={{ color: '#fff' }} numberOfLines={2}>
+                  {playingPSA.title}
+                </Text>
+              </View>
+            ) : null}
+          </Pressable>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -787,9 +837,50 @@ const styles = StyleSheet.create({
     aspectRatio: 16 / 9,
     justifyContent: 'center',
     alignItems: 'center',
+    overflow: 'hidden',
+  },
+  psaPlayIcon: {
+    textShadowColor: 'rgba(0,0,0,0.6)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
   },
   psaInfo: {
     padding: 12,
+  },
+  psaVideoOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 16,
+  },
+  psaVideoContainer: {
+    width: '100%',
+    maxWidth: 500,
+    aspectRatio: 9 / 16,
+    maxHeight: '90%',
+    backgroundColor: '#000',
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  psaVideo: {
+    width: '100%',
+    height: '100%',
+  },
+  psaVideoClose: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  psaVideoTitleBar: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
   alignmentRow: {
     flexDirection: 'row',
