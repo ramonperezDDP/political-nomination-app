@@ -952,7 +952,10 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   psaCard: {
-    width: (SCREEN_WIDTH - 44) / 2,
+    // Dimensions.get('window') returns the browser window on web, not the
+    // phone-frame container — a fixed pixel width overflows dramatically.
+    // Use a percentage on web so the card fills the actual container.
+    width: Platform.OS === 'web' ? '48%' : (SCREEN_WIDTH - 44) / 2,
     overflow: 'hidden',
   },
   psaThumbnail: {
