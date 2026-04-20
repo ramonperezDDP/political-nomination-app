@@ -1,7 +1,21 @@
-import { Tabs } from 'expo-router';
+import { Tabs, router } from 'expo-router';
+import { Platform } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from 'react-native-paper';
 import { useAuthStore } from '@/stores';
+
+// On web, tapping an already-focused tab does NOT pop its stack to the
+// root route (unlike iOS). That leaves users stranded on nested routes
+// like /(main)/(feed)/candidate/[id] with no way back to the feed index.
+// Intercept tabPress on web and hard-route to the tab root so every tap
+// behaves like the iOS "pop to root" shortcut.
+const resetToTabRoot = (rootPath: string) => ({
+  tabPress: (e: any) => {
+    if (Platform.OS !== 'web') return;
+    e.preventDefault();
+    router.replace(rootPath as any);
+  },
+});
 
 export const unstable_settings = {
   initialRouteName: '(home)',
@@ -39,6 +53,7 @@ export default function MainLayout() {
             />
           ),
         }}
+        listeners={resetToTabRoot('/(main)/(home)')}
       />
       <Tabs.Screen
         name="(feed)"
@@ -52,6 +67,7 @@ export default function MainLayout() {
             />
           ),
         }}
+        listeners={resetToTabRoot('/(main)/(feed)')}
       />
       <Tabs.Screen
         name="(leaderboard)"
@@ -65,6 +81,7 @@ export default function MainLayout() {
             />
           ),
         }}
+        listeners={resetToTabRoot('/(main)/(leaderboard)')}
       />
       <Tabs.Screen
         name="(profile)"
@@ -78,6 +95,7 @@ export default function MainLayout() {
             />
           ),
         }}
+        listeners={resetToTabRoot('/(main)/(profile)')}
       />
       <Tabs.Screen
         name="quiz"
