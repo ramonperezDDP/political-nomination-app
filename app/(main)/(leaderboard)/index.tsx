@@ -33,7 +33,10 @@ export default function LeaderboardScreen() {
   const fetchLeaderboard = useCallback(async () => {
     setIsLoading(true);
     try {
-      const data = await getCandidatesWithUsers(leaderboardType, 50, selectedDistrict);
+      // Fetch the full district roster (101 seeded candidates per district) so
+      // the name-filter search can reach candidates that rank below the
+      // visible top-N. Perf cost is trivial at this scale.
+      const data = await getCandidatesWithUsers(leaderboardType, 200, selectedDistrict);
       setLeaderboard(data);
     } catch (error) {
       console.warn('Error fetching leaderboard:', error);
