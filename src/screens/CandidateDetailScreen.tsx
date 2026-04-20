@@ -62,6 +62,7 @@ export default function CandidateProfileScreen() {
   const [displayedEndorsementCount, setDisplayedEndorsementCount] = useState(0);
   const [showLockModal, setShowLockModal] = useState(false);
   const [playingPSA, setPlayingPSA] = useState<PSA | null>(null);
+  const [showFullPhoto, setShowFullPhoto] = useState(false);
 
   // Check endorsement status and lock state
   const hasEndorsed = useUserStore((s) =>
@@ -495,15 +496,22 @@ export default function CandidateProfileScreen() {
 
         {/* Profile Header */}
         <View style={styles.header}>
-          <CandidateAvatar
-            candidateId={id || ''}
-            displayName={candidateUser?.displayName || 'Candidate'}
-            gender={candidateUser?.gender || inferGenderFromName(candidateUser?.displayName || '')}
-            photoUrl={candidate?.photoUrl || candidateUser?.photoUrl}
-            thumbnailUrl={candidate?.thumbnailUrl}
-            spectrumPosition={calculateAverageSpectrum(candidate?.topIssues || [])}
-            size={100}
-          />
+          <Pressable
+            onPress={() => {
+              const fullPhoto = candidate?.photoUrl || candidateUser?.photoUrl;
+              if (fullPhoto) setShowFullPhoto(true);
+            }}
+          >
+            <CandidateAvatar
+              candidateId={id || ''}
+              displayName={candidateUser?.displayName || 'Candidate'}
+              gender={candidateUser?.gender || inferGenderFromName(candidateUser?.displayName || '')}
+              photoUrl={candidate?.photoUrl || candidateUser?.photoUrl}
+              thumbnailUrl={candidate?.thumbnailUrl}
+              spectrumPosition={calculateAverageSpectrum(candidate?.topIssues || [])}
+              size={100}
+            />
+          </Pressable>
           <Text variant="headlineMedium" style={styles.name}>
             {candidateUser?.displayName || 'Candidate'}
           </Text>
@@ -644,6 +652,31 @@ export default function CandidateProfileScreen() {
         visible={showLockModal}
         onDismiss={() => setShowLockModal(false)}
       />
+
+      {/* Full-size headshot viewer */}
+      <Modal
+        visible={showFullPhoto}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowFullPhoto(false)}
+      >
+        <Pressable style={styles.photoViewerOverlay} onPress={() => setShowFullPhoto(false)}>
+          <Pressable style={styles.photoViewerContainer} onPress={(e) => e.stopPropagation()}>
+            <Image
+              source={{ uri: candidate?.photoUrl || candidateUser?.photoUrl }}
+              style={styles.photoViewerImage}
+              resizeMode="contain"
+            />
+            <IconButton
+              icon="close"
+              iconColor="#fff"
+              size={28}
+              style={styles.photoViewerClose}
+              onPress={() => setShowFullPhoto(false)}
+            />
+          </Pressable>
+        </Pressable>
+      </Modal>
 
       {/* PSA video player modal */}
       <Modal
@@ -854,6 +887,31 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16,
+  },
+  photoViewerOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 16,
+  },
+  photoViewerContainer: {
+    width: '75%',
+    height: '75%',
+    maxWidth: 600,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  photoViewerImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 12,
+  },
+  photoViewerClose: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)',
   },
   psaVideoContainer: {
     width: '100%',
