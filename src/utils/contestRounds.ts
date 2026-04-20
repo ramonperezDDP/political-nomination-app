@@ -37,6 +37,40 @@ const ROUND_CANDIDATE_LIMITS: Record<ContestRoundId, number | undefined> = {
 };
 
 /**
+ * How many candidates will advance from this round to the next.
+ * Distinct from the visible-cap above: this is the *survival* count.
+ *   Round 1 → 20 advance
+ *   Round 2 → 10 advance
+ *   Round 3 →  4 advance
+ *   VTH     →  2 advance
+ *   Debate  →  1 advances (winner announced)
+ *   Final / Post — no further advancement; returns undefined.
+ *
+ * Used by the leaderboard to draw the "below the cutoff → eliminated"
+ * divider line + dim styling.
+ */
+const ROUND_ADVANCEMENT_COUNTS: Record<ContestRoundId, number | undefined> = {
+  round_1_endorsement: 20,
+  round_2_endorsement: 10,
+  round_3_endorsement: 4,
+  virtual_town_hall: 2,
+  debate: 1,
+  final_results: undefined,
+  post_election: undefined,
+};
+
+/**
+ * Number of candidates that will advance out of the given round to the
+ * next one. Returns `undefined` for terminal rounds.
+ */
+export function getRoundAdvancementCount(
+  roundId: ContestRoundId | undefined | null
+): number | undefined {
+  if (!roundId) return undefined;
+  return ROUND_ADVANCEMENT_COUNTS[roundId];
+}
+
+/**
  * How many candidates should be visible in this round's feed / leaderboard?
  * Returns `undefined` for unlimited.
  */

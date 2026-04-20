@@ -13,7 +13,7 @@ import {
 } from '@/services/firebase/firestore';
 import { useConfigStore, useUserStore, selectCurrentRoundId } from '@/stores';
 import { Card, CandidateAvatar, RankBadge, LoadingScreen, EmptyState } from '@/components/ui';
-import { getRoundCandidateLimit } from '@/utils/contestRounds';
+import { getRoundCandidateLimit, getRoundAdvancementCount } from '@/utils/contestRounds';
 import type { LeaderboardEntry } from '@/types';
 
 const SafeAreaView = Platform.OS === 'web' ? View : NativeSafeAreaView;
@@ -75,19 +75,15 @@ export default function LeaderboardScreen() {
     setIsSeeding(false);
   };
 
-  // Get endorsement cutoffs from config
-  const cutoffs = partyConfig?.endorsementCutoffs || [
-    { stage: 1, threshold: 1000 },
-    { stage: 2, threshold: 500 },
-  ];
-
-  const getCutoffLine = () => {
-    // Find where the cutoff line should be drawn
-    const currentCutoff = cutoffs[0]?.threshold || 1000;
-    return leaderboard.findIndex((entry) => entry.endorsementCount < currentCutoff);
-  };
-
-  const cutoffIndex = getCutoffLine();
+  // Rank-based advancement cutoff, driven by the current round.
+  // e.g. Round 1 advances the top 20 → cutoff line sits after the 20th row
+  // (index 20, so indices 0..19 are "above", 20+ are "below").
+  // Terminal rounds (Final Results, Post-Election) get no cutoff line.
+  const advancementCount = getRoundAdvancementCount(currentRoundId);
+  const cutoffIndex =
+    typeof advancementCount === 'number' && advancementCount < leaderboard.length
+      ? advancementCount
+      : -1;
 
   const filteredLeaderboard = searchQuery.trim()
     ? leaderboard.filter((entry) =>
@@ -113,7 +109,7 @@ export default function LeaderboardScreen() {
           <View style={styles.cutoffContainer}>
             <View style={[styles.cutoffLine, { backgroundColor: theme.colors.error }]} />
             <Text variant="labelSmall" style={[styles.cutoffText, { color: theme.colors.error }]}>
-              Endorsement Threshold ({formatNumber(cutoffs[0]?.threshold || 1000)})
+              Top {advancementCount} advance
             </Text>
             <View style={[styles.cutoffLine, { backgroundColor: theme.colors.error }]} />
           </View>
