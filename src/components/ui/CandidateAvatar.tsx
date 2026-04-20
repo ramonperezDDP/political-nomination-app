@@ -7,7 +7,13 @@ interface CandidateAvatarProps {
   candidateId: string;
   displayName: string;
   gender?: Gender;
-  spectrumPosition?: number; // -100 (progressive) to 100 (conservative)
+  /**
+   * Real candidate photo URL (e.g. from Firebase Storage). When provided,
+   * this is rendered directly; if loading fails, we fall back to the
+   * DiceBear-generated avatar and finally to initials.
+   */
+  photoUrl?: string;
+  spectrumPosition?: number;
   size?: number;
   style?: ViewStyle;
 }
@@ -70,11 +76,13 @@ export function CandidateAvatar({
   candidateId,
   displayName,
   gender,
+  photoUrl,
   spectrumPosition = 0,
   size = 64,
   style,
 }: CandidateAvatarProps) {
   const theme = useTheme();
+  const [photoFailed, setPhotoFailed] = useState(false);
   const [hasError, setHasError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -169,7 +177,7 @@ export function CandidateAvatar({
   }, [gender, seedHash]);
 
   // DiceBear avataaars style with gender-specific options (using PNG for better React Native compatibility)
-  const avatarUrl = useMemo(() => {
+  const diceBearUrl = useMemo(() => {
     const baseUrl = 'https://api.dicebear.com/7.x/avataaars/png';
     const params = new URLSearchParams({
       seed: seed,
@@ -181,6 +189,10 @@ export function CandidateAvatar({
     });
     return `${baseUrl}?${params.toString()}`;
   }, [seed, backgroundColorHex, hairstyle, facialHair, size]);
+
+  // If a real photoUrl was provided and hasn't failed, use it. Otherwise
+  // fall back to the DiceBear-generated avatar.
+  const avatarUrl = photoUrl && !photoFailed ? photoUrl : diceBearUrl;
 
   // Render initials as fallback
   const renderFallback = () => (
@@ -218,8 +230,14 @@ export function CandidateAvatar({
         style={StyleSheet.flatten([styles.avatar, { width: size, height: size, borderRadius: size / 2 }])}
         onLoad={() => setIsLoading(false)}
         onError={() => {
-          setHasError(true);
-          setIsLoading(false);
+          // First failure on a real photoUrl: degrade to DiceBear, keep trying.
+          // Second failure (DiceBear also failed): show initials.
+          if (photoUrl && !photoFailed) {
+            setPhotoFailed(true);
+          } else {
+            setHasError(true);
+            setIsLoading(false);
+          }
         }}
       />
     </View>

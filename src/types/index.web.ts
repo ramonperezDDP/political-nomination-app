@@ -89,6 +89,10 @@ export interface Candidate {
   trendingScore: number;
   district: string;
   zone?: string;
+  /** Firebase Storage URL for the candidate photo. Written by the seed pipeline. */
+  photoUrl?: string;
+  /** SHA-256 of the local avatar file, used by the seeder's hash-diff upload logic. */
+  photoHash?: string;
   publishedAt?: Timestamp;
   createdAt: Timestamp;
   updatedAt: Timestamp;

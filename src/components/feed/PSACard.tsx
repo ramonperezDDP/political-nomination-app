@@ -186,6 +186,7 @@ export default function PSACard({ feedItem, isActive = true, selectedIssueId, is
             candidateId={candidate.id}
             displayName={candidate.displayName}
             gender={candidate.gender}
+            photoUrl={candidate.photoUrl}
             spectrumPosition={candidate.averageSpectrum}
             size={48}
           />

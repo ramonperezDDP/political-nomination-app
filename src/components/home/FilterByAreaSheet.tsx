@@ -203,6 +203,7 @@ export default function FilterByAreaSheet({ visible, onDismiss, district }: Filt
                         candidateId={candidate.id}
                         displayName={candidateUser?.displayName || 'Candidate'}
                         gender={candidateUser?.gender || inferGenderFromName(candidateUser?.displayName || '')}
+                        photoUrl={candidate.photoUrl || candidateUser?.photoUrl}
                         spectrumPosition={calculateAverageSpectrum(candidate.topIssues || [])}
                         size={36}
                       />

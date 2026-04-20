@@ -271,6 +271,7 @@ export default function CharacterSearchSheet({ visible, onDismiss, district }: C
                               candidateId={candidate.id}
                               displayName={candidateUser?.displayName || 'Candidate'}
                               gender={candidateUser?.gender || inferGenderFromName(candidateUser?.displayName || '')}
+                              photoUrl={candidate.photoUrl || candidateUser?.photoUrl}
                               spectrumPosition={calculateAverageSpectrum(candidate.topIssues || [])}
                               size={36}
                             />
