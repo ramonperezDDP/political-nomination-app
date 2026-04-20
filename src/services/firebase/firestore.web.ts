@@ -265,11 +265,19 @@ export const getCandidatesWithUsers = async (
       });
     const candidates = typeof limit === 'number' ? sorted.slice(0, limit) : sorted;
 
-    const entries: LeaderboardEntry[] = [];
+    // Fetch all user docs in parallel — a sequential `for (await getUser)`
+    // made Round 1 (202 candidates, no cap) wait on 202 serial roundtrips.
+    const users = await Promise.all(
+      candidates.map((c) =>
+        getUser(c.userId).catch((err) => {
+          console.warn(`Error fetching user for candidate ${c.id}:`, err);
+          return null;
+        })
+      )
+    );
 
-    for (let i = 0; i < candidates.length; i++) {
-      const candidate = candidates[i];
-      const user = await getUser(candidate.userId);
+    const entries: LeaderboardEntry[] = candidates.map((candidate, i) => {
+      const user = users[i];
       const displayName = user?.displayName || 'Unknown Candidate';
 
       const topIssues = candidate.topIssues || [];
@@ -279,7 +287,7 @@ export const getCandidatesWithUsers = async (
 
       const gender = user?.gender || inferGenderFromName(displayName);
 
-      entries.push({
+      return {
         candidateId: candidate.id,
         candidateName: displayName,
         photoUrl: candidate.photoUrl || user?.photoUrl,
@@ -290,8 +298,8 @@ export const getCandidatesWithUsers = async (
         trendingScore: candidate.trendingScore || 0,
         rank: i + 1,
         averageSpectrum: Math.round(averageSpectrum),
-      });
-    }
+      };
+    });
 
     return entries;
   } catch (error) {
