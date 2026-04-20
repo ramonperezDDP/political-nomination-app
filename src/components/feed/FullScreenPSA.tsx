@@ -31,6 +31,7 @@ export default function FullScreenPSA({ feedItem, isActive, height }: FullScreen
   const videoRef = useRef<Video>(null);
   const [isPaused, setIsPaused] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
+  const [bottomInfoHeight, setBottomInfoHeight] = useState(0);
 
   const { candidate, psa, alignmentScore, alignedQuestionIds, candidateResponses, sharedCount, exactMatchIds, closeMatchIds, notMatchedIds } = feedItem;
 
@@ -161,8 +162,16 @@ export default function FullScreenPSA({ feedItem, isActive, height }: FullScreen
         )}
       </Pressable>
 
-      {/* Gradient overlay at bottom for readability */}
-      <View style={styles.bottomGradient} pointerEvents="none" />
+      {/* Dark overlay at bottom for readability — sized to hug the info block */}
+      {bottomInfoHeight > 0 && (
+        <View
+          style={[
+            styles.bottomGradient,
+            { height: bottomInfoHeight + (Platform.OS === 'web' ? 24 : 32) },
+          ]}
+          pointerEvents="none"
+        />
+      )}
 
       {/* Alignment circle — top left, tappable to show breakdown */}
       {/* On web, insets.top is 0 but AppHeader is outside the card, so use a fixed offset */}
@@ -241,7 +250,10 @@ export default function FullScreenPSA({ feedItem, isActive, height }: FullScreen
       </View>
 
       {/* Bottom info overlay */}
-      <View style={styles.bottomInfo}>
+      <View
+        style={styles.bottomInfo}
+        onLayout={(e) => setBottomInfoHeight(e.nativeEvent.layout.height)}
+      >
         <Text style={styles.candidateName}>{candidate.displayName}</Text>
         {sharedPolicies.length > 0 && (
           <>
@@ -301,7 +313,8 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: Platform.OS === 'web' ? 180 : 200,
+    // height is set dynamically from bottomInfo onLayout so the overlay
+    // hugs the actual text block rather than a fixed 200px slab.
     backgroundColor: 'rgba(0,0,0,0.4)',
   },
   alignmentCircle: {
