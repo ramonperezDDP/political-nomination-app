@@ -13,6 +13,12 @@ interface CandidateAvatarProps {
    * DiceBear-generated avatar and finally to initials.
    */
   photoUrl?: string;
+  /**
+   * Small (256px) optimized thumbnail. Preferred over photoUrl in avatar-
+   * sized surfaces so we don't pull a full-resolution headshot just to
+   * render a 36–120px circle.
+   */
+  thumbnailUrl?: string;
   spectrumPosition?: number;
   size?: number;
   style?: ViewStyle;
@@ -77,6 +83,7 @@ export function CandidateAvatar({
   displayName,
   gender,
   photoUrl,
+  thumbnailUrl,
   spectrumPosition = 0,
   size = 64,
   style,
@@ -190,9 +197,10 @@ export function CandidateAvatar({
     return `${baseUrl}?${params.toString()}`;
   }, [seed, backgroundColorHex, hairstyle, facialHair, size]);
 
-  // If a real photoUrl was provided and hasn't failed, use it. Otherwise
-  // fall back to the DiceBear-generated avatar.
-  const avatarUrl = photoUrl && !photoFailed ? photoUrl : diceBearUrl;
+  // Prefer the small thumbnail when available; fall back to the full photo,
+  // then to the DiceBear-generated avatar, then to initials.
+  const preferredPhoto = thumbnailUrl || photoUrl;
+  const avatarUrl = preferredPhoto && !photoFailed ? preferredPhoto : diceBearUrl;
 
   // Render initials as fallback
   const renderFallback = () => (
@@ -230,9 +238,9 @@ export function CandidateAvatar({
         style={StyleSheet.flatten([styles.avatar, { width: size, height: size, borderRadius: size / 2 }])}
         onLoad={() => setIsLoading(false)}
         onError={() => {
-          // First failure on a real photoUrl: degrade to DiceBear, keep trying.
+          // First failure on a real photo: degrade to DiceBear, keep trying.
           // Second failure (DiceBear also failed): show initials.
-          if (photoUrl && !photoFailed) {
+          if (preferredPhoto && !photoFailed) {
             setPhotoFailed(true);
           } else {
             setHasError(true);

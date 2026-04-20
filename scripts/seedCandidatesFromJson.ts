@@ -89,6 +89,7 @@ interface JsonCandidate {
 interface JsonDistrict { district: string; questions: any[]; candidates: JsonCandidate[]; }
 
 interface AvatarPlan { path: string; hash: string; needsUpload: boolean; currentHash: string | null; }
+interface ThumbnailPlan { hash: string; needsUpload: boolean; currentHash: string | null; }
 interface CandidatePlan {
   kind: 'create' | 'update' | 'skip';
   json: JsonCandidate;
@@ -97,10 +98,16 @@ interface CandidatePlan {
   existingCandidate: any | null;
   existingUser: any | null;
   avatar: AvatarPlan | null;
+  thumbnail: ThumbnailPlan | null;
   bio: { summary: string; background: string; reasonForRunning: string };
   zone: string;
   topIssues: any[];
 }
+
+// Thumbnail params baked into thumbHash so a param change forces re-upload.
+const THUMBNAIL_VERSION = 'v1-256-jpeg-q80';
+const THUMBNAIL_MAX_PX = 256;
+const THUMBNAIL_JPEG_QUALITY = 80;
 interface PsaPlan {
   kind: 'create' | 'update' | 'skip';
   psaId: string;
@@ -173,6 +180,7 @@ async function planCandidates(jsons: JsonDistrict[], args: Args) {
 
   const plans: CandidatePlan[] = [];
   const avatarsToUpload: { plan: CandidatePlan; avatar: AvatarPlan }[] = [];
+  const thumbnailsToUpload: { plan: CandidatePlan; thumb: ThumbnailPlan; sourcePath: string }[] = [];
 
   for (const jd of jsons) {
     if (args.districtFilter && jd.district !== args.districtFilter) continue;
@@ -183,8 +191,9 @@ async function planCandidates(jsons: JsonDistrict[], args: Args) {
       const existingUser = existingUsers.get(userId) || null;
       const kind: CandidatePlan['kind'] = existingCand ? 'update' : 'create';
 
-      // Avatar hash
+      // Avatar hash + derived thumbnail hash
       let avatar: AvatarPlan | null = null;
+      let thumbnail: ThumbnailPlan | null = null;
       if (!args.skipImages) {
         const avPath = path.join(AVATARS_DIR, `${c.district}-Profile-Pics`, c.imageFilename);
         if (!fs.existsSync(avPath)) {
@@ -193,6 +202,11 @@ async function planCandidates(jsons: JsonDistrict[], args: Args) {
           const hash = sha256File(avPath);
           const currentHash = existingCand?.photoHash || null;
           avatar = { path: avPath, hash, needsUpload: hash !== currentHash, currentHash };
+          // Thumbnail tag = source hash + params version. Regenerates when
+          // either the source photo or the thumbnail params change.
+          const thumbTag = `${hash}/${THUMBNAIL_VERSION}`;
+          const currentThumb = existingCand?.thumbnailHash || null;
+          thumbnail = { hash: thumbTag, needsUpload: thumbTag !== currentThumb, currentHash: currentThumb };
         }
       }
 
@@ -206,9 +220,12 @@ async function planCandidates(jsons: JsonDistrict[], args: Args) {
       const { zone } = zipToZone(c.zipCode, c.district);
       const topIssues = deriveTopIssues(c, jd.questions);
 
-      const plan: CandidatePlan = { kind, json: c, candidateId, userId, existingCandidate: existingCand, existingUser, avatar, bio, zone, topIssues };
+      const plan: CandidatePlan = { kind, json: c, candidateId, userId, existingCandidate: existingCand, existingUser, avatar, thumbnail, bio, zone, topIssues };
       plans.push(plan);
       if (avatar && avatar.needsUpload) avatarsToUpload.push({ plan, avatar });
+      if (thumbnail && thumbnail.needsUpload && avatar) {
+        thumbnailsToUpload.push({ plan, thumb: thumbnail, sourcePath: avatar.path });
+      }
     }
   }
 
@@ -240,7 +257,7 @@ async function planCandidates(jsons: JsonDistrict[], args: Args) {
     }
   }
 
-  return { plans, avatarsToUpload, orphans, legacy };
+  return { plans, avatarsToUpload, thumbnailsToUpload, orphans, legacy };
 }
 
 function deriveTopIssues(c: JsonCandidate, questions: any[]) {
@@ -376,6 +393,7 @@ async function planPsas(jsons: JsonDistrict[], candidatePlansByKey: Map<string, 
 function printSummary(plan: {
   candidates: CandidatePlan[];
   avatarsToUpload: { plan: CandidatePlan; avatar: AvatarPlan }[];
+  thumbnailsToUpload: { plan: CandidatePlan; thumb: ThumbnailPlan; sourcePath: string }[];
   psas: PsaPlan[];
   orphans: OrphanDoc[];
   legacy: LegacyDoc[];
@@ -394,6 +412,7 @@ function printSummary(plan: {
   console.log('');
   console.log(`Candidates: ${creates} create, ${updates} update, ${plan.candidates.filter((p) => p.kind === 'skip').length} skip`);
   console.log(`Avatars:    ${plan.avatarsToUpload.length} to upload`);
+  console.log(`Thumbnails: ${plan.thumbnailsToUpload.length} to generate + upload (${THUMBNAIL_MAX_PX}px JPEG q${THUMBNAIL_JPEG_QUALITY})`);
   console.log(`PSAs:       ${psaCreates} create, ${psaUpdates} update, ${psaSkips} skip`);
   console.log(`  videos:   ${videosToUpload.length} to upload (${(totalVideoBytes / 1024 / 1024).toFixed(1)} MB)`);
   console.log('');
@@ -495,6 +514,35 @@ async function executeAvatarUploads(items: { plan: CandidatePlan; avatar: Avatar
   }
 }
 
+function generateAvatarThumbnail(sourcePath: string, outPath: string) {
+  // macOS sips: scale longest side to THUMBNAIL_MAX_PX, convert to JPEG at quality q.
+  const res = spawnSync('sips', [
+    '-Z', String(THUMBNAIL_MAX_PX),
+    '-s', 'format', 'jpeg',
+    '-s', 'formatOptions', String(THUMBNAIL_JPEG_QUALITY),
+    sourcePath,
+    '--out', outPath,
+  ], { encoding: 'utf8' });
+  if (res.status !== 0) throw new Error(`sips thumbnail failed for ${sourcePath}: ${res.stderr}`);
+}
+
+async function executeThumbnailUploads(
+  items: { plan: CandidatePlan; thumb: ThumbnailPlan; sourcePath: string }[],
+  uploadedPaths: string[],
+) {
+  const tmpDir = '/tmp';
+  for (const { plan, thumb, sourcePath } of items) {
+    const localThumb = path.join(tmpDir, `amsp-thumb-${plan.userId}.jpg`);
+    generateAvatarThumbnail(sourcePath, localThumb);
+    const storagePath = `profileThumbnails/${plan.userId}/thumbnail.jpg`;
+    const url = await uploadFile(localThumb, storagePath, 'image/jpeg');
+    uploadedPaths.push(storagePath);
+    try { fs.unlinkSync(localThumb); } catch { /* ignore */ }
+    (plan as any)._thumbnailUrl = url;
+    (plan as any)._thumbnailHash = thumb.hash;
+  }
+}
+
 async function executeVideoUploads(psas: PsaPlan[], uploadedPaths: string[]) {
   const tmpDir = '/tmp';
   for (const p of psas) {
@@ -568,7 +616,10 @@ async function executeDocWrites(plan: {
       updatedAt: now,
     };
     const avatarUrl = (p as any)._photoUrl || p.existingCandidate?.photoUrl || null;
+    const thumbUrl = (p as any)._thumbnailUrl || p.existingCandidate?.thumbnailUrl || null;
+    const thumbHash = (p as any)._thumbnailHash || p.existingCandidate?.thumbnailHash || null;
     if (avatarUrl) userDoc.photoUrl = avatarUrl;
+    if (thumbUrl) userDoc.thumbnailUrl = thumbUrl;
 
     const candDoc: any = {
       id: p.candidateId,
@@ -599,6 +650,8 @@ async function executeDocWrites(plan: {
     }
     if (p.avatar) candDoc.photoHash = p.avatar.hash;
     if (avatarUrl) candDoc.photoUrl = avatarUrl;
+    if (thumbUrl) candDoc.thumbnailUrl = thumbUrl;
+    if (thumbHash) candDoc.thumbnailHash = thumbHash;
 
     userWrites.push({ id: p.userId, data: userDoc });
     candWrites.push({ id: p.candidateId, data: candDoc });
@@ -692,6 +745,7 @@ async function main() {
   const plan = {
     candidates: candPlan.plans,
     avatarsToUpload: candPlan.avatarsToUpload,
+    thumbnailsToUpload: candPlan.thumbnailsToUpload,
     psas: psaOut.psaPlans,
     orphans: combinedOrphans,
     legacy: candPlan.legacy,
@@ -725,7 +779,10 @@ async function main() {
   // creates failed.
   const uploadedPaths: string[] = [];
   try {
-    if (!args.skipImages) await executeAvatarUploads(plan.avatarsToUpload, uploadedPaths);
+    if (!args.skipImages) {
+      await executeAvatarUploads(plan.avatarsToUpload, uploadedPaths);
+      await executeThumbnailUploads(plan.thumbnailsToUpload, uploadedPaths);
+    }
     if (!args.skipPsas) await executeVideoUploads(plan.psas.filter((p) => p.kind !== 'skip'), uploadedPaths);
     await executeDocWrites(plan, args, jsonsByDistrict);
   } catch (err) {

@@ -76,7 +76,8 @@ const generateFeedItem = (
     candidate: {
       id: candidate.id,
       displayName: candidateUser?.displayName || 'Candidate',
-      photoUrl: candidateUser?.photoUrl,
+      photoUrl: candidate.photoUrl || candidateUser?.photoUrl,
+      thumbnailUrl: candidate.thumbnailUrl,
       gender: candidateUser?.gender || inferGenderFromName(candidateUser?.displayName || ''),
       topIssues: candidateIssueIds.slice(0, 3).map(
         (id) => issues.find((i) => i.id === id)?.name || id

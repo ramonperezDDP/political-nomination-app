@@ -93,6 +93,10 @@ export interface Candidate {
   photoUrl?: string;
   /** SHA-256 of the local avatar file, used by the seeder's hash-diff upload logic. */
   photoHash?: string;
+  /** 256px JPEG derived from photoUrl, used in avatar-sized surfaces for fast loads. */
+  thumbnailUrl?: string;
+  /** Tag tied to photoHash + thumbnail version, used by the seeder to detect stale thumbs. */
+  thumbnailHash?: string;
   publishedAt?: Timestamp;
   createdAt: Timestamp;
   updatedAt: Timestamp;
@@ -253,6 +257,7 @@ export interface LeaderboardEntry {
   candidateId: string;
   candidateName: string;
   photoUrl?: string;
+  thumbnailUrl?: string;
   gender?: Gender;
   endorsementCount: number;
   profileViews: number;
@@ -281,6 +286,7 @@ export interface CandidatePreview {
   id: string;
   displayName: string;
   photoUrl?: string;
+  thumbnailUrl?: string;
   gender?: Gender;
   topIssues: string[];
   endorsementCount: number;

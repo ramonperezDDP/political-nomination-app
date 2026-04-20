@@ -500,6 +500,7 @@ export default function CandidateProfileScreen() {
             displayName={candidateUser?.displayName || 'Candidate'}
             gender={candidateUser?.gender || inferGenderFromName(candidateUser?.displayName || '')}
             photoUrl={candidate?.photoUrl || candidateUser?.photoUrl}
+            thumbnailUrl={candidate?.thumbnailUrl}
             spectrumPosition={calculateAverageSpectrum(candidate?.topIssues || [])}
             size={100}
           />

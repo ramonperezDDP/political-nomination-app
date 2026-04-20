@@ -134,6 +134,7 @@ export default function LeaderboardScreen() {
                 displayName={item.candidateName}
                 gender={item.gender}
                 photoUrl={item.photoUrl}
+                thumbnailUrl={item.thumbnailUrl}
                 spectrumPosition={item.averageSpectrum}
                 size={48}
               />

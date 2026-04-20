@@ -193,9 +193,9 @@ export default function FullScreenPSA({ feedItem, isActive, height }: FullScreen
           style={styles.actionButton}
         >
           <View style={styles.avatarCircle}>
-            {candidate.photoUrl ? (
+            {candidate.thumbnailUrl || candidate.photoUrl ? (
               <Image
-                source={{ uri: candidate.photoUrl }}
+                source={{ uri: candidate.thumbnailUrl || candidate.photoUrl }}
                 style={styles.avatarImage}
               />
             ) : (

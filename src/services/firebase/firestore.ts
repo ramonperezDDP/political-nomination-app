@@ -278,7 +278,8 @@ export const getCandidatesWithUsers = async (
       entries.push({
         candidateId: candidate.id,
         candidateName: displayName,
-        photoUrl: user?.photoUrl,
+        photoUrl: candidate.photoUrl || user?.photoUrl,
+        thumbnailUrl: candidate.thumbnailUrl,
         gender,
         endorsementCount: candidate.endorsementCount || 0,
         profileViews: candidate.profileViews || 0,
