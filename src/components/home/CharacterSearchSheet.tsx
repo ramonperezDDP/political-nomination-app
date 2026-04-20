@@ -6,6 +6,8 @@ import { router } from 'expo-router';
 
 import { getActiveQuestions, getCandidatesForFeed, inferGenderFromName } from '@/services/firebase/firestore';
 import { CandidateAvatar, calculateAverageSpectrum } from '@/components/ui';
+import { useConfigStore, selectCurrentRoundId } from '@/stores';
+import { getRoundCandidateLimit } from '@/utils/contestRounds';
 import type { Question, Candidate, User } from '@/types';
 
 interface CharacterSearchSheetProps {
@@ -24,6 +26,7 @@ export default function CharacterSearchSheet({ visible, onDismiss, district }: C
   const [selectedSpectrumValue, setSelectedSpectrumValue] = useState<number | null>(null);
   const [candidates, setCandidates] = useState<Array<{ candidate: Candidate; user: User | null }>>([]);
   const [matchingCandidates, setMatchingCandidates] = useState<Array<{ candidate: Candidate; user: User | null }>>([]);
+  const currentRoundId = useConfigStore(selectCurrentRoundId);
   const [loading, setLoading] = useState(false);
   const [candidatesLoaded, setCandidatesLoaded] = useState(false);
 
@@ -58,7 +61,8 @@ export default function CharacterSearchSheet({ visible, onDismiss, district }: C
     if (!visible || candidatesLoaded) return;
     let cancelled = false;
     const load = async () => {
-      const data = await getCandidatesForFeed(district);
+      const roundLimit = getRoundCandidateLimit(currentRoundId);
+      const data = await getCandidatesForFeed(district, roundLimit);
       if (!cancelled) {
         setCandidates(data);
         setCandidatesLoaded(true);
@@ -66,7 +70,7 @@ export default function CharacterSearchSheet({ visible, onDismiss, district }: C
     };
     load();
     return () => { cancelled = true; };
-  }, [visible, district, candidatesLoaded]);
+  }, [visible, district, candidatesLoaded, currentRoundId]);
 
   // Filter candidates when an option is selected
   useEffect(() => {

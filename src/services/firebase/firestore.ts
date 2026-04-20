@@ -171,7 +171,7 @@ export const updateCandidate = async (
 };
 
 export const getApprovedCandidates = async (
-  limit = 50,
+  limit?: number,
   district?: string
 ): Promise<Candidate[]> => {
   try {
@@ -180,11 +180,11 @@ export const getApprovedCandidates = async (
     const allCandidates = snapshot?.docs?.map((doc) => doc.data() as Candidate) || [];
     console.log('Total candidates in Firestore:', allCandidates.length);
 
-    const approved = allCandidates
+    const sorted = allCandidates
       .filter((c) => c.status === 'approved')
       .filter((c) => !district || c.district === district)
-      .sort((a, b) => (b.endorsementCount || 0) - (a.endorsementCount || 0))
-      .slice(0, limit);
+      .sort((a, b) => (b.endorsementCount || 0) - (a.endorsementCount || 0));
+    const approved = typeof limit === 'number' ? sorted.slice(0, limit) : sorted;
 
     console.log('Approved candidates:', approved.length);
     return approved;
@@ -195,12 +195,15 @@ export const getApprovedCandidates = async (
 };
 
 // Get candidates with full data for feed generation
-export const getCandidatesForFeed = async (district?: string): Promise<Array<{ candidate: Candidate; user: User | null }>> => {
+export const getCandidatesForFeed = async (
+  district?: string,
+  limit?: number
+): Promise<Array<{ candidate: Candidate; user: User | null }>> => {
   try {
-    // Fetch the full district roster (101 seeded candidates) so downstream
-    // filters (alignment, "My Issues", "Top Picks") have the complete set
-    // to work with, not just a pre-capped top slice.
-    const candidates = await getApprovedCandidates(200, district);
+    // No cap by default. Callers pass a round-specific limit via
+    // getRoundCandidateLimit() so the visible field narrows as the
+    // contest advances (Round 2 → 20, Round 3 → 10, etc.).
+    const candidates = await getApprovedCandidates(limit, district);
     console.log('getApprovedCandidates returned:', candidates.length, 'candidates');
 
     // Fetch all users in parallel, handling errors individually
@@ -236,15 +239,15 @@ export const incrementCandidateViews = async (
 // Get candidates with user display names for leaderboard
 export const getCandidatesWithUsers = async (
   sortBy: 'endorsements' | 'trending' = 'endorsements',
-  limit = 50,
+  limit?: number,
   district?: string
 ): Promise<LeaderboardEntry[]> => {
   try {
     // Fetch all candidates to avoid composite index requirement
     const snapshot = await getCollection<Candidate>(Collections.CANDIDATES).get();
 
-    // Filter and sort in memory
-    const candidates = (snapshot?.docs?.map((doc) => doc.data() as Candidate) || [])
+    // Filter and sort in memory — cap is optional (round-driven by callers)
+    const sorted = (snapshot?.docs?.map((doc) => doc.data() as Candidate) || [])
       .filter((c) => c.status === 'approved')
       .filter((c) => !district || c.district === district)
       .sort((a, b) => {
@@ -252,8 +255,8 @@ export const getCandidatesWithUsers = async (
           return (b.endorsementCount || 0) - (a.endorsementCount || 0);
         }
         return (b.trendingScore || 0) - (a.trendingScore || 0);
-      })
-      .slice(0, limit);
+      });
+    const candidates = typeof limit === 'number' ? sorted.slice(0, limit) : sorted;
 
     const entries: LeaderboardEntry[] = [];
 

@@ -11,8 +11,9 @@ import {
   seedCandidates,
   getCandidatesWithUsers,
 } from '@/services/firebase/firestore';
-import { useConfigStore, useUserStore } from '@/stores';
+import { useConfigStore, useUserStore, selectCurrentRoundId } from '@/stores';
 import { Card, CandidateAvatar, RankBadge, LoadingScreen, EmptyState } from '@/components/ui';
+import { getRoundCandidateLimit } from '@/utils/contestRounds';
 import type { LeaderboardEntry } from '@/types';
 
 const SafeAreaView = Platform.OS === 'web' ? View : NativeSafeAreaView;
@@ -22,6 +23,7 @@ type LeaderboardType = 'endorsements' | 'trending';
 export default function LeaderboardScreen() {
   const theme = useTheme();
   const { partyConfig } = useConfigStore();
+  const currentRoundId = useConfigStore(selectCurrentRoundId);
   const selectedDistrict = useUserStore((s) => s.selectedBrowsingDistrict);
   const [leaderboardType, setLeaderboardType] = useState<LeaderboardType>('endorsements');
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
@@ -33,16 +35,16 @@ export default function LeaderboardScreen() {
   const fetchLeaderboard = useCallback(async () => {
     setIsLoading(true);
     try {
-      // Fetch the full district roster (101 seeded candidates per district) so
-      // the name-filter search can reach candidates that rank below the
-      // visible top-N. Perf cost is trivial at this scale.
-      const data = await getCandidatesWithUsers(leaderboardType, 200, selectedDistrict);
+      // Round-aware cap: Endorsement One is unlimited; Round 2 → 20;
+      // Round 3 → 10; etc. See src/utils/contestRounds.ts.
+      const roundLimit = getRoundCandidateLimit(currentRoundId);
+      const data = await getCandidatesWithUsers(leaderboardType, roundLimit, selectedDistrict);
       setLeaderboard(data);
     } catch (error) {
       console.warn('Error fetching leaderboard:', error);
     }
     setIsLoading(false);
-  }, [leaderboardType, selectedDistrict]);
+  }, [leaderboardType, selectedDistrict, currentRoundId]);
 
   useEffect(() => {
     fetchLeaderboard();

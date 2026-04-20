@@ -7,6 +7,7 @@ import { Card } from '@/components/ui';
 import { useAuthStore, useConfigStore, useUserStore, selectHasAccount, selectCurrentRoundId } from '@/stores';
 import { getFaqsForRound } from '@/constants/faqs';
 import { getActiveQuestions, updateSingleQuizResponse, clearQuizResponse, updateUser, getCandidatesForFeed } from '@/services/firebase/firestore';
+import { getRoundCandidateLimit } from '@/utils/contestRounds';
 import type { Question, QuestionnaireResponse, Candidate, User as UserType } from '@/types';
 import VideoCard from './VideoCard';
 import QuizCard from './QuizCard';
@@ -26,6 +27,7 @@ const QUIZ_QUESTION_IDS: Record<string, string[]> = {
 export default function VoterHome() {
   const theme = useTheme();
   const { partyConfig } = useConfigStore();
+  const currentRoundId = useConfigStore(selectCurrentRoundId);
   const user = useAuthStore((s) => s.user);
   const setUser = useAuthStore((s) => s.setUser);
   const hasAccount = useUserStore(selectHasAccount);
@@ -67,12 +69,13 @@ export default function VoterHome() {
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
-      const data = await getCandidatesForFeed(selectedDistrict);
+      const roundLimit = getRoundCandidateLimit(currentRoundId);
+      const data = await getCandidatesForFeed(selectedDistrict, roundLimit);
       if (!cancelled) setCandidateData(data);
     };
     load();
     return () => { cancelled = true; };
-  }, [selectedDistrict]);
+  }, [selectedDistrict, currentRoundId]);
 
   // Calculate exact match count
   const { matchCount, totalCandidates } = useMemo(() => {
@@ -223,7 +226,6 @@ export default function VoterHome() {
   }, [user?.questionnaireResponses, districtQuestionIds]);
   const totalIssues = districtQuestionIds.length;
 
-  const currentRoundId = useConfigStore(selectCurrentRoundId);
   const faqs = useMemo(() => getFaqsForRound(currentRoundId), [currentRoundId]);
 
   // Web overlay sheets — rendered outside ScrollView via renderOverlays callback

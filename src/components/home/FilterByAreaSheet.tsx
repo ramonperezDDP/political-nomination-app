@@ -7,6 +7,8 @@ import Svg, { Path, G, Text as SvgText } from 'react-native-svg';
 
 import { getCandidatesForFeed, inferGenderFromName } from '@/services/firebase/firestore';
 import { CandidateAvatar, calculateAverageSpectrum } from '@/components/ui';
+import { useConfigStore, selectCurrentRoundId } from '@/stores';
+import { getRoundCandidateLimit } from '@/utils/contestRounds';
 import type { Candidate, User } from '@/types';
 
 interface Zone {
@@ -48,6 +50,7 @@ export default function FilterByAreaSheet({ visible, onDismiss, district }: Filt
   const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);
   const [candidates, setCandidates] = useState<Array<{ candidate: Candidate; user: User | null }>>([]);
   const [candidatesLoaded, setCandidatesLoaded] = useState(false);
+  const currentRoundId = useConfigStore(selectCurrentRoundId);
 
   const zones = DISTRICT_ZONES[district] || PA01_ZONES;
 
@@ -70,7 +73,8 @@ export default function FilterByAreaSheet({ visible, onDismiss, district }: Filt
     if (!visible || candidatesLoaded) return;
     let cancelled = false;
     const load = async () => {
-      const data = await getCandidatesForFeed(district);
+      const roundLimit = getRoundCandidateLimit(currentRoundId);
+      const data = await getCandidatesForFeed(district, roundLimit);
       if (!cancelled) {
         setCandidates(data);
         setCandidatesLoaded(true);
@@ -78,7 +82,7 @@ export default function FilterByAreaSheet({ visible, onDismiss, district }: Filt
     };
     load();
     return () => { cancelled = true; };
-  }, [visible, district, candidatesLoaded]);
+  }, [visible, district, candidatesLoaded, currentRoundId]);
 
   // Reset when sheet closes
   useEffect(() => {

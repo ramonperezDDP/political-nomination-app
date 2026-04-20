@@ -9,10 +9,11 @@ import {
 } from 'react-native';
 import type { LayoutChangeEvent } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useAuthStore, useConfigStore } from '@/stores';
+import { useAuthStore, useConfigStore, selectCurrentRoundId } from '@/stores';
 import { useUserStore, selectCanSeeAlignment, selectBrowsingDistrict } from '@/stores';
 import { getCandidatesForFeed, reseedAllData, inferGenderFromName } from '@/services/firebase/firestore';
 import { calculateAlignmentScore } from '@/utils/alignment';
+import { getRoundCandidateLimit } from '@/utils/contestRounds';
 import FullScreenPSA from '@/components/feed/FullScreenPSA';
 import ExperienceMenu from '@/components/feed/ExperienceMenu';
 import type { ExperienceFilter } from '@/components/feed/ExperienceMenu';
@@ -100,6 +101,7 @@ export default function ForYouScreen() {
   const userId = user?.id;
   const { issues } = useConfigStore();
   const issuesReady = issues.length > 0;
+  const currentRoundId = useConfigStore(selectCurrentRoundId);
   const canSeeAlignment = useUserStore(selectCanSeeAlignment);
   const selectedDistrict = useUserStore(selectBrowsingDistrict);
 
@@ -135,7 +137,9 @@ export default function ForYouScreen() {
       if (!issuesReady) return;
       setIsLoading(true);
       try {
-        let candidatesData = await getCandidatesForFeed(selectedDistrict);
+        // Round-aware cap: no limit in Endorsement One, top-20 in Round 2, etc.
+        const roundLimit = getRoundCandidateLimit(currentRoundId);
+        let candidatesData = await getCandidatesForFeed(selectedDistrict, roundLimit);
         const needsReseed = candidatesData.length === 0 ||
           candidatesData.some(({ candidate }) => !candidate.zone) ||
           candidatesData.some(({ candidate }) =>
@@ -149,7 +153,7 @@ export default function ForYouScreen() {
           });
         if (needsReseed) {
           await reseedAllData();
-          candidatesData = await getCandidatesForFeed(selectedDistrict);
+          candidatesData = await getCandidatesForFeed(selectedDistrict, roundLimit);
         }
         // Normalize current user's quiz responses to numeric answers for alignment
         const normalizedUserResponses = (user?.questionnaireResponses || [])
@@ -169,7 +173,7 @@ export default function ForYouScreen() {
       setIsLoading(false);
     };
     loadFeed();
-  }, [issuesReady, userId, selectedDistrict, userResponses]);
+  }, [issuesReady, userId, selectedDistrict, userResponses, currentRoundId]);
 
   // Apply experience filter — use stable references, not entire user object
   const filteredItems = useMemo(() => {

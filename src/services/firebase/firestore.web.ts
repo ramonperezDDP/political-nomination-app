@@ -184,7 +184,7 @@ export const updateCandidate = async (
 };
 
 export const getApprovedCandidates = async (
-  limit = 50,
+  limit?: number,
   district?: string
 ): Promise<Candidate[]> => {
   try {
@@ -193,11 +193,11 @@ export const getApprovedCandidates = async (
     const allCandidates = snapshot.docs.map((d) => d.data() as Candidate);
     console.log('Total candidates in Firestore:', allCandidates.length);
 
-    const approved = allCandidates
+    const sorted = allCandidates
       .filter((c) => c.status === 'approved')
       .filter((c) => !district || c.district === district)
-      .sort((a, b) => (b.endorsementCount || 0) - (a.endorsementCount || 0))
-      .slice(0, limit);
+      .sort((a, b) => (b.endorsementCount || 0) - (a.endorsementCount || 0));
+    const approved = typeof limit === 'number' ? sorted.slice(0, limit) : sorted;
 
     console.log('Approved candidates:', approved.length);
     return approved;
@@ -208,11 +208,13 @@ export const getApprovedCandidates = async (
 };
 
 // Get candidates with full data for feed generation
-export const getCandidatesForFeed = async (district?: string): Promise<Array<{ candidate: Candidate; user: User | null }>> => {
+export const getCandidatesForFeed = async (
+  district?: string,
+  limit?: number
+): Promise<Array<{ candidate: Candidate; user: User | null }>> => {
   try {
-    // Fetch full district roster so downstream filters operate on the
-    // complete set (matches firestore.ts behavior).
-    const candidates = await getApprovedCandidates(200, district);
+    // No cap by default; callers pass a round-specific limit.
+    const candidates = await getApprovedCandidates(limit, district);
     console.log('getApprovedCandidates returned:', candidates.length, 'candidates');
 
     const results = await Promise.all(
@@ -245,13 +247,13 @@ export const incrementCandidateViews = async (
 // Get candidates with user display names for leaderboard
 export const getCandidatesWithUsers = async (
   sortBy: 'endorsements' | 'trending' = 'endorsements',
-  limit = 50,
+  limit?: number,
   district?: string
 ): Promise<LeaderboardEntry[]> => {
   try {
     const snapshot = await getDocs(collection(db, Collections.CANDIDATES));
 
-    const candidates = snapshot.docs
+    const sorted = snapshot.docs
       .map((d) => d.data() as Candidate)
       .filter((c) => c.status === 'approved')
       .filter((c) => !district || c.district === district)
@@ -260,8 +262,8 @@ export const getCandidatesWithUsers = async (
           return (b.endorsementCount || 0) - (a.endorsementCount || 0);
         }
         return (b.trendingScore || 0) - (a.trendingScore || 0);
-      })
-      .slice(0, limit);
+      });
+    const candidates = typeof limit === 'number' ? sorted.slice(0, limit) : sorted;
 
     const entries: LeaderboardEntry[] = [];
 
