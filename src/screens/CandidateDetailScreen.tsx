@@ -947,7 +947,9 @@ const styles = StyleSheet.create({
     marginLeft: 12,
   },
   psaGrid: {
-    flexDirection: 'row',
+    // On web we stack PSAs in a single full-width column; on native the
+    // two-column pixel grid still works because SCREEN_WIDTH is the phone.
+    flexDirection: Platform.OS === 'web' ? 'column' : 'row',
     flexWrap: 'wrap',
     gap: 12,
   },
