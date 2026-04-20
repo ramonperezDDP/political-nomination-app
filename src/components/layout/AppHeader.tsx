@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { StyleSheet, View, Image, Pressable, Platform } from 'react-native';
 import { Text, useTheme } from 'react-native-paper';
-import { useRouter, useNavigation } from 'expo-router';
+import { useRouter, useNavigation, usePathname } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useConfigStore, selectCurrentRoundLabel } from '@/stores';
@@ -30,8 +30,28 @@ interface AppHeaderProps {
 
 export default function AppHeader({ hideDistrictPicker, showBack }: AppHeaderProps = {}) {
   const router = useRouter();
+  const pathname = usePathname();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+
+  // On web, `router.back()` from a nested candidate route (e.g. /feed/candidate/xxx)
+  // pops back through the expo-router tab boundary and lands on Home, not the
+  // parent tab. Worse, the tab's stack still has the candidate at the top, so
+  // re-tapping the tab returns to the profile. Replace the route with the
+  // parent tab so the URL + stack state both reset cleanly.
+  const handleBack = useCallback(() => {
+    if (Platform.OS === 'web') {
+      if (pathname?.includes('/feed/candidate/')) {
+        router.replace('/(main)/(feed)' as any);
+        return;
+      }
+      if (pathname?.includes('/leaderboard/candidate/')) {
+        router.replace('/(main)/(leaderboard)' as any);
+        return;
+      }
+    }
+    router.back();
+  }, [pathname, router]);
   const roundLabel = useConfigStore(selectCurrentRoundLabel);
   const debugRoundOverride = useConfigStore((s) => s.debugRoundOverride);
   const setDebugRound = useConfigStore((s) => s.setDebugRound);
@@ -56,7 +76,7 @@ export default function AppHeader({ hideDistrictPicker, showBack }: AppHeaderPro
   return (
     <View style={[styles.container, { paddingTop: insets.top + 8, backgroundColor: theme.colors.surface, borderBottomColor: theme.colors.outlineVariant }]}>
       {showBack ? (
-        <Pressable onPress={() => router.back()} style={styles.backButton}>
+        <Pressable onPress={handleBack} style={styles.backButton}>
           <MaterialCommunityIcons name="arrow-left" size={24} color={theme.colors.onSurface} />
         </Pressable>
       ) : (
