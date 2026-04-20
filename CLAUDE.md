@@ -75,6 +75,7 @@ Always conditionally render Paper `<Modal>`, `<Menu>`, `<Dialog>` — they block
 ### Firestore Writes
 - Never pass `undefined` values to `update()` / `set()` — filter them out first
 - Wrap reseed/write operations in their own try/catch so permission errors don't break the read path
+- **Endorsement count ownership:** `createEndorsement` / `revokeEndorsement` in `src/services/firebase/firestore*.ts` manage ONLY the endorsement doc state. The `candidates.endorsementCount` update lives in `userStore.endorseCandidate` / `revokeEndorsement`, guarded by the local `hasEndorsedCandidate()` check. Do NOT re-add `FieldValue.increment(±1)` calls to the service-layer endorsement functions — the Firestore layer's idempotency check can silently short-circuit under cross-session state drift, leaving counts wrong. See `docs/TROUBLESHOOTING.md` "Endorsement Count Doesn't Increment When Endorsing From Bookmarks."
 
 ### Web Compatibility
 - SafeAreaView must be aliased to `View` on web (style array issue)

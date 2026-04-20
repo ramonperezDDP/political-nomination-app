@@ -1162,6 +1162,24 @@ await updateUser(userId, data);
 
 ---
 
+## Endorsement Count Doesn't Increment When Endorsing From Bookmarks
+
+**Symptom:** User saves a candidate in the For You feed, then from Profile → Bookmarks clicks "Endorse All." The endorsement becomes active (button shows checked on the candidate profile), but the candidate's `endorsementCount` doesn't change. Toggling the endorsement off later decrements the count by 1, leaving it LOWER than before the user ever interacted with the candidate.
+
+**Root cause:** `createEndorsement` in `src/services/firebase/firestore.ts` / `.web.ts` has an idempotency check that looks for an existing active endorsement doc for the same user + candidate. If one is found (e.g., a prior session wrote one but the current session's local state doesn't know), it returns the existing ID WITHOUT incrementing the count. `revokeEndorsement` always decrements, so the net effect across the user's perceived "endorse then revoke" was -1 instead of 0.
+
+**Fix (2026-04-19):** The count update was moved out of the Firestore-level functions and into `userStore.endorseCandidate` / `userStore.revokeEndorsement`, guarded by the local `hasEndorsedCandidate()` check. The local guard is the real source of truth for "did the user just take an endorse/revoke action" — trusting it means we increment/decrement exactly once per user-initiated action, regardless of whether the Firestore doc already existed.
+
+**Architectural rule going forward:**
+- `createEndorsement` / `revokeEndorsement` in the Firestore service layer manage ONLY the endorsement document state (creating, marking active/inactive).
+- `updateCandidate` with `FieldValue.increment(±1)` lives in `userStore`, called after the Firestore write succeeds, guarded by the local check.
+
+Do NOT re-add count mutations to `createEndorsement` / `revokeEndorsement` — doing so will silently re-introduce this bug under state-drift conditions.
+
+**Data reconciliation:** This fix prevents new occurrences but does not retroactively heal counts that were already drifted before 2026-04-19. If a reconciliation script is ever needed, it should re-derive each candidate's `endorsementCount` from a live query of `endorsements` where `isActive === true`.
+
+---
+
 ## Seeder: Avatar Thumbnail Step Fails on Non-macOS
 
 **Symptom:** `npx ts-node scripts/seedCandidatesFromJson.ts --confirm` errors out with `sips thumbnail failed for ...: ENOENT` or `sips: command not found`.
