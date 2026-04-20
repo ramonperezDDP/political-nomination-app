@@ -726,9 +726,24 @@ export default function CandidateProfileScreen() {
                   />
                 </View>
                 {candidate?.bio?.summary ? (
-                  <Text variant="bodyMedium" style={styles.photoSheetAbout}>
-                    {candidate.bio.summary}
-                  </Text>
+                  <>
+                    <Text variant="labelLarge" style={styles.photoSheetSectionLabel}>
+                      About
+                    </Text>
+                    <Text variant="bodyMedium" style={styles.photoSheetBody}>
+                      {candidate.bio.summary}
+                    </Text>
+                  </>
+                ) : null}
+                {candidate?.reasonForRunning ? (
+                  <>
+                    <Text variant="labelLarge" style={styles.photoSheetSectionLabel}>
+                      Why I'm Running
+                    </Text>
+                    <Text variant="bodyMedium" style={styles.photoSheetBody}>
+                      {candidate.reasonForRunning}
+                    </Text>
+                  </>
                 ) : null}
               </ScrollView>
             </Animated.View>
@@ -1012,8 +1027,12 @@ const styles = StyleSheet.create({
     height: 340,
     borderRadius: 12,
   },
-  photoSheetAbout: {
+  photoSheetSectionLabel: {
+    fontWeight: '700',
     marginTop: 16,
+    marginBottom: 4,
+  },
+  photoSheetBody: {
     lineHeight: 20,
   },
   psaVideoContainer: {
