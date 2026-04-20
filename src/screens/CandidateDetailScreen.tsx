@@ -947,17 +947,11 @@ const styles = StyleSheet.create({
     marginLeft: 12,
   },
   psaGrid: {
-    // On web we stack PSAs in a single full-width column; on native the
-    // two-column pixel grid still works because SCREEN_WIDTH is the phone.
-    flexDirection: Platform.OS === 'web' ? 'column' : 'row',
-    flexWrap: 'wrap',
+    flexDirection: 'column',
     gap: 12,
   },
   psaCard: {
-    // Dimensions.get('window') returns the browser window on web, not the
-    // phone-frame container — a fixed pixel width overflows dramatically.
-    // Full-width single-column on web so the 16:9 thumbnail isn't squashed.
-    width: Platform.OS === 'web' ? '100%' : (SCREEN_WIDTH - 44) / 2,
+    width: '100%',
     overflow: 'hidden',
   },
   psaThumbnail: {
