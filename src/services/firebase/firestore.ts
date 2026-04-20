@@ -197,7 +197,10 @@ export const getApprovedCandidates = async (
 // Get candidates with full data for feed generation
 export const getCandidatesForFeed = async (district?: string): Promise<Array<{ candidate: Candidate; user: User | null }>> => {
   try {
-    const candidates = await getApprovedCandidates(50, district);
+    // Fetch the full district roster (101 seeded candidates) so downstream
+    // filters (alignment, "My Issues", "Top Picks") have the complete set
+    // to work with, not just a pre-capped top slice.
+    const candidates = await getApprovedCandidates(200, district);
     console.log('getApprovedCandidates returned:', candidates.length, 'candidates');
 
     // Fetch all users in parallel, handling errors individually

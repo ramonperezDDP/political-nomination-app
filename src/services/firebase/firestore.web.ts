@@ -210,7 +210,9 @@ export const getApprovedCandidates = async (
 // Get candidates with full data for feed generation
 export const getCandidatesForFeed = async (district?: string): Promise<Array<{ candidate: Candidate; user: User | null }>> => {
   try {
-    const candidates = await getApprovedCandidates(50, district);
+    // Fetch full district roster so downstream filters operate on the
+    // complete set (matches firestore.ts behavior).
+    const candidates = await getApprovedCandidates(200, district);
     console.log('getApprovedCandidates returned:', candidates.length, 'candidates');
 
     const results = await Promise.all(
