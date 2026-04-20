@@ -1140,10 +1140,7 @@ export const createEndorsement = async (
   const docRef = await addDoc(collection(db, Collections.ENDORSEMENTS), endorsementData);
   await updateDoc(docRef, { id: docRef.id });
 
-  await updateCandidate(candidateId, {
-    endorsementCount: increment(1) as unknown as number,
-  });
-
+  // Count is managed by userStore.endorseCandidate (see firestore.ts note).
   return docRef.id;
 };
 
@@ -1161,9 +1158,7 @@ export const revokeEndorsement = async (
 
   if (matchingDoc) {
     await updateDoc(matchingDoc.ref, { isActive: false });
-    await updateCandidate(candidateId, {
-      endorsementCount: increment(-1) as unknown as number,
-    });
+    // Count is managed by userStore.revokeEndorsement.
   }
 };
 

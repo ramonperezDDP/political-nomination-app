@@ -10,7 +10,22 @@ import {
   addBookmark as addBookmarkInFirestore,
   removeBookmark as removeBookmarkInFirestore,
   convertEndorsementsToBookmarks as convertEndorsementsToBookmarksInFirestore,
+  updateCandidate as updateCandidateInFirestore,
 } from '@/services/firebase/firestore';
+// Platform-specific FieldValue.increment — the native SDK exposes it via
+// `firestore.FieldValue.increment`, the web SDK via a standalone `increment`.
+// Both return a sentinel that updateCandidate forwards to the doc update.
+import { Platform } from 'react-native';
+const getIncrement = (n: number): any => {
+  if (Platform.OS === 'web') {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { increment } = require('firebase/firestore');
+    return increment(n);
+  }
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const firestore = require('@react-native-firebase/firestore').default;
+  return firestore.FieldValue.increment(n);
+};
 import type { User, Endorsement, Bookmark, QuestionnaireResponse } from '@/types';
 
 interface UserState {
@@ -165,6 +180,17 @@ export const useUserStore = create<UserState>((set, get) => ({
         endorsements: [...state.endorsements, newEndorsement],
       }));
 
+      // Increment the candidate's count. Guarded by the hasEndorsedCandidate
+      // check above — we only reach here when local state agrees the user
+      // was NOT endorsed, so exactly one +1 per user-initiated endorse.
+      try {
+        await updateCandidateInFirestore(candidateId, {
+          endorsementCount: getIncrement(1) as unknown as number,
+        });
+      } catch (countErr) {
+        console.warn('Failed to increment endorsementCount (endorsement doc was still created):', countErr);
+      }
+
       return true;
     } catch (error: any) {
       console.error('Error endorsing candidate:', error);
@@ -189,6 +215,17 @@ export const useUserStore = create<UserState>((set, get) => ({
           e.candidateId === candidateId ? { ...e, isActive: false } : e
         ),
       }));
+
+      // Decrement the candidate's count. Guarded by the hasEndorsedCandidate
+      // check above — we only reach here when local state agrees the user
+      // WAS endorsed, so exactly one -1 per user-initiated revoke.
+      try {
+        await updateCandidateInFirestore(candidateId, {
+          endorsementCount: getIncrement(-1) as unknown as number,
+        });
+      } catch (countErr) {
+        console.warn('Failed to decrement endorsementCount (endorsement doc was still deactivated):', countErr);
+      }
 
       return true;
     } catch (error: any) {

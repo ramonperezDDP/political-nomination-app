@@ -1355,10 +1355,11 @@ export const createEndorsement = async (
   );
   await docRef.update({ id: docRef.id });
 
-  // Increment candidate's endorsement count
-  await updateCandidate(candidateId, {
-    endorsementCount: firestore.FieldValue.increment(1) as unknown as number,
-  });
+  // NOTE: count is intentionally NOT updated here. Count is managed by
+  // userStore.endorseCandidate, guarded by local state, so the increment
+  // happens exactly once per user-initiated endorse action — even when
+  // this function short-circuits on an existing active endorsement doc
+  // (which can happen due to cross-session state drift).
 
   return docRef.id;
 };
@@ -1378,10 +1379,7 @@ export const revokeEndorsement = async (
 
   if (matchingDoc) {
     await matchingDoc.ref.update({ isActive: false });
-    // Decrement candidate's endorsement count
-    await updateCandidate(candidateId, {
-      endorsementCount: firestore.FieldValue.increment(-1) as unknown as number,
-    });
+    // Count is managed by userStore.revokeEndorsement — see createEndorsement.
   }
 };
 
