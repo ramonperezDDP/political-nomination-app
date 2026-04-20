@@ -1,6 +1,6 @@
-import React, { useEffect, useState, useMemo } from 'react';
-import { StyleSheet, View, ScrollView, Dimensions, FlatList, Pressable, Modal, Platform, Image } from 'react-native';
-import { Text, useTheme, SegmentedButtons, Chip, Divider, IconButton } from 'react-native-paper';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
+import { StyleSheet, View, ScrollView, Dimensions, FlatList, Pressable, Modal, Platform, Image, Animated } from 'react-native';
+import { Text, useTheme, SegmentedButtons, Chip, Divider, IconButton, Portal } from 'react-native-paper';
 import { Video, ResizeMode } from 'expo-av';
 import { useLocalSearchParams, useGlobalSearchParams, router } from 'expo-router';
 import { SafeAreaView as NativeSafeAreaView } from 'react-native-safe-area-context';
@@ -63,6 +63,40 @@ export default function CandidateProfileScreen() {
   const [showLockModal, setShowLockModal] = useState(false);
   const [playingPSA, setPlayingPSA] = useState<PSA | null>(null);
   const [showFullPhoto, setShowFullPhoto] = useState(false);
+  const photoSlideAnim = useRef(new Animated.Value(600)).current;
+  const photoBackdropAnim = useRef(new Animated.Value(0)).current;
+  const [photoWebMounted, setPhotoWebMounted] = useState(false);
+  const [photoWebAnimating, setPhotoWebAnimating] = useState(false);
+
+  // Slide the photo sheet up/down on open/close (native animation).
+  useEffect(() => {
+    if (showFullPhoto) {
+      Animated.parallel([
+        Animated.timing(photoBackdropAnim, { toValue: 1, duration: 250, useNativeDriver: true }),
+        Animated.spring(photoSlideAnim, { toValue: 0, damping: 20, stiffness: 200, useNativeDriver: true }),
+      ]).start();
+    } else {
+      Animated.parallel([
+        Animated.timing(photoBackdropAnim, { toValue: 0, duration: 200, useNativeDriver: true }),
+        Animated.timing(photoSlideAnim, { toValue: 600, duration: 200, useNativeDriver: true }),
+      ]).start();
+    }
+  }, [showFullPhoto]);
+
+  // Web uses Portal + CSS transform, mount/unmount gated so the slide-down
+  // animation can finish before the sheet disappears. Pattern mirrors the
+  // other bottom sheets in src/components/home/.
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+    if (showFullPhoto) {
+      setPhotoWebMounted(true);
+      requestAnimationFrame(() => requestAnimationFrame(() => setPhotoWebAnimating(true)));
+    } else {
+      setPhotoWebAnimating(false);
+      const timer = setTimeout(() => setPhotoWebMounted(false), 300);
+      return () => clearTimeout(timer);
+    }
+  }, [showFullPhoto]);
 
   // Check endorsement status and lock state
   const hasEndorsed = useUserStore((s) =>
@@ -653,30 +687,55 @@ export default function CandidateProfileScreen() {
         onDismiss={() => setShowLockModal(false)}
       />
 
-      {/* Full-size headshot viewer */}
-      <Modal
-        visible={showFullPhoto}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowFullPhoto(false)}
-      >
-        <Pressable style={styles.photoViewerOverlay} onPress={() => setShowFullPhoto(false)}>
-          <Pressable style={styles.photoViewerContainer} onPress={(e) => e.stopPropagation()}>
-            <Image
-              source={{ uri: candidate?.photoUrl || candidateUser?.photoUrl }}
-              style={styles.photoViewerImage}
-              resizeMode="contain"
-            />
-            <IconButton
-              icon="close"
-              iconColor="#fff"
-              size={28}
-              style={styles.photoViewerClose}
-              onPress={() => setShowFullPhoto(false)}
-            />
-          </Pressable>
-        </Pressable>
-      </Modal>
+      {/* Full-size headshot viewer — bottom sheet, matches the quiz/about-contest pattern */}
+      {(() => {
+        const isWeb = Platform.OS === 'web';
+        const sheetStyle = isWeb
+          ? [styles.photoSheet, {
+              backgroundColor: theme.colors.surface,
+              transform: [{ translateY: photoWebAnimating ? 0 : 600 }],
+              transition: 'transform 0.3s ease-out',
+              boxShadow: '0 -4px 20px rgba(0,0,0,0.15)',
+            } as any]
+          : [styles.photoSheet, { backgroundColor: theme.colors.surface, transform: [{ translateY: photoSlideAnim }] }];
+
+        const sheetContent = (
+          <View style={isWeb ? styles.photoWebBackdrop : styles.photoBackdrop}>
+            {isWeb ? (
+              <Pressable style={StyleSheet.absoluteFill} onPress={() => setShowFullPhoto(false)} />
+            ) : (
+              <Animated.View style={[styles.photoBackdropOverlay, { opacity: photoBackdropAnim }]}>
+                <Pressable style={StyleSheet.absoluteFill} onPress={() => setShowFullPhoto(false)} />
+              </Animated.View>
+            )}
+            <Animated.View style={sheetStyle}>
+              <View style={[styles.photoHandle, { backgroundColor: theme.colors.outlineVariant }]} />
+              <View style={styles.photoImageWrap}>
+                <Image
+                  source={{ uri: candidate?.photoUrl || candidateUser?.photoUrl }}
+                  style={styles.photoSheetImage}
+                  resizeMode="contain"
+                />
+              </View>
+            </Animated.View>
+          </View>
+        );
+
+        if (isWeb) {
+          if (!photoWebMounted) return null;
+          return <Portal>{sheetContent}</Portal>;
+        }
+        return (
+          <Modal
+            visible={showFullPhoto}
+            animationType="none"
+            transparent
+            onRequestClose={() => setShowFullPhoto(false)}
+          >
+            {sheetContent}
+          </Modal>
+        );
+      })()}
 
       {/* PSA video player modal */}
       <Modal
@@ -888,30 +947,47 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 16,
   },
-  photoViewerOverlay: {
+  photoBackdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.9)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 16,
+    justifyContent: 'flex-end',
   },
-  photoViewerContainer: {
-    width: '75%',
+  photoWebBackdrop: {
+    position: 'absolute' as any,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'flex-end',
+    zIndex: 9999,
+  },
+  photoBackdropOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+  },
+  photoSheet: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingHorizontal: 20,
+    paddingBottom: 32,
+    paddingTop: 12,
     height: '75%',
-    maxWidth: 600,
+  },
+  photoHandle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginBottom: 16,
+  },
+  photoImageWrap: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  photoViewerImage: {
+  photoSheetImage: {
     width: '100%',
     height: '100%',
     borderRadius: 12,
-  },
-  photoViewerClose: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    backgroundColor: 'rgba(0,0,0,0.5)',
   },
   psaVideoContainer: {
     width: '100%',
