@@ -113,6 +113,17 @@ See PLAN-20 for the full workflow matrix, including avatar/video uploads (hash-d
 
 **Stable IDs:** `seed-PA-XX-NNN` for candidates, `seed-user-PA-XX-NNN` for users, `seed-psa-PA-XX-NNN` for PSAs. Do not reuse these prefixes for non-seed data.
 
+**Avatar thumbnails:** `CandidateAvatar` prefers `thumbnailUrl` (256 px JPEG, ~20 KB) over `photoUrl` (full-size PNG). Thumbnails live at `profileThumbnails/{userId}/thumbnail.jpg` in Storage AND at `assets/candidates/PA-{01,02}-Profile-Thumbs/` in git. The For You full-screen background still loads the full photo; everything else uses the thumbnail. Tapping the avatar on the candidate profile opens a bottom-sheet viewer with the full photo + About + Why I'm Running (matches the `QuizBottomSheet` / `VerifyIdentitySheet` pattern). Thumbnail generation shells out to macOS `sips` — non-macOS contributors will need to swap in `sharp` or similar.
+
+## Round-Aware Limits
+
+`src/utils/contestRounds.ts` is the source of truth for per-round caps:
+
+- `getRoundCandidateLimit(roundId)` — how many candidates are visible in this round. Round 1: `undefined` (unlimited); Round 2: 20; Round 3: 10; VTH: 4; Debate: 2; Final/Post: 1.
+- `getRoundAdvancementCount(roundId)` — how many advance to the next round. R1→20, R2→10, R3→4, VTH→2, Debate→1; terminal rounds return `undefined`.
+
+Every fetch of candidates in UI code (For You feed, leaderboard, filter sheet, character search) threads `getRoundCandidateLimit(currentRoundId)` through to `getApprovedCandidates` / `getCandidatesForFeed` / `getCandidatesWithUsers`. Leaderboard cutoff line uses `getRoundAdvancementCount` — label reads "Top N advance," terminal rounds render no line. **Do not reintroduce hardcoded `.slice(0, 50)` or threshold-based (e.g. `< 1000 endorsements`) cutoffs anywhere.**
+
 ## Backup Bucket (Firestore exports)
 
 Firestore exports must target `gs://party-nomination-app-backups` (us-central1). The live app storage bucket `gs://party-nomination-app.firebasestorage.app` is us-east1, which Firestore exports reject. The backups bucket was created 2026-04-19.

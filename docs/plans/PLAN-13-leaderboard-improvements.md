@@ -32,3 +32,20 @@ The endorsement threshold cutoff line was showing on BOTH the Endorsements and T
 **Data enrichment will be required:** Candidate issue metadata is needed for filtering, but the exact shape depends on the final filter model decision (user quiz issues, all issues, both, or precomputed match data). Do not assume `topIssueIds: string[]` until the product decision is final.
 
 > **Depends on:** [PLAN-00 Phase 2](./PLAN-00-contest-round-architecture.md), backend batch endpoint, filter model product decision
+
+---
+
+## PLAN-13C: Rank-Based Cutoff + Round-Aware Visible Cap ✅ COMPLETE (2026-04-19)
+
+The cutoff line was previously drawn at "first row below `endorsementCutoffs[0].threshold`" (effectively 1000 endorsements), and the leaderboard fetched a hardcoded top-50. Both are now round-driven.
+
+**Files:**
+- `src/utils/contestRounds.ts` (new): exports `getRoundCandidateLimit()` and `getRoundAdvancementCount()`.
+- `app/(main)/(leaderboard)/index.tsx`: imports both helpers, computes `cutoffIndex = advancementCount < leaderboard.length ? advancementCount : -1`, renders the divider label as `Top {advancementCount} advance`. No cutoff shown when `advancementCount` is `undefined` (terminal rounds).
+- `src/services/firebase/firestore.ts` + `.web.ts`: `getCandidatesWithUsers()` accepts optional `limit`; callers pass `getRoundCandidateLimit(currentRoundId)` so Round 1 is unbounded, Round 2 caps at 20, etc.
+
+**Rounds → advancement count:** R1→20, R2→10, R3→4, VTH→2, Debate→1; terminal rounds (Final Results, Post-Election) → `undefined`.
+
+**Why:** Product direction is that Endorsement One shows every approved candidate (unbounded field) and each subsequent round trims to the survivors. The fixed-threshold cutoff (`< 1000 endorsements`) was an artifact of the first schema and didn't reflect the "top N advance" rule.
+
+See PLAN-20 Execution Log (2026-04-19 post-seed additions) for the wider set of round-awareness changes that landed alongside this.

@@ -1162,6 +1162,20 @@ await updateUser(userId, data);
 
 ---
 
+## Seeder: Avatar Thumbnail Step Fails on Non-macOS
+
+**Symptom:** `npx ts-node scripts/seedCandidatesFromJson.ts --confirm` errors out with `sips thumbnail failed for ...: ENOENT` or `sips: command not found`.
+
+**Cause:** `generateAvatarThumbnail()` in `scripts/seedCandidatesFromJson.ts` shells out to macOS's built-in `sips` binary to produce the 256 px JPEG thumbnails (`THUMBNAIL_VERSION = 'v1-256-jpeg-q80'`). `sips` is macOS-only.
+
+**Fixes:**
+- On macOS: `sips` ships with the OS — nothing to install. If the command is missing, check `/usr/bin/sips` and your PATH.
+- On Linux/Windows: either run the seeder on a macOS box (recommended for now), or replace `generateAvatarThumbnail()` with `sharp` (Node-native, cross-platform) — one drop-in swap in `scripts/seedCandidatesFromJson.ts`.
+
+**Workaround for one-off runs:** Pass `--skip-images` to the seeder. This skips BOTH the full-size avatar upload AND the thumbnail step, so re-runs after a text-only edit still succeed without touching Storage.
+
+---
+
 ## Environment Information
 
 This troubleshooting guide was tested with:
