@@ -14,7 +14,9 @@
     "build:bios": "node scripts/buildBios.js",
     "map:zones": "node scripts/mapZones.js",
     "seed:candidates": "ts-node scripts/seedCandidatesFromJson.ts",
-    "seed:candidates:apply": "ts-node scripts/seedCandidatesFromJson.ts --confirm"
+    "seed:candidates:apply": "ts-node scripts/seedCandidatesFromJson.ts --confirm",
+    "seed:candidates:text": "ts-node scripts/seedCandidatesFromJson.ts --confirm --skip-images --skip-psas",
+    "seed:candidates:assets": "ts-node scripts/seedCandidatesFromJson.ts --confirm --skip-psas"
   },
   "dependencies": {
     "@expo-google-fonts/nunito-sans": "^0.4.2",

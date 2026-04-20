@@ -25,8 +25,9 @@ Safeguards we *do* keep, because they are cheap and high-value:
 - Runtime-owned field preservation (endorsements, views, etc.) so iterative edits don't reset live counters.
 - Optional Firestore-emulator smoke test before the first live run (see Phase 3 step 3b).
 - Manual backup one-liners, run before the first destructive operation:
-  - Firestore: `gcloud firestore export gs://party-nomination-app.firebasestorage.app/backups/$(date +%Y%m%d-%H%M) --project party-nomination-app`
+  - Firestore: `gcloud firestore export gs://party-nomination-app-backups/$(date +%Y%m%d-%H%M) --project party-nomination-app`
   - Storage (avatars + PSA videos + thumbnails): `gsutil -m cp -r gs://party-nomination-app.firebasestorage.app/profilePhotos /tmp/amsp-backup/profilePhotos-$(date +%Y%m%d-%H%M) && gsutil -m cp -r gs://party-nomination-app.firebasestorage.app/psaVideos /tmp/amsp-backup/psaVideos-$(date +%Y%m%d-%H%M) && gsutil -m cp -r gs://party-nomination-app.firebasestorage.app/psaThumbnails /tmp/amsp-backup/psaThumbnails-$(date +%Y%m%d-%H%M)`
+  - **Bucket note**: Firestore exports must target `gs://party-nomination-app-backups` (us-central1). The live app bucket `gs://party-nomination-app.firebasestorage.app` is us-east1 which Firestore rejects. The backups bucket was created 2026-04-19 specifically for this.
 
 ## Impact Summary
 
@@ -415,6 +416,25 @@ The "How to edit" workflows below are the operational record of how the JSON-dri
 3. Run `npm run seed:candidates -- --confirm --allow-deletes`.
 4. Keep the image file or delete it — irrelevant once the Firestore ref is gone.
 
+### Re-zone candidates after editing the zip table (text-only run)
+
+After editing `scripts/lib/zipToZone.js`, every affected candidate's `zone` field needs to be re-written in Firestore — but avatars and videos shouldn't be re-uploaded.
+
+1. `npm run map:zones` — confirm the new grouping in the preview file.
+2. `npm run seed:candidates -- --skip-images --skip-psas` — dry-run; shows every affected candidate doc as an `update` with no avatar/PSA uploads planned.
+3. `npm run seed:candidates:text` — convenience alias for `--confirm --skip-images --skip-psas`. Writes only the Firestore candidate docs with new `zone` values; photos and PSAs stay untouched.
+
+Hash-diff upload logic is skipped entirely on this path, so even if image files changed on disk, this workflow never re-uploads them. Use `seed:candidates:assets` (below) for asset-only runs.
+
+### Batch-upload new or changed assets (image or video) without re-writing bios
+
+After dropping a new avatar (or replacing an existing one), or dropping a new PSA video:
+
+1. `npm run seed:candidates -- --skip-psas` — dry-run that will show which avatar hashes changed. (Use no `--skip-psas` to also include PSAs.)
+2. `npm run seed:candidates:assets` — convenience alias for `--confirm --skip-psas`. Uploads changed avatars, updates the candidate doc's `photoUrl` + `photoHash`, and rewrites the full seed-owned field set (so it picks up any concurrent JSON edits too). PSAs are skipped; use the unskipped form for PSA-only or full-asset runs.
+
+Hash-diff means this is cheap — unchanged avatars are identified by local SHA-256 vs. the stored `photoHash` and skipped.
+
 ### Regenerate JSON from CSV (rarely)
 
 Only needed if the upstream spreadsheet is revised and you want to reset the JSON. The script `scripts/convertCandidatesCsv.js` is idempotent — runs clobber the JSON with CSV-derived content, destroying any manual JSON edits. Don't run casually; prefer editing the JSON directly.
@@ -485,3 +505,36 @@ All previously-open questions have been answered. Recording the resolutions here
 - **Batch-overflow guard** — explicit Math.ceil chunking with a hard throw on pathological cases; see Phase 1 step 10.
 
 With those resolved, nothing blocks the implementation of Phase 1 (the Node seeder script).
+
+---
+
+## Execution Log
+
+### 2026-04-19 — Initial live seed against `party-nomination-app`
+
+Sequence executed per Phase 3:
+
+1. **ADC setup** — `gcloud auth application-default login` completed with `info@digitaldemocracyproject.org`; ADC file written to `~/.config/gcloud/application_default_credentials.json`. Quota project set to `party-nomination-app`.
+2. **Temurin JDK installed** — required for Firebase emulators (`brew install --cask temurin` → `openjdk 26 Temurin-26+35`).
+3. **Emulator smoke test** — `firebase emulators:start --only firestore,storage --project party-nomination-app` + seeder `--confirm --remove-legacy`. Result: 202 candidate + 202 user + 1 PSA creates, 202 avatar + 1 video + 1 thumbnail uploads, all fields verified (photoUrl, photoHash, zone, endorsementCount baseline, bio prose) before tearing down.
+4. **Backup bucket created** — `gcloud storage buckets create gs://party-nomination-app-backups --location=us-central1 --project=party-nomination-app` (us-east1 live bucket rejected by Firestore exports).
+5. **Pre-apply Firestore export** — `gs://party-nomination-app-backups/20260419-2032`.
+6. **Prod dry-run** — `npx ts-node scripts/seedCandidatesFromJson.ts --remove-legacy`. Plan: 202 creates, 202 avatar uploads, 1 PSA + video + thumbnail upload, 552 legacy deletes (24 candidate docs + 528 candidate-role user docs, all `@example.com` synthetic from prior in-app reseed runs across Jan–Mar 2026).
+7. **Prod apply** — `echo "party-nomination-app" | npx ts-node scripts/seedCandidatesFromJson.ts --confirm --remove-legacy`. Typed confirmation matched; execution order: creates+uploads first, legacy wipe last. All steps reported "Done." without errors.
+8. **Post-apply verification** — `candidates: 202 (all seed)`, `users: 274 (202 seed + 72 non-candidate-role preserved)`, `psas: 1`. Sample PN 1 Maria Smith: photoUrl resolves, zone=`pa01-south`, endorsementCount=3168, bio.summary="Maria Smith, 25, an electrician from Bristol." PSA `seed-psa-PA-02-085` duration=5s, title="A message from Diego Ortiz".
+9. **iOS simulator smoke test** — Leaderboard shows #1 Maria Smith (3.2K), #2 Scott Foster (2.8K), #3 Pat King (2.7K), #4 Gary Gonzalez (2.6K). For You feed renders full-screen Storage-hosted avatars, alignment match computed from new `questionnaireResponses`, "Endorse all 50" mass-endorse button appears on My Issues filter.
+
+No failures, no rollback needed. Cloud Functions trigger audit held: `onEndorsementCreate/Delete`, `processApplication`, and auth lifecycle triggers did NOT fire during the run (none listen on users/, candidates/, or psas/).
+
+Artifacts of this run:
+- Firestore backup: `gs://party-nomination-app-backups/20260419-2032`
+- Local backup (not run): `/tmp/amsp-backup/` — skipped per dev-beta posture; the live bucket wasn't modified on a read path.
+
+### Post-run cleanup (in-app seeder removal)
+
+Still pending as a follow-up PR:
+- Delete `seedCandidates()` and its hardcoded 20-candidate array from `src/services/firebase/firestore.ts`.
+- Delete the `QUESTION_OPTIONS` / `snapVal` helpers that only supported it.
+- `reseedAllData()` continues to work for issues / questions / quiz config (the other three seed calls); drop the candidate slice only.
+
+Low priority — nothing calls `seedCandidates()` at runtime in normal use; the Node seeder is the exclusive path for the roster going forward.

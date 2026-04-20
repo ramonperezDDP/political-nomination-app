@@ -1065,6 +1065,24 @@ sudo journalctl -u nginx -f
 | Deploy | `npm run deploy` | Build web + deploy to Firebase Hosting |
 | Lint | `npm run lint` | Run ESLint |
 | Type Check | `npm run type-check` | Run TypeScript type checking |
+| Preview bios | `npm run build:bios` | Regenerate candidate bio preview markdown |
+| Preview zones | `npm run map:zones` | Regenerate zip→zone assignment preview |
+| Seed candidates (dry-run) | `npm run seed:candidates` | Dry-run Firestore/Storage diff for the 202-candidate roster |
+| Seed candidates (apply) | `npm run seed:candidates:apply` | Apply changes (add `--remove-legacy` first time) |
+| Text-only re-seed | `npm run seed:candidates:text` | Update bios/zones/answers without re-uploading assets |
+| Assets-only re-seed | `npm run seed:candidates:assets` | Upload changed avatars without re-running bios |
+
+## Candidate Roster Management
+
+The 202 fictional candidates per district live in `scripts/data/candidates-PA-{01,02}.json` (source of truth, committed to git). Avatars live locally at `assets/candidates/PA-{01,02}-Profile-Pics/` and are uploaded to Firebase Storage during seeding. PSA videos go at `assets/candidates/PA-{01,02}-PSA-Videos/` (opt-in per candidate).
+
+Workflow for any candidate change:
+1. Edit the JSON file directly (or drop a new avatar, or add a PSA video).
+2. `npm run build:bios` and `npm run map:zones` to preview derived content.
+3. `npm run seed:candidates` to see the Firestore/Storage diff (dry-run).
+4. `npm run seed:candidates:apply` to commit the change.
+
+See **[docs/plans/PLAN-20-seed-candidate-profiles.md](./docs/plans/PLAN-20-seed-candidate-profiles.md)** for the full design, including hash-diff upload behavior, safety gates (typed confirmation, emulator smoke test, backup recipe), and PSA auto-thumbnail generation via `ffmpeg`/`ffprobe`.
 
 ---
 

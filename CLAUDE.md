@@ -34,6 +34,12 @@ Requires `.env` with `EXPO_PUBLIC_FIREBASE_*` vars (see `.env.example`). Clear `
 | Web build + deploy | `npm run deploy` |
 | Screenshot simulator | `xcrun simctl io booted screenshot /tmp/screenshot.png` |
 | Kill stale processes | `pkill -9 -f "expo"; pkill -9 -f "metro"` |
+| Bio preview | `npm run build:bios` |
+| Zone preview | `npm run map:zones` |
+| Seed candidates (dry-run) | `npm run seed:candidates` |
+| Seed candidates (apply) | `npm run seed:candidates:apply` |
+| Candidate text-only update | `npm run seed:candidates:text` |
+| Candidate asset-only update | `npm run seed:candidates:assets` |
 
 ## Architecture
 
@@ -89,8 +95,27 @@ Podfile requires `use_frameworks! :linkage => :static` — must re-patch after e
 ## Key Docs
 - `docs/TROUBLESHOOTING.md` — comprehensive guide to all known issues and fixes
 - `docs/DEPENDENCIES.md` — full dependency catalog
-- `docs/plans/PLAN-*.md` — implementation plans (00-19)
+- `docs/plans/PLAN-*.md` — implementation plans (00-20)
+- `docs/plans/PLAN-20-seed-candidate-profiles.md` — candidate roster management (JSON source of truth, seeder, bio + zone tools)
 - `docs/feedback/` — stakeholder feedback and screenshots
+
+## Candidate Roster Management
+
+The 202 fictional candidates (101 per district, PA-01 and PA-02) live in `scripts/data/candidates-PA-{01,02}.json` — this is the **canonical source of truth**, edited by hand and committed to git. Do NOT re-add hardcoded candidates to `src/services/firebase/firestore.ts` (the old `seedCandidates()` was removed after the PLAN-20 live seed).
+
+Flow for any candidate change:
+1. Edit `scripts/data/candidates-PA-XX.json` directly (name, age, quiz answers, neighborhood, etc.).
+2. Optional: `npm run build:bios` / `npm run map:zones` to preview bio + zone derivation.
+3. `npm run seed:candidates` to dry-run the Firestore + Storage diff.
+4. `npm run seed:candidates:apply` to write.
+
+See PLAN-20 for the full workflow matrix, including avatar/video uploads (hash-diffed), batch text/asset updates, and the destructive-operation safety gates (typed confirmation, backup recipe, emulator dry-run).
+
+**Stable IDs:** `seed-PA-XX-NNN` for candidates, `seed-user-PA-XX-NNN` for users, `seed-psa-PA-XX-NNN` for PSAs. Do not reuse these prefixes for non-seed data.
+
+## Backup Bucket (Firestore exports)
+
+Firestore exports must target `gs://party-nomination-app-backups` (us-central1). The live app storage bucket `gs://party-nomination-app.firebasestorage.app` is us-east1, which Firestore exports reject. The backups bucket was created 2026-04-19.
 
 ## Firestore Collections
 ```
