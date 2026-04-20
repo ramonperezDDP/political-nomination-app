@@ -710,13 +710,27 @@ export default function CandidateProfileScreen() {
             )}
             <Animated.View style={sheetStyle}>
               <View style={[styles.photoHandle, { backgroundColor: theme.colors.outlineVariant }]} />
-              <View style={styles.photoImageWrap}>
-                <Image
-                  source={{ uri: candidate?.photoUrl || candidateUser?.photoUrl }}
-                  style={styles.photoSheetImage}
-                  resizeMode="contain"
-                />
-              </View>
+              <Text variant="titleLarge" style={styles.photoSheetTitle}>
+                {candidateUser?.displayName || 'Candidate'}
+              </Text>
+              <ScrollView
+                style={styles.photoSheetScroll}
+                contentContainerStyle={styles.photoSheetScrollContent}
+                bounces={false}
+              >
+                <View style={styles.photoImageWrap}>
+                  <Image
+                    source={{ uri: candidate?.photoUrl || candidateUser?.photoUrl }}
+                    style={styles.photoSheetImage}
+                    resizeMode="contain"
+                  />
+                </View>
+                {candidate?.bio?.summary ? (
+                  <Text variant="bodyMedium" style={styles.photoSheetAbout}>
+                    {candidate.bio.summary}
+                  </Text>
+                ) : null}
+              </ScrollView>
             </Animated.View>
           </View>
         );
@@ -979,15 +993,28 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     marginBottom: 16,
   },
-  photoImageWrap: {
+  photoSheetTitle: {
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  photoSheetScroll: {
     flex: 1,
-    justifyContent: 'center',
+  },
+  photoSheetScrollContent: {
+    paddingBottom: 12,
+  },
+  photoImageWrap: {
     alignItems: 'center',
   },
   photoSheetImage: {
     width: '100%',
-    height: '100%',
+    height: 340,
     borderRadius: 12,
+  },
+  photoSheetAbout: {
+    marginTop: 16,
+    lineHeight: 20,
   },
   psaVideoContainer: {
     width: '100%',
