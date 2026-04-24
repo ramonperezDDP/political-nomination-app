@@ -116,6 +116,8 @@ See PLAN-20 for the full workflow matrix, including avatar/video uploads (hash-d
 
 **Avatar thumbnails:** `CandidateAvatar` prefers `thumbnailUrl` (256 px JPEG, ~20 KB) over `photoUrl` (full-size PNG). Thumbnails live at `profileThumbnails/{userId}/thumbnail.jpg` in Storage AND at `assets/candidates/PA-{01,02}-Profile-Thumbs/` in git. The For You full-screen background still loads the full photo; everything else uses the thumbnail. Tapping the avatar on the candidate profile opens a bottom-sheet viewer with the full photo + About + Why I'm Running (matches the `QuizBottomSheet` / `VerifyIdentitySheet` pattern). Thumbnail generation shells out to macOS `sips` — non-macOS contributors will need to swap in `sharp` or similar.
 
+**PSA thumbnails:** Prefer a candidate-supplied landscape image at `assets/candidates/PA-{01,02}-PSA-Landscape-Thumbs/{district}-{pn}.{jpg,jpeg,png}`; fall back to an `ffmpeg` frame-grab at ~15% into the portrait video when no override is present. The PSA doc tracks `thumbSourceHash` (`landscape:{sha}` or `frame:{videoHash}`) independently of `videoHash`, so swapping the landscape image re-uploads only the thumbnail, not the video. See PLAN-20 Decision 10.
+
 ## Round-Aware Limits
 
 `src/utils/contestRounds.ts` is the source of truth for per-round caps:

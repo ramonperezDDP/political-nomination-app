@@ -122,6 +122,12 @@ interface PsaPlan {
   issueIds: string[];
   title: string;
   description: string;
+  // Thumbnail source: either a candidate-supplied landscape image or a
+  // frame-grab from the portrait video. Hash-tracked separately from the
+  // video so swapping only the landscape image re-uploads just the thumb.
+  landscapeThumbPath: string | null;
+  thumbSourceHash: string;
+  needsThumbUpload: boolean;
 }
 interface LegacyDoc { collection: 'candidates' | 'users'; id: string; displayName?: string; email?: string; createdAt?: string; }
 interface OrphanDoc { collection: 'candidates' | 'users' | 'psas'; id: string; displayName?: string; }
@@ -307,6 +313,22 @@ function generateThumbnail(videoPath: string, durationSec: number, outPath: stri
   if (res.status !== 0) throw new Error(`ffmpeg thumbnail failed for ${videoPath}: ${res.stderr}`);
 }
 
+function findLandscapeThumbPath(district: string, pn: number): string | null {
+  const districtCode = district.replace(/^PA-/, '');
+  const dir = path.join(AVATARS_DIR, `${district}-PSA-Landscape-Thumbs`);
+  if (!fs.existsSync(dir)) return null;
+  // Accept both `01-1.jpg` (unpadded, matches the PSA filename regex) and
+  // `01-01.jpg` (2-digit padded, matches the actual video filenames).
+  const pnVariants = [String(pn), pn.toString().padStart(2, '0')];
+  for (const pnStr of pnVariants) {
+    for (const ext of ['jpg', 'jpeg', 'png']) {
+      const p = path.join(dir, `${districtCode}-${pnStr}.${ext}`);
+      if (fs.existsSync(p)) return p;
+    }
+  }
+  return null;
+}
+
 async function planPsas(jsons: JsonDistrict[], candidatePlansByKey: Map<string, CandidatePlan>, args: Args): Promise<{ psaPlans: PsaPlan[]; orphans: OrphanDoc[] }> {
   if (args.skipPsas) return { psaPlans: [], orphans: [] };
   const db = admin.firestore();
@@ -360,6 +382,16 @@ async function planPsas(jsons: JsonDistrict[], candidatePlansByKey: Map<string, 
         ? sidecar.issueIds
         : candidatePlan.topIssues.map((ti: any) => ti.issueId);
 
+      // Thumbnail source: prefer a candidate-supplied landscape image;
+      // fall back to a frame grab from the portrait video (tagged with the
+      // video hash so a video swap regenerates the frame).
+      const landscapeThumbPath = findLandscapeThumbPath(jd.district, pn);
+      const thumbSourceHash = landscapeThumbPath
+        ? `landscape:${sha256File(landscapeThumbPath)}`
+        : `frame:${videoHash}`;
+      const currentThumbSourceHash = prior?.thumbSourceHash || null;
+      const needsThumbUpload = thumbSourceHash !== currentThumbSourceHash;
+
       psaPlans.push({
         kind,
         psaId,
@@ -374,6 +406,9 @@ async function planPsas(jsons: JsonDistrict[], candidatePlansByKey: Map<string, 
         issueIds,
         title,
         description,
+        landscapeThumbPath,
+        thumbSourceHash,
+        needsThumbUpload,
       });
     }
   }
@@ -405,6 +440,9 @@ function printSummary(plan: {
   const psaSkips = plan.psas.filter((p) => p.kind === 'skip').length;
   const videosToUpload = plan.psas.filter((p) => p.kind !== 'skip');
   const totalVideoBytes = videosToUpload.reduce((sum, p) => sum + fs.statSync(p.videoPath).size, 0);
+  const thumbUploads = plan.psas.filter((p) => p.needsThumbUpload);
+  const thumbFromLandscape = thumbUploads.filter((p) => p.landscapeThumbPath).length;
+  const thumbFromFrameGrab = thumbUploads.length - thumbFromLandscape;
 
   console.log('');
   console.log('================ PLAN ================');
@@ -415,6 +453,7 @@ function printSummary(plan: {
   console.log(`Thumbnails: ${plan.thumbnailsToUpload.length} to generate + upload (${THUMBNAIL_MAX_PX}px JPEG q${THUMBNAIL_JPEG_QUALITY})`);
   console.log(`PSAs:       ${psaCreates} create, ${psaUpdates} update, ${psaSkips} skip`);
   console.log(`  videos:   ${videosToUpload.length} to upload (${(totalVideoBytes / 1024 / 1024).toFixed(1)} MB)`);
+  console.log(`  psa thumbs: ${thumbUploads.length} to upload (${thumbFromLandscape} landscape image, ${thumbFromFrameGrab} frame-grab)`);
   console.log('');
 
   if (args.removeLegacy) {
@@ -437,7 +476,7 @@ function printSummary(plan: {
   // Batch chunk preview
   const totalUserBatches = Math.ceil(plan.candidates.filter((p) => p.kind !== 'skip').length / FIRESTORE_BATCH_LIMIT);
   const totalCandBatches = totalUserBatches;
-  const totalPsaBatches = Math.ceil(plan.psas.filter((p) => p.kind !== 'skip').length / FIRESTORE_BATCH_LIMIT);
+  const totalPsaBatches = Math.ceil(plan.psas.filter((p) => p.kind !== 'skip' || p.needsThumbUpload).length / FIRESTORE_BATCH_LIMIT);
   console.log(`Batches: users ${totalUserBatches}, candidates ${totalCandBatches}, psas ${totalPsaBatches} (limit ${FIRESTORE_BATCH_LIMIT}/batch)`);
   console.log('======================================');
 }
@@ -543,22 +582,34 @@ async function executeThumbnailUploads(
   }
 }
 
-async function executeVideoUploads(psas: PsaPlan[], uploadedPaths: string[]) {
+async function executePsaUploads(psas: PsaPlan[], uploadedPaths: string[]) {
   const tmpDir = '/tmp';
   for (const p of psas) {
-    const ext = path.extname(p.videoPath);
-    const videoStoragePath = `psaVideos/${p.candidateId}/video${ext}`;
-    const videoUrl = await uploadFile(p.videoPath, videoStoragePath, guessVideoContentType(p.videoPath));
-    uploadedPaths.push(videoStoragePath);
-    // Thumbnail
-    const thumbLocal = path.join(tmpDir, `amsp-psa-thumb-${p.psaId}.jpg`);
-    generateThumbnail(p.videoPath, p.durationSec, thumbLocal);
-    const thumbStoragePath = `psaThumbnails/${p.candidateId}/thumbnail.jpg`;
-    const thumbUrl = await uploadFile(thumbLocal, thumbStoragePath, 'image/jpeg');
-    uploadedPaths.push(thumbStoragePath);
-    try { fs.unlinkSync(thumbLocal); } catch { /* ignore */ }
-    (p as any)._videoUrl = videoUrl;
-    (p as any)._thumbUrl = thumbUrl;
+    // Video upload: only when the video file changed (create or update)
+    if (p.kind !== 'skip') {
+      const ext = path.extname(p.videoPath);
+      const videoStoragePath = `psaVideos/${p.candidateId}/video${ext}`;
+      const videoUrl = await uploadFile(p.videoPath, videoStoragePath, guessVideoContentType(p.videoPath));
+      uploadedPaths.push(videoStoragePath);
+      (p as any)._videoUrl = videoUrl;
+    }
+    // Thumbnail upload: only when the thumb source changed
+    if (p.needsThumbUpload) {
+      const thumbStoragePath = `psaThumbnails/${p.candidateId}/thumbnail.jpg`;
+      let sourcePath: string;
+      let tmpCleanup: string | null = null;
+      if (p.landscapeThumbPath) {
+        sourcePath = p.landscapeThumbPath;
+      } else {
+        sourcePath = path.join(tmpDir, `amsp-psa-thumb-${p.psaId}.jpg`);
+        tmpCleanup = sourcePath;
+        generateThumbnail(p.videoPath, p.durationSec, sourcePath);
+      }
+      const thumbUrl = await uploadFile(sourcePath, thumbStoragePath, 'image/jpeg');
+      uploadedPaths.push(thumbStoragePath);
+      if (tmpCleanup) { try { fs.unlinkSync(tmpCleanup); } catch { /* ignore */ } }
+      (p as any)._thumbUrl = thumbUrl;
+    }
   }
 }
 
@@ -664,7 +715,7 @@ async function executeDocWrites(plan: {
   // PSAs
   const psaWrites: { id: string; data: any }[] = [];
   for (const p of plan.psas) {
-    if (p.kind === 'skip') continue;
+    if (p.kind === 'skip' && !p.needsThumbUpload) continue;
     const prior = await db.collection('psas').doc(p.psaId).get().then((s) => s.exists ? s.data() : null);
     const psaDoc: any = {
       id: p.psaId,
@@ -677,6 +728,7 @@ async function executeDocWrites(plan: {
       status: (p.sidecar?.status) || prior?.status || 'published',
       issueIds: p.issueIds,
       videoHash: p.videoHash,
+      thumbSourceHash: p.thumbSourceHash,
       updatedAt: now,
     };
     if (p.kind === 'create') {
@@ -783,7 +835,7 @@ async function main() {
       await executeAvatarUploads(plan.avatarsToUpload, uploadedPaths);
       await executeThumbnailUploads(plan.thumbnailsToUpload, uploadedPaths);
     }
-    if (!args.skipPsas) await executeVideoUploads(plan.psas.filter((p) => p.kind !== 'skip'), uploadedPaths);
+    if (!args.skipPsas) await executePsaUploads(plan.psas.filter((p) => p.kind !== 'skip' || p.needsThumbUpload), uploadedPaths);
     await executeDocWrites(plan, args, jsonsByDistrict);
   } catch (err) {
     console.error('\nA create / upload step failed BEFORE the legacy wipe ran. Legacy data is untouched.');

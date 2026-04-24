@@ -38,6 +38,7 @@ Safeguards we *do* keep, because they are cheap and high-value:
 | Converter | 1 | `scripts/convertCandidatesCsv.js` — already in place; run on-demand if CSV is re-sourced |
 | Avatars | 202 | `assets/candidates/PA-{01,02}-Profile-Pics/*.png` — checked into git |
 | PSA videos | 0–N | `assets/candidates/PA-{01,02}-PSA-Videos/{district}-{pn}.mp4` — opt-in, only seeded if present |
+| PSA landscape thumbs (optional) | 0–N | `assets/candidates/PA-{01,02}-PSA-Landscape-Thumbs/{district}-{pn}.{jpg,jpeg,png}` — override for the PSA card thumbnail; falls back to portrait frame-grab if absent |
 | PSA sidecars (optional) | 0–N | `assets/candidates/PA-{01,02}-PSA-Videos/{district}-{pn}.meta.json` — optional metadata overrides |
 | Bio builder (new) | 2 | `scripts/lib/buildBio.js` + `scripts/buildBios.js` — deterministic bio generator + preview CLI with profanity scan |
 | Zone mapper (new) | 2 | `scripts/lib/zipToZone.js` + `scripts/mapZones.js` — zip→zone table + preview CLI for QC review |
@@ -224,7 +225,7 @@ Not every candidate will have a PSA. The seeder treats PSAs as a second-class ar
 
 - **Discovery**: the seeder globs `assets/candidates/PA-{01,02}-PSA-Videos/*.{mp4,mov,m4v}`. A video is matched to a candidate by filename — e.g., `02-85.mp4` → PA-02 `pn` 85. Candidates without a matching file simply have no PSA doc.
 - **Stable ID**: `psaId` = `seed-psa-PA-02-085`. Same upsert-not-recreate semantics as candidates.
-- **Auto-extracted fields**: `duration` (via `ffprobe`), `videoUrl` (Storage upload), `thumbnailUrl` (frame grab at ~1s via `ffmpeg`, uploaded to Storage).
+- **Auto-extracted fields**: `duration` (via `ffprobe`), `videoUrl` (Storage upload), `thumbnailUrl` (uploaded to Storage — prefers an override image at `assets/candidates/PA-{01,02}-PSA-Landscape-Thumbs/{district}-{pn}.{jpg,jpeg,png}` if present, otherwise a frame grab at ~15% via `ffmpeg`).
 - **Auto-generated text** (placeholders):
   - `title` = `"A message from {displayName}"`
   - `description` = `"{displayName} on their priorities for {district}."`
@@ -243,14 +244,16 @@ Not every candidate will have a PSA. The seeder treats PSAs as a second-class ar
 
 **Why:** we have one sample today and may never get more than a handful. Auto-generated defaults mean a new PSA = drop a file, re-seed. The sidecar gives us an escape hatch for high-profile videos where we want crafted copy, without requiring a schema change.
 
-### Decision 10: Content-hash sync for videos, thumbnails regenerated from video hash
+### Decision 10: Content-hash sync for videos and thumbnails (independent tracks)
 
-Same pattern as avatar images:
+Same pattern as avatar images, with the video and the thumbnail hash-tracked separately so swapping only the landscape thumbnail doesn't force a video re-upload:
 - PSA doc stores `videoHash` (SHA-256 of the local mp4).
-- On seed: hash match → skip upload; mismatch or missing → upload video, regenerate thumbnail, upload thumbnail, update both URLs.
-- Thumbnail is always regenerated when video is re-uploaded — no separate thumbnail hash needed.
+- PSA doc stores `thumbSourceHash` — `landscape:{sha256}` when a landscape override is present, otherwise `frame:{videoHash}`.
+- On seed:
+  - Video: hash match → skip upload; mismatch or missing → upload video.
+  - Thumbnail: `thumbSourceHash` match → skip; mismatch → regenerate (from landscape image or frame-grab) and upload.
 
-**Why:** bandwidth. A 4 MB sample is fine; scaling to a few dozen is still trivial, but re-uploading everything on every seed run is wasteful. Thumbnails regenerate cheaply from the new video.
+**Why:** bandwidth. With only frame-grab thumbnails a video swap was the only trigger for a new thumbnail; adding candidate-supplied landscape photos breaks that coupling. Independent hashes mean a tweaked photo doesn't re-upload ~3 MB of video and vice versa.
 
 ### Decision 11: Remove ALL existing candidate data and start fresh from the JSON
 
@@ -449,7 +452,11 @@ Only needed if the upstream spreadsheet is revised and you want to reset the JSO
 
 ### Swap a PSA video
 
-Replace the file (keep the same filename) and re-seed. Video hash mismatch triggers re-upload; thumbnail is regenerated from the new video automatically.
+Replace the file (keep the same filename) and re-seed. Video hash mismatch triggers re-upload; thumbnail is regenerated automatically — from the landscape override if one is present, otherwise from a frame-grab of the new video.
+
+### Swap or add a PSA landscape thumbnail
+
+Drop (or replace) a landscape image at `assets/candidates/PA-XX-PSA-Landscape-Thumbs/{district}-{pn}.{jpg,jpeg,png}` and re-seed. The image hash change triggers a thumbnail-only re-upload; the video is untouched. Removing the image file falls back to a frame-grab on the next seed.
 
 ### Edit PSA text (title, description, issueIds) without re-uploading video
 
@@ -474,7 +481,7 @@ Delete the video file (and sidecar if any) from the folder. Run `npm run seed:ca
 - **ffmpeg/ffprobe dependency.** Required only on the host running the seeder, not in the app or CI. The seeder errors out with a clear install hint if either is missing.
 - **Unmatched PSA video.** If a video filename doesn't correspond to any known `pn` (e.g., `02-999.mp4`), the seeder logs a warning and skips. Doesn't fail.
 - **Candidate-less PSA edge case.** If a candidate is later removed from JSON but their PSA video is still on disk, the next run plans to delete both the candidate and the orphaned PSA doc. The video file on disk is left alone for humans to clean up.
-- **Portrait vs. landscape videos.** The sample is 544×720 (portrait). Thumbnail scaling clamps the long edge to 720px — works for either orientation without forcing aspect change.
+- **Portrait vs. landscape videos.** The sample is 544×720 (portrait). Thumbnail scaling clamps the long edge to 720px — works for either orientation without forcing aspect change. A portrait frame-grab will letterbox awkwardly on a wider PSA card; the landscape thumbnail override exists specifically to sidestep that (see `PA-{01,02}-PSA-Landscape-Thumbs/`).
 - **Cloud Functions trigger audit (done).** Existing triggers listen on: `endorsements/{id}` (create + delete), `candidateApplications/{id}` (create), and Firebase Auth user lifecycle. **None** listen to `users/{id}`, `candidates/{id}`, or `psas/{id}` — the collections the seeder writes to. Running the seeder will not fan out notifications, emails, or leaderboard rebuilds. If new triggers are added on those collections later, this plan should be revisited.
 - **Missing avatar file.** If `imageFilename` is referenced in JSON but the file is absent on disk, the seeder fails that candidate loudly with the exact missing path and continues with the rest (does not abort the whole run). Missing avatars are never silently skipped.
 - **Missing PSA video sidecar.** Sidecars are optional; absence is not an error. Malformed sidecar JSON (parse error) fails that PSA only and logs the path.
@@ -488,7 +495,7 @@ All previously-open questions have been answered. Recording the resolutions here
 
 - **PSA coverage** — only candidates with a matching video file get a PSA. No expectation of full coverage. Resolved via Decision 9.
 - **PSA title/description source** — auto-generated placeholders with optional sidecar JSON overrides. Resolved via Decision 9.
-- **Thumbnails** — auto-extracted from the video via ffmpeg at ~15% into the clip. Resolved via Decision 10 and the Phase 1 spec.
+- **Thumbnails** — prefer a candidate-supplied landscape image at `PA-{01,02}-PSA-Landscape-Thumbs/{district}-{pn}.{jpg,jpeg,png}`; fall back to an ffmpeg frame-grab at ~15% into the clip when no override is present. Resolved via Decision 10 and the Phase 1 spec.
 - **Duration** — read from ffprobe output. Resolved via the Phase 1 spec.
 - **PN 18 missing `borders-1` answer** — substitute the center-option spectrum value (`0`, `"Partially Close"`). Resolved via Decision 6 / Edge Cases.
 - **Initial endorsement counts** — seed from the CSV's `afterTop20` column on first create; runtime-owned thereafter. Resolved via Decision 5.

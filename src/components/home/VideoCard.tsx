@@ -4,7 +4,7 @@ import { Text } from 'react-native-paper';
 
 import { Card } from '@/components/ui';
 
-const VIMEO_EMBED_ID = '1170067252';
+const VIMEO_EMBED_ID = '1184918235';
 const VIMEO_EMBED_URL = `https://player.vimeo.com/video/${VIMEO_EMBED_ID}?title=0&byline=0&portrait=0`;
 
 // Lazy-load WebView only on native to avoid web bundle issues
