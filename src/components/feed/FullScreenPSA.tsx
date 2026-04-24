@@ -1,4 +1,4 @@
-import React, { useRef, useState, useMemo } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { View, Pressable, StyleSheet, Image, useWindowDimensions, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from 'react-native-paper';
@@ -30,10 +30,36 @@ export default function FullScreenPSA({ feedItem, isActive, height }: FullScreen
   const isWeb = Platform.OS === 'web';
   const videoRef = useRef<Video>(null);
   const [isPaused, setIsPaused] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
+  // Browsers block autoplay of unmuted video until the user interacts with
+  // the page. Start muted on web so the feed autoplays immediately; user
+  // taps the volume icon to unmute. Native AVPlayer has no such restriction.
+  const [isMuted, setIsMuted] = useState(isWeb);
   const [bottomInfoHeight, setBottomInfoHeight] = useState(0);
 
   const { candidate, psa, alignmentScore, alignedQuestionIds, candidateResponses, sharedCount, exactMatchIds, closeMatchIds, notMatchedIds } = feedItem;
+
+  const hasVideoUrl = !!psa.videoUrl;
+  // On web, expo-av's Video doesn't reliably set the `muted` attribute on
+  // the underlying <video> element before the browser's autoplay policy
+  // check fires, so the autoplay attribute gets rejected even when we
+  // pass isMuted=true. Work around it by explicitly muting + playing via
+  // the imperative API once the card becomes active.
+  useEffect(() => {
+    if (!isWeb || !isActive || !hasVideoUrl) return;
+    const v = videoRef.current;
+    if (!v) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        await v.setIsMutedAsync(true);
+        if (!cancelled) await v.playAsync();
+      } catch {
+        // Ignore — typically a transient interruption (component unmounted,
+        // user paused, etc.). Native AVPlayer doesn't hit this path.
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [isWeb, isActive, hasVideoUrl, psa.videoUrl]);
 
   const currentUser = useAuthStore((s) => s.user);
   const { issues } = useConfigStore();

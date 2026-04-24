@@ -84,6 +84,10 @@ Always conditionally render Paper `<Modal>`, `<Menu>`, `<Dialog>` — they block
 - `useWindowDimensions()` returns browser window size, not phone frame size — use `onLayout` on web
 - Phone frame breakpoints: full >950px, 85% at 800-950px, 75% at 580-800px, hidden ≤580px
 - Test CSS breakpoints in Chrome with bookmarks bar visible (Chrome UI eats 150px+)
+- **expo-av video autoplay on web:** `<Video isMuted shouldPlay>` props are not enough — expo-av doesn't reliably set the `<video muted>` attribute before the browser's autoplay-policy check, so autoplay gets rejected and the user sees a still first frame. Drive playback imperatively via the videoRef in a Platform.OS==='web' useEffect: `await v.setIsMutedAsync(true); await v.playAsync();`. Native is untouched — AVPlayer handles its own buffering. See TROUBLESHOOTING "PSA Videos: Slow Cold-Load + First-Frame-Only on Web."
+
+### Firebase Storage Cache-Control
+Every upload to Firebase Storage MUST set `cacheControl` metadata at upload time. Without it, Firebase Storage returns `Cache-Control: private, max-age=0` and Google's CDN refuses to cache — every request hits origin (us-east1), so web video playback is slow on every load. iOS/AVPlayer has a private disk cache that masks this, so the bug is invisible on native. The seeder's `uploadFile()` in `scripts/seedCandidatesFromJson.ts` sets `cacheControl: 'public, max-age=86400'`; preserve that pattern in any new upload helper. To fix existing objects without re-uploading bytes, use Admin SDK `bucket.file(path).setMetadata({ cacheControl: ... })`. See TROUBLESHOOTING "PSA Videos: Slow Cold-Load + First-Frame-Only on Web."
 
 ### iOS Build
 Podfile requires `use_frameworks! :linkage => :static` — must re-patch after every `expo prebuild --clean`.

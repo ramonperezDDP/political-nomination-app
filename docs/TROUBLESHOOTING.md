@@ -1180,6 +1180,79 @@ Do NOT re-add count mutations to `createEndorsement` / `revokeEndorsement` — d
 
 ---
 
+## PSA Videos: Slow Cold-Load + First-Frame-Only on Web
+
+**Symptom (post-deploy of new PSA seed, 2026-04-24):** On `mainstreet-party.web.app`, the For You feed shows the first frame of each PSA video but doesn't play it; iOS app plays the same PSAs immediately. Subsequent hard refreshes intermittently get a few PSAs to play, then revert to the same broken state.
+
+**Two separate root causes stacked, both web-specific:**
+
+### Cause 1: Storage objects missing `cacheControl` metadata
+
+Firebase Storage's default `Cache-Control` header for objects without explicit metadata is `private, max-age=0` — meaning Google's CDN refuses to cache the file at edges, and the browser revalidates on every request. Result: every video URL hits the origin bucket (us-east1) every time, with no persistent caching anywhere.
+
+iOS doesn't notice because AVPlayer maintains its own disk cache and ignores `Cache-Control: private`. The browser respects the directive strictly.
+
+**Verification:**
+```bash
+curl -sI "<videoUrl>" | grep -i cache-control
+# Bad:  cache-control: private, max-age=0
+# Good: cache-control: public, max-age=86400
+```
+
+**Fix:**
+
+1. **Future uploads** — `scripts/seedCandidatesFromJson.ts` `uploadFile()` now sets `cacheControl: 'public, max-age=86400'` in the upload metadata. **Any new upload helper added to the seeder, app, or Cloud Functions must include this same metadata** — otherwise the file silently regresses to `private, max-age=0`.
+
+2. **Existing objects** — set metadata in-place via Admin SDK (no byte re-upload needed):
+
+```ts
+const admin = require('firebase-admin');
+admin.initializeApp({ projectId: 'party-nomination-app',
+  storageBucket: 'party-nomination-app.firebasestorage.app' });
+const bucket = admin.storage().bucket();
+const [files] = await bucket.getFiles({ prefix: 'psaVideos/' });
+for (const f of files) await f.setMetadata({ cacheControl: 'public, max-age=86400' });
+```
+
+This was applied to the 80 existing PSA videos + thumbnails on 2026-04-24. Profile photos and thumbnails uploaded *before* that date may still have `private, max-age=0`; running the seeder again will fix them on next upload, or run a similar one-shot script over `profilePhotos/` and `profileThumbnails/`.
+
+### Cause 2: expo-av Video autoplay timing on web
+
+`<Video isMuted={true} shouldPlay={true}>` from `expo-av` on web translates to HTML `<video muted autoplay>`, but the library doesn't reliably set the `muted` attribute on the underlying DOM element *before* the browser's autoplay-policy check fires. The autoplay request gets rejected (browsers block autoplay of unmuted video), and `muted` is applied too late. Net effect: the video element loads metadata + first frame, but never plays. Looks visually like a still image of the candidate.
+
+The 4th card in the user's feed *did* play because by then there had been a swipe (= user gesture), and a programmatic `play()` triggered by isActive→true on a re-render was permitted under the gesture.
+
+**Fix** (`src/components/feed/FullScreenPSA.tsx`):
+
+Don't rely on the `isMuted` / `shouldPlay` props alone. Add a `useEffect` that imperatively calls `setIsMutedAsync(true)` then `playAsync()` via the videoRef when the card becomes active *on web*. This guarantees mute is set before play is requested, and works even on the first card with no prior interaction.
+
+```tsx
+useEffect(() => {
+  if (!isWeb || !isActive || !hasVideoUrl) return;
+  const v = videoRef.current;
+  if (!v) return;
+  let cancelled = false;
+  (async () => {
+    try {
+      await v.setIsMutedAsync(true);
+      if (!cancelled) await v.playAsync();
+    } catch { /* component unmounted, paused, etc. */ }
+  })();
+  return () => { cancelled = true; };
+}, [isWeb, isActive, hasVideoUrl, psa.videoUrl]);
+```
+
+Native (iOS) is untouched — AVPlayer doesn't have this problem and adding a parallel imperative play would fight its own buffering.
+
+### Why both fixes are needed
+
+- Without (1), every video is slow cold-load on every visit (no persistent cache → re-download from us-east1).
+- Without (2), even cached videos render only their first frame on the first card — user sees what looks like a photo and assumes there's no PSA.
+
+The two were masking each other during diagnosis: each fix individually felt incomplete because the other was still broken.
+
+---
+
 ## Seeder: Avatar Thumbnail Step Fails on Non-macOS
 
 **Symptom:** `npx ts-node scripts/seedCandidatesFromJson.ts --confirm` errors out with `sips thumbnail failed for ...: ENOENT` or `sips: command not found`.

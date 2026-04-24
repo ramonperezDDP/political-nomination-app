@@ -502,6 +502,7 @@ async function uploadFile(localPath: string, storagePath: string, contentType: s
   await bucket.file(storagePath).save(buf, {
     metadata: {
       contentType,
+      cacheControl: 'public, max-age=86400',
       metadata: { firebaseStorageDownloadTokens: token },
     },
     resumable: false,
