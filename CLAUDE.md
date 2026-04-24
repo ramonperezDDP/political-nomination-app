@@ -145,4 +145,4 @@ users/{id}                  → profile, verification, districts
 ## Bundle ID & Firebase
 - **App bundle ID:** `com.politicalnomination.app`
 - **Firebase project:** `party-nomination-app`
-- **Hosted URL:** `https://party-nomination-app.web.app`
+- **Hosted URL:** `https://mainstreet-party.web.app`
