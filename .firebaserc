@@ -1,5 +1,15 @@
 {
   "projects": {
     "default": "party-nomination-app"
-  }
+  },
+  "targets": {
+    "party-nomination-app": {
+      "hosting": {
+        "mainstreet-party": [
+          "mainstreet-party"
+        ]
+      }
+    }
+  },
+  "etags": {}
 }
