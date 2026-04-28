@@ -863,7 +863,7 @@ These are runtime bugs encountered on iOS (not web-specific) and their fixes.
 
 **Alternative for dropdowns:** Replace Paper's `<Menu>` with a custom dropdown using `<View>` + `<Pressable>` (no Portal). See `src/components/feed/ExperienceMenu.tsx` for an example implementation with an absolutely-positioned backdrop for dismiss handling.
 
-**Files fixed:** `FullScreenPSA.tsx` (EndorseLockModal), `MassEndorseButton.tsx` (ConfirmModal), `for-you.tsx` (LocationMapModal).
+**Files fixed:** `FullScreenPSA.tsx` (EndorseLockModal), `MassEndorseButton.tsx` (ConfirmModal — file later removed when the For You "Endorse all N" button was retired in favor of the Save-then-Endorse funnel), `for-you.tsx` (LocationMapModal). The conditional-mount pattern itself is still required for any Portal-based modal — see `EndorseConfirmModal` mounts in `CandidateDetailScreen`, `PSACard`, `FullScreenPSA`, and `app/(main)/(profile)/endorsements.tsx` for current examples.
 
 ---
 
@@ -897,7 +897,7 @@ const userDistrictIds = useMemo(() => districts?.map((d) => d.id) || [], [distri
 - Derive computed values locally with `useMemo` in the component
 - If you must use a derived selector, use Zustand's `useShallow` or a custom equality function
 
-**File fixed:** `src/components/feed/MassEndorseButton.tsx` — replaced `useUserStore(selectUserDistrictIds)` with local `useMemo`.
+**File fixed:** `src/components/feed/MassEndorseButton.tsx` — replaced `useUserStore(selectUserDistrictIds)` with local `useMemo`. (The file itself was later removed when the For You "Endorse all N" button was retired; the stable-selector rule still applies everywhere.)
 
 ---
 
