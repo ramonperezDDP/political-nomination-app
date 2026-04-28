@@ -9,6 +9,7 @@ import { Card, CandidateAvatar, AlignmentBadge, Chip, PrimaryButton } from '@/co
 import { useAuthStore, useUserStore, useConfigStore, selectCurrentRoundId } from '@/stores';
 import { selectEndorseLockReason, selectHasAccount } from '@/stores';
 import VerifyIdentitySheet from '../home/VerifyIdentitySheet';
+import EndorseConfirmModal from './EndorseConfirmModal';
 import type { FeedItem, Issue } from '@/types';
 
 interface PSACardProps {
@@ -21,7 +22,12 @@ interface PSACardProps {
 export default function PSACard({ feedItem, isActive = true, selectedIssueId, issues = [] }: PSACardProps) {
   const theme = useTheme();
   const { user } = useAuthStore();
-  const { endorseCandidate, revokeEndorsement } = useUserStore();
+  const endorseCandidate = useUserStore((s) => s.endorseCandidate);
+  const bookmarkCandidate = useUserStore((s) => s.bookmarkCandidate);
+  const removeBookmark = useUserStore((s) => s.removeBookmark);
+  const isBookmarked = useUserStore((s) =>
+    s.bookmarks.some((b) => b.candidateId === feedItem.candidate.id)
+  );
   const currentRoundId = useConfigStore(selectCurrentRoundId);
   const videoRef = useRef<Video>(null);
 
@@ -41,6 +47,7 @@ export default function PSACard({ feedItem, isActive = true, selectedIssueId, is
   const lockReason = useUserStore(lockReasonSelector);
   const canEndorse = lockReason === null;
   const [showLockModal, setShowLockModal] = useState(false);
+  const [showEndorseConfirm, setShowEndorseConfirm] = useState(false);
 
   // Get display content for the selected issue, if any
   const getSelectedIssueContent = () => {
@@ -90,36 +97,39 @@ export default function PSACard({ feedItem, isActive = true, selectedIssueId, is
     setIsMuted(!isMuted);
   };
 
-  const handleEndorseToggle = async () => {
-    if (!user?.id || isEndorsing) return;
-
-    if (!hasEndorsed && !canEndorse) {
+  // Endorsements are final — tapping when already endorsed is a no-op. The
+  // first tap opens the irreversible-warning modal; the actual write happens
+  // on confirm.
+  const handleEndorsePress = () => {
+    if (!user?.id || isEndorsing || hasEndorsed) return;
+    if (!canEndorse) {
       setShowLockModal(true);
       return;
     }
+    setShowEndorseConfirm(true);
+  };
 
+  const handleConfirmEndorse = async () => {
+    if (!user?.id || isEndorsing) return;
     setIsEndorsing(true);
     try {
-      if (hasEndorsed) {
-        // Remove endorsement
-        const success = await revokeEndorsement(user.id, candidate.id, currentRoundId);
-        if (success) {
-          // Decrement the displayed count immediately for visual feedback
-          setDisplayedEndorsementCount((prev) => Math.max(0, prev - 1));
-        }
-      } else {
-        // Add endorsement
-        const success = await endorseCandidate(user.id, candidate.id, currentRoundId);
-        if (success) {
-          // Increment the displayed count immediately for visual feedback
-          setDisplayedEndorsementCount((prev) => prev + 1);
-        }
+      const success = await endorseCandidate(user.id, candidate.id, currentRoundId);
+      if (success) {
+        setDisplayedEndorsementCount((prev) => prev + 1);
+        if (isBookmarked) await removeBookmark(user.id, candidate.id);
       }
     } catch (error) {
-      console.error('Error toggling endorsement:', error);
+      console.error('Error endorsing candidate:', error);
     } finally {
       setIsEndorsing(false);
+      setShowEndorseConfirm(false);
     }
+  };
+
+  const handleBookmarkToggle = async () => {
+    if (!user?.id) return;
+    if (isBookmarked) await removeBookmark(user.id, candidate.id);
+    else await bookmarkCandidate(user.id, candidate.id);
   };
 
   const handleViewProfile = () => {
@@ -243,8 +253,9 @@ export default function PSACard({ feedItem, isActive = true, selectedIssueId, is
         {/* Action Buttons */}
         <View style={styles.actionRow}>
           <PrimaryButton
-            onPress={handleEndorseToggle}
+            onPress={handleEndorsePress}
             loading={isEndorsing}
+            disabled={hasEndorsed}
             icon={!canEndorse && !hasEndorsed ? 'lock' : hasEndorsed ? 'check' : 'thumb-up'}
             style={[
               styles.endorseButton,
@@ -261,6 +272,11 @@ export default function PSACard({ feedItem, isActive = true, selectedIssueId, is
           >
             {hasEndorsed ? 'Endorsed' : 'Endorse'}
           </PrimaryButton>
+          <IconButton
+            icon={isBookmarked ? 'bookmark' : 'bookmark-outline'}
+            mode="contained-tonal"
+            onPress={handleBookmarkToggle}
+          />
           <IconButton
             icon="share-variant"
             mode="contained-tonal"
@@ -280,6 +296,16 @@ export default function PSACard({ feedItem, isActive = true, selectedIssueId, is
       visible={showLockModal}
       onDismiss={() => setShowLockModal(false)}
     />
+
+    {showEndorseConfirm && (
+      <EndorseConfirmModal
+        visible={showEndorseConfirm}
+        onDismiss={() => setShowEndorseConfirm(false)}
+        onConfirm={handleConfirmEndorse}
+        candidateName={candidate.displayName}
+        loading={isEndorsing}
+      />
+    )}
     </>
   );
 }

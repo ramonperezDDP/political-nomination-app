@@ -9,6 +9,7 @@ import { useAuthStore, useUserStore, useConfigStore, selectFullyVerified } from 
 import { selectCurrentRoundId } from '@/stores/configStore';
 import { Card, UserAvatar, EmptyState, LoadingScreen, Chip } from '@/components/ui';
 import VerifyIdentitySheet from '@/components/home/VerifyIdentitySheet';
+import EndorseConfirmModal from '@/components/feed/EndorseConfirmModal';
 import { getCandidate, getUser } from '@/services/firebase/firestore';
 import type { Candidate, User, Endorsement, Bookmark } from '@/types';
 
@@ -32,7 +33,7 @@ interface BookmarkedCandidateInfo extends CandidateInfo {
 export default function MyEndorsementsScreen() {
   const theme = useTheme();
   const { user: currentUser } = useAuthStore();
-  const { endorsements, bookmarks, revokeEndorsement, removeBookmark, reEndorseFromBookmark, fetchBookmarks } = useUserStore();
+  const { endorsements, bookmarks, removeBookmark, reEndorseFromBookmark, fetchBookmarks } = useUserStore();
   const currentRoundId = useConfigStore(selectCurrentRoundId);
 
   const selectedDistrict = useUserStore((s) => s.selectedBrowsingDistrict) || 'PA-01';
@@ -46,6 +47,8 @@ export default function MyEndorsementsScreen() {
   const [actionId, setActionId] = useState<string | null>(null);
   const [showVerifySheet, setShowVerifySheet] = useState(false);
   const [endorsingAll, setEndorsingAll] = useState(false);
+  const [pendingEndorse, setPendingEndorse] = useState<{ candidateId: string; name: string } | null>(null);
+  const [showEndorseAllConfirm, setShowEndorseAllConfirm] = useState(false);
 
   // Fetch bookmarks on mount
   useEffect(() => {
@@ -98,16 +101,6 @@ export default function MyEndorsementsScreen() {
     fetchBookmarkedCandidates();
   }, [bookmarks]);
 
-  const handleRemoveEndorsement = async (candidateId: string) => {
-    if (!currentUser?.id) return;
-    setActionId(candidateId);
-    try {
-      await revokeEndorsement(currentUser.id, candidateId, currentRoundId);
-    } finally {
-      setActionId(null);
-    }
-  };
-
   const handleRemoveBookmark = async (candidateId: string) => {
     if (!currentUser?.id) return;
     setActionId(candidateId);
@@ -118,37 +111,53 @@ export default function MyEndorsementsScreen() {
     }
   };
 
-  const handleReEndorse = async (candidateId: string) => {
-    if (!currentUser?.id) return;
+  const handleReEndorsePress = (candidateId: string, name: string) => {
+    if (!isFullyVerified) {
+      setShowVerifySheet(true);
+      return;
+    }
+    setPendingEndorse({ candidateId, name });
+  };
+
+  const handleConfirmReEndorse = async () => {
+    if (!currentUser?.id || !pendingEndorse) return;
+    const { candidateId } = pendingEndorse;
     setActionId(candidateId);
     try {
       await reEndorseFromBookmark(currentUser.id, candidateId, currentRoundId);
     } finally {
       setActionId(null);
+      setPendingEndorse(null);
     }
   };
 
   const activeEndorsements = endorsedCandidates.filter(e => e.candidate !== null && e.candidate.district === selectedDistrict);
   const activeBookmarks = bookmarkedCandidates.filter(b => b.candidate !== null && b.candidate.district === selectedDistrict);
 
-  const handleEndorseAll = async () => {
+  const endorsableBookmarks = activeBookmarks.filter(b => {
+    if (!b.candidate || b.candidate.contestStatus === 'eliminated') return false;
+    return !endorsements.some(e => e.candidateId === b.candidate!.id && e.isActive);
+  });
+
+  const handleEndorseAllPress = () => {
     if (!isFullyVerified) {
       setShowVerifySheet(true);
       return;
     }
+    if (!currentUser?.id || endorsingAll || endorsableBookmarks.length === 0) return;
+    setShowEndorseAllConfirm(true);
+  };
+
+  const handleConfirmEndorseAll = async () => {
     if (!currentUser?.id || endorsingAll) return;
     setEndorsingAll(true);
     try {
-      // Endorse all non-eliminated bookmarked candidates that aren't already endorsed
-      const endorsable = activeBookmarks.filter(b => {
-        if (!b.candidate || b.candidate.contestStatus === 'eliminated') return false;
-        return !endorsements.some(e => e.candidateId === b.candidate!.id && e.isActive);
-      });
-      for (const item of endorsable) {
+      for (const item of endorsableBookmarks) {
         await reEndorseFromBookmark(currentUser.id, item.candidate!.id, currentRoundId);
       }
     } finally {
       setEndorsingAll(false);
+      setShowEndorseAllConfirm(false);
     }
   };
 
@@ -187,7 +196,7 @@ export default function MyEndorsementsScreen() {
                 color={theme.colors.primary}
               />
               <Text variant="bodySmall" style={{ color: theme.colors.primary, marginLeft: 4, fontWeight: '600' }}>
-                Endorsed
+                Endorsed (final this round)
               </Text>
             </View>
             <View style={styles.issueChips}>
@@ -201,13 +210,11 @@ export default function MyEndorsementsScreen() {
               ))}
             </View>
           </View>
-          <IconButton
-            icon="close-circle"
-            iconColor={theme.colors.error}
-            size={24}
-            onPress={() => handleRemoveEndorsement(item.candidate!.id)}
-            loading={actionId === item.candidate!.id}
-            disabled={actionId !== null}
+          <MaterialCommunityIcons
+            name="lock-check"
+            size={20}
+            color={theme.colors.primary}
+            style={styles.endorsedLock}
           />
         </Pressable>
       </Card>
@@ -263,13 +270,13 @@ export default function MyEndorsementsScreen() {
               <Button
                 mode="outlined"
                 compact
-                onPress={() => handleReEndorse(item.candidate!.id)}
+                onPress={() => handleReEndorsePress(item.candidate!.id, item.user?.displayName || 'this candidate')}
                 loading={actionId === item.candidate!.id}
                 disabled={actionId !== null}
                 style={styles.reEndorseButton}
                 labelStyle={styles.reEndorseLabel}
               >
-                Re-endorse
+                Endorse
               </Button>
             )}
             <IconButton
@@ -319,7 +326,7 @@ export default function MyEndorsementsScreen() {
           <EmptyState
             icon="thumb-up-outline"
             title="No endorsements this round"
-            message="You haven't endorsed anyone this round yet. Browse candidates and endorse the ones you support."
+            message="Save candidates you're interested in, then endorse them from the Bookmarks tab when you're ready. Endorsements are final once made."
             actionLabel="Browse Candidates"
             onAction={() => router.push('/(main)/(feed)' as any)}
           />
@@ -337,7 +344,7 @@ export default function MyEndorsementsScreen() {
           <EmptyState
             icon="bookmark-outline"
             title="No bookmarks yet"
-            message="Bookmarks are created when endorsements carry over between rounds, or when you manually bookmark a candidate."
+            message="Save candidates you're interested in. When you're ready to commit, endorse them from here — endorsements are final for the round."
           />
         ) : (
           <>
@@ -345,12 +352,14 @@ export default function MyEndorsementsScreen() {
               <Button
                 mode="contained"
                 icon="thumb-up"
-                onPress={handleEndorseAll}
+                onPress={handleEndorseAllPress}
                 loading={endorsingAll}
-                disabled={endorsingAll}
+                disabled={endorsingAll || endorsableBookmarks.length === 0}
                 style={styles.endorseAllButton}
               >
-                Endorse All
+                {endorsableBookmarks.length > 0
+                  ? `Endorse All (${endorsableBookmarks.length})`
+                  : 'Endorse All'}
               </Button>
             </View>
             <FlatList
@@ -368,6 +377,26 @@ export default function MyEndorsementsScreen() {
         visible={showVerifySheet}
         onDismiss={() => setShowVerifySheet(false)}
       />
+
+      {pendingEndorse && (
+        <EndorseConfirmModal
+          visible={pendingEndorse !== null}
+          onDismiss={() => setPendingEndorse(null)}
+          onConfirm={handleConfirmReEndorse}
+          candidateName={pendingEndorse.name}
+          loading={actionId !== null}
+        />
+      )}
+
+      {showEndorseAllConfirm && (
+        <EndorseConfirmModal
+          visible={showEndorseAllConfirm}
+          onDismiss={() => setShowEndorseAllConfirm(false)}
+          onConfirm={handleConfirmEndorseAll}
+          candidateCount={endorsableBookmarks.length}
+          loading={endorsingAll}
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -426,6 +455,10 @@ const styles = StyleSheet.create({
   },
   bookmarkActions: {
     alignItems: 'center',
+  },
+  endorsedLock: {
+    marginRight: 12,
+    marginTop: 4,
   },
   reEndorseButton: {
     borderRadius: 16,

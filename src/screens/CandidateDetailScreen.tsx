@@ -17,6 +17,7 @@ import {
 import { useAuthStore, useConfigStore, useUserStore, selectCurrentRoundId } from '@/stores';
 import { selectEndorseLockReason, selectHasAccount } from '@/stores';
 import VerifyIdentitySheet from '@/components/home/VerifyIdentitySheet';
+import EndorseConfirmModal from '@/components/feed/EndorseConfirmModal';
 
 const DISTRICT_COLORS: Record<string, string> = {
   'PA-01': '#FFB6C1',
@@ -47,7 +48,12 @@ export default function CandidateProfileScreen() {
   const theme = useTheme();
   const { user: currentUser } = useAuthStore();
   const { issues } = useConfigStore();
-  const { endorseCandidate, revokeEndorsement } = useUserStore();
+  const endorseCandidate = useUserStore((s) => s.endorseCandidate);
+  const bookmarkCandidate = useUserStore((s) => s.bookmarkCandidate);
+  const removeBookmark = useUserStore((s) => s.removeBookmark);
+  const isBookmarked = useUserStore((s) =>
+    id ? s.bookmarks.some((b) => b.candidateId === id) : false
+  );
   const currentRoundId = useConfigStore(selectCurrentRoundId);
   const selectedDistrict = useUserStore((s) => s.selectedBrowsingDistrict) || 'PA-01';
   const chipColor = DISTRICT_COLORS[selectedDistrict] || '#E0E0E0';
@@ -61,6 +67,7 @@ export default function CandidateProfileScreen() {
   const [isEndorsing, setIsEndorsing] = useState(false);
   const [displayedEndorsementCount, setDisplayedEndorsementCount] = useState(0);
   const [showLockModal, setShowLockModal] = useState(false);
+  const [showEndorseConfirm, setShowEndorseConfirm] = useState(false);
   const [playingPSA, setPlayingPSA] = useState<PSA | null>(null);
   const [showFullPhoto, setShowFullPhoto] = useState(false);
   const photoSlideAnim = useRef(new Animated.Value(600)).current;
@@ -200,36 +207,43 @@ export default function CandidateProfileScreen() {
     fetchCandidateData();
   }, [id]);
 
-  const handleEndorseToggle = async () => {
-    if (!currentUser?.id || !id || isEndorsing) return;
-
-    // Check lock before endorsing (allow revocation even if locked)
-    if (!hasEndorsed && !canEndorse) {
+  // Endorsements are final for the round — tapping when already endorsed is a
+  // no-op. First tap opens the irreversible-warning modal; the actual write
+  // happens on confirm.
+  const handleEndorsePress = () => {
+    if (!currentUser?.id || !id || isEndorsing || hasEndorsed) return;
+    if (!canEndorse) {
       setShowLockModal(true);
       return;
     }
+    setShowEndorseConfirm(true);
+  };
 
+  const handleConfirmEndorse = async () => {
+    if (!currentUser?.id || !id || isEndorsing) return;
     setIsEndorsing(true);
     try {
-      if (hasEndorsed) {
-        // Remove endorsement
-        const success = await revokeEndorsement(currentUser.id, id, currentRoundId);
-        if (success) {
-          // Decrement the displayed count immediately for visual feedback
-          setDisplayedEndorsementCount((prev) => Math.max(0, prev - 1));
-        }
-      } else {
-        // Add endorsement
-        const success = await endorseCandidate(currentUser.id, id, currentRoundId);
-        if (success) {
-          // Increment the displayed count immediately for visual feedback
-          setDisplayedEndorsementCount((prev) => prev + 1);
-        }
+      const success = await endorseCandidate(currentUser.id, id, currentRoundId);
+      if (success) {
+        setDisplayedEndorsementCount((prev) => prev + 1);
+        // Endorsing supersedes a bookmark — drop the bookmark so the user
+        // doesn't see the same candidate twice on the profile screen.
+        if (isBookmarked) await removeBookmark(currentUser.id, id);
       }
     } catch (error) {
-      console.error('Error toggling endorsement:', error);
+      console.error('Error endorsing candidate:', error);
     } finally {
       setIsEndorsing(false);
+      setShowEndorseConfirm(false);
+    }
+  };
+
+  const handleBookmarkToggle = async () => {
+    if (!currentUser?.id || !id) return;
+    if (isBookmarked) {
+      await removeBookmark(currentUser.id, id);
+    } else {
+      await bookmarkCandidate(currentUser.id, id);
     }
   };
 
@@ -635,8 +649,9 @@ export default function CandidateProfileScreen() {
           {/* Action Buttons */}
           <View style={styles.actionButtons}>
             <PrimaryButton
-              onPress={handleEndorseToggle}
+              onPress={handleEndorsePress}
               loading={isEndorsing}
+              disabled={hasEndorsed}
               icon={!canEndorse && !hasEndorsed ? 'lock' : hasEndorsed ? 'check' : 'thumb-up'}
               style={[
                 styles.endorseButton,
@@ -653,6 +668,13 @@ export default function CandidateProfileScreen() {
             >
               {hasEndorsed ? 'Endorsed' : 'Endorse'}
             </PrimaryButton>
+            <SecondaryButton
+              onPress={handleBookmarkToggle}
+              icon={isBookmarked ? 'bookmark' : 'bookmark-outline'}
+              style={styles.saveButton}
+            >
+              {isBookmarked ? 'Saved' : 'Save'}
+            </SecondaryButton>
             <SecondaryButton
               onPress={() => {}}
               icon="share-variant"
@@ -686,6 +708,16 @@ export default function CandidateProfileScreen() {
         visible={showLockModal}
         onDismiss={() => setShowLockModal(false)}
       />
+
+      {showEndorseConfirm && (
+        <EndorseConfirmModal
+          visible={showEndorseConfirm}
+          onDismiss={() => setShowEndorseConfirm(false)}
+          onConfirm={handleConfirmEndorse}
+          candidateName={candidateUser?.displayName || 'this candidate'}
+          loading={isEndorsing}
+        />
+      )}
 
       {/* Full-size headshot viewer — bottom sheet, matches the quiz/about-contest pattern */}
       {(() => {
@@ -868,9 +900,12 @@ const styles = StyleSheet.create({
   },
   actionButtons: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 8,
   },
   endorseButton: {
+    flex: 1.4,
+  },
+  saveButton: {
     flex: 1,
   },
   shareButton: {

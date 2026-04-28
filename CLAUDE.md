@@ -77,6 +77,17 @@ Always conditionally render Paper `<Modal>`, `<Menu>`, `<Dialog>` — they block
 - Wrap reseed/write operations in their own try/catch so permission errors don't break the read path
 - **Endorsement count ownership:** `createEndorsement` / `revokeEndorsement` in `src/services/firebase/firestore*.ts` manage ONLY the endorsement doc state. The `candidates.endorsementCount` update lives in `userStore.endorseCandidate` / `revokeEndorsement`, guarded by the local `hasEndorsedCandidate()` check. Do NOT re-add `FieldValue.increment(±1)` calls to the service-layer endorsement functions — the Firestore layer's idempotency check can silently short-circuit under cross-session state drift, leaving counts wrong. See `docs/TROUBLESHOOTING.md` "Endorsement Count Doesn't Increment When Endorsing From Bookmarks."
 
+### Endorsements Are Final Per Round
+Endorsements cannot be revoked from the UI once made — they are final for the duration of the round. The product flow is **Save → bookmark → review → Endorse with confirmation**:
+
+- Every endorse path (For You feed heart icon, candidate-profile Endorse button, PSACard button, Bookmarks-tab Endorse, Bookmarks-tab Endorse-All) MUST gate with `EndorseConfirmModal` in `src/components/feed/EndorseConfirmModal.tsx` before calling `endorseCandidate`. The modal supports single (`candidateName`) and bulk (`candidateCount`) variants.
+- Once endorsed, the Endorse button is disabled and shows an "Endorsed" + check-icon state. The Bookmarks-tab Endorsements list shows a `lock-check` glyph. **Do not re-add a revoke / un-endorse / close-circle button anywhere in the UI.**
+- The store-level `revokeEndorsement` function (in `userStore.ts` and `firestore*.ts`) is intentionally retained for audit / admin-tool use, but is unreachable from any user-facing surface. Do not import or call it from new components.
+- When a user endorses a candidate they had previously bookmarked, drop the bookmark in the same flow so the candidate doesn't appear in both the Endorsements and Bookmarks tabs (see `handleConfirmEndorse` in `CandidateDetailScreen` / `PSACard` / `FullScreenPSA`).
+- Every surface that shows an Endorse button must also surface a Save (bookmark) button so the user has the lower-commitment path. The For You feed, candidate profile, and PSACard all expose Save alongside Endorse.
+- Cross-round reset (each round starts with zero active endorsements; bookmarks carry forward) leans on the existing `convertEndorsementsToBookmarks` helper in `userStore`. Verify that's wired to round transitions before assuming new-round endorsing works without manual cleanup.
+- The "Endorse all N" button on the For You feed has been retired — bulk endorsing only happens from the Bookmarks tab where the user has already curated the list.
+
 ### Web Compatibility
 - SafeAreaView must be aliased to `View` on web (style array issue)
 - Style arrays on Paper components need `StyleSheet.flatten()`

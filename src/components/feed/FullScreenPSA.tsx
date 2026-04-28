@@ -15,6 +15,7 @@ const DISTRICT_COLORS: Record<string, string> = {
 import AlignmentCircle from './AlignmentCircle';
 import AlignmentExplainerModal from './AlignmentExplainerModal';
 import VerifyIdentitySheet from '../home/VerifyIdentitySheet';
+import EndorseConfirmModal from './EndorseConfirmModal';
 import type { FeedItem } from '@/types';
 
 interface FullScreenPSAProps {
@@ -67,7 +68,6 @@ export default function FullScreenPSA({ feedItem, isActive, height }: FullScreen
   const canSeeAlignment = useUserStore(selectCanSeeAlignment);
   const hasAccount = useUserStore(selectHasAccount);
   const endorseCandidate = useUserStore((s) => s.endorseCandidate);
-  const revokeEndorsement = useUserStore((s) => s.revokeEndorsement);
   const hasEndorsed = useUserStore((s) => s.endorsements.some(
     (e) => e.candidateId === candidate.id && e.isActive
   ));
@@ -104,6 +104,8 @@ export default function FullScreenPSA({ feedItem, isActive, height }: FullScreen
 
   const [showLockModal, setShowLockModal] = useState(false);
   const [showAlignmentModal, setShowAlignmentModal] = useState(false);
+  const [showEndorseConfirm, setShowEndorseConfirm] = useState(false);
+  const [isEndorsing, setIsEndorsing] = useState(false);
 
   // Derive alignment breakdown from feedItem IDs for the explainer modal
   const alignmentBreakdown = useMemo(() => {
@@ -130,14 +132,28 @@ export default function FullScreenPSA({ feedItem, isActive, height }: FullScreen
     };
   }, [exactMatchIds, closeMatchIds, notMatchedIds, candidateResponses, issues]);
 
+  // Endorsements are final per round — once endorsed, the heart is read-only.
+  // First tap on the unfilled heart opens the irreversible-warning modal.
   const handleEndorsePress = () => {
+    if (hasEndorsed) return;
     if (!canEndorse) {
       setShowLockModal(true);
       return;
     }
     if (!currentUser?.id) return;
-    if (hasEndorsed) revokeEndorsement(currentUser.id, candidate.id, currentRoundId);
-    else endorseCandidate(currentUser.id, candidate.id, currentRoundId);
+    setShowEndorseConfirm(true);
+  };
+
+  const handleConfirmEndorse = async () => {
+    if (!currentUser?.id || isEndorsing) return;
+    setIsEndorsing(true);
+    try {
+      const ok = await endorseCandidate(currentUser.id, candidate.id, currentRoundId);
+      if (ok && isBookmarked) await removeBookmark(currentUser.id, candidate.id);
+    } finally {
+      setIsEndorsing(false);
+      setShowEndorseConfirm(false);
+    }
   };
 
   const handleBookmarkPress = () => {
@@ -317,6 +333,16 @@ export default function FullScreenPSA({ feedItem, isActive, height }: FullScreen
         visible={showLockModal}
         onDismiss={() => setShowLockModal(false)}
       />
+
+      {showEndorseConfirm && (
+        <EndorseConfirmModal
+          visible={showEndorseConfirm}
+          onDismiss={() => setShowEndorseConfirm(false)}
+          onConfirm={handleConfirmEndorse}
+          candidateName={candidate.displayName}
+          loading={isEndorsing}
+        />
+      )}
     </View>
   );
 }

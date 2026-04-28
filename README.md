@@ -26,7 +26,7 @@ The America's Main Street Party App is a participatory democracy platform that e
 - **Anonymous visitors** to browse candidates, take the policy quiz, and explore the platform without creating an account (via Firebase Anonymous Auth)
 - **All users (beta)** to instantly verify via an "I understand" acknowledgment and gain full endorsement access to both PA-01 and PA-02 districts — no email registration or real identity verification required in the beta
 - **Home screen tools** including Filter by Policy (search candidates by quiz position), Filter by Area (SVG zone map), and a quiz card showing real-time candidate match counts
-- **For You feed** with a full-screen TikTok-style vertical swipe experience, experience filters (Explore, My Area, My Issues, Top Picks), SVG location maps for zone-based browsing, and mass endorsement
+- **For You feed** with a full-screen TikTok-style vertical swipe experience, experience filters (All Candidates, My Issues, My Area), SVG location maps for zone-based browsing, and a Save-then-Endorse funnel
 - **Candidates** to apply for nomination, build profiles, and track campaign metrics
 - **Administrators** to manage party configuration and contest stages
 
@@ -814,8 +814,8 @@ The app uses a **progressive access model** built on Firebase Anonymous Authenti
 4. **Account upgrade (production)**: When real verification is enabled, `linkWithCredential()` upgrades the anonymous account in place — the UID stays the same and all Firestore data (quiz responses, etc.) is preserved
 5. **Alignment scores gated on quiz**: Users who haven't completed the quiz see "?" on the For You feed and "N/A" on candidate cards, leaderboard, and candidate profiles
 6. **District-gated endorsements**: Users can browse any district but can only endorse candidates in their verified districts
-7. **Experience filters**: The For You feed supports 4 filter modes — Explore (random), My Area (SVG zone maps), My Issues (policy-aligned), and Top Picks (no dealbreakers). Filters unlock progressively as users complete the quiz and set dealbreakers
-8. **Mass endorsement**: After filtering, verified users can endorse all matching candidates in their district with a single action
+7. **Experience filters**: The For You feed supports 3 filter modes — All Candidates (everyone in the selected district sorted by alignment), My Issues (policy-aligned, sorted by alignment), and My Area (SVG zone map). My Issues unlocks once the user completes the quiz
+8. **Save-then-Endorse funnel**: The primary action throughout the app is Save (bookmark). Endorsement is final per round once made — every Endorse button opens an irreversible-warning confirmation modal before committing. There is no in-app un-endorse path. Bookmarks carry forward across rounds; endorsements do not. Bulk endorsing is available from the Bookmarks tab on the user's profile
 9. **Endorsement gating**: Unverified users who tap endorse buttons anywhere in the app (For You feed, candidate profiles, leaderboard) see the Verify Identity bottom sheet instead of the old "Endorsement Locked" modal
 10. **Cleanup**: A scheduled Cloud Function (`cleanupAbandonedAnonymous`) runs daily to delete anonymous accounts inactive for 90+ days
 

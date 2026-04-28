@@ -23,7 +23,6 @@ import FullScreenPSA from '@/components/feed/FullScreenPSA';
 import ExperienceMenu from '@/components/feed/ExperienceMenu';
 import type { ExperienceFilter } from '@/components/feed/ExperienceMenu';
 import QuizPromptCard from '@/components/feed/QuizPromptCard';
-import MassEndorseButton from '@/components/feed/MassEndorseButton';
 import LocationMapModal from '@/components/feed/LocationMapModal';
 import { LoadingScreen } from '@/components/ui';
 import type { FeedItem, Candidate, User, PSA } from '@/types';
@@ -193,17 +192,21 @@ export default function ForYouScreen() {
 
   // Apply experience filter — use stable references, not entire user object
   const filteredItems = useMemo(() => {
+    // Sort all feedItems by alignment score, putting null scores at the end.
+    const sortByAlignment = (items: FeedItem[]) => {
+      const withScore = items.filter((item) => item.alignmentScore != null);
+      const withoutScore = items.filter((item) => item.alignmentScore == null);
+      return [
+        ...withScore.sort((a, b) => (b.alignmentScore ?? 0) - (a.alignmentScore ?? 0)),
+        ...withoutScore,
+      ];
+    };
+
     switch (experienceFilter) {
-      case 'issues': {
-        // Show candidates sorted by alignment score (best matches first).
-        // Include candidates with null scores at the end (no shared quiz answers yet).
-        const withScore = feedItems.filter((item) => item.alignmentScore != null);
-        const withoutScore = feedItems.filter((item) => item.alignmentScore == null);
-        return [
-          ...withScore.sort((a, b) => (b.alignmentScore ?? 0) - (a.alignmentScore ?? 0)),
-          ...withoutScore,
-        ];
-      }
+      case 'all':
+      case 'issues':
+        // Both show every candidate in the selected district, sorted by alignment.
+        return sortByAlignment(feedItems);
 
       case 'location':
         if (!selectedLocation) return feedItems;
@@ -252,12 +255,6 @@ export default function ForYouScreen() {
         onFilterChange={setExperienceFilter}
         onLocationPress={() => setLocationModalVisible(true)}
         style={{ top: 8 }}
-      />
-
-      <MassEndorseButton
-        filteredItems={filteredItems}
-        experienceFilter={experienceFilter}
-        style={{ top: 4 }}
       />
 
       <FlatList
